@@ -1,46 +1,22 @@
 <!DOCTYPE html>
-<html lang="{{ page.lang | default: site.lang | default: 'en' }}">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- SEO -->
   <title>{{ page.title | default: site.title }}</title>
   <meta name="description" content="{{ page.description | default: site.description }}">
-  <meta name="keywords" content="{{ page.keywords | default: site.keywords }}">
-  <meta name="author" content="{{ page.author | default: site.author }}">
 
-  <!-- Open Graph -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="{{ site.url }}{{ page.url }}">
-  <meta property="og:title" content="{{ page.title | default: site.title }}">
-  <meta property="og:description" content="{{ page.description | default: site.description }}">
-  <meta property="og:image" content="{{ site.url }}{{ page.image | default: site.image }}">
-
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="{{ site.url }}{{ page.url }}">
-  <meta name="twitter:title" content="{{ page.title | default: site.title }}">
-  <meta name="twitter:description" content="{{ page.description | default: site.description }}">
-  <meta name="twitter:image" content="{{ site.url }}{{ page.image | default: site.image }}">
-
-  <!-- Canonical -->
-  <link rel="canonical" href="{{ site.url }}{{ page.url }}">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="{{ site.url }}/assets/images/favicon.png">
-
-  <!-- Theme Stylesheet -->
-  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  <!-- Direct CSS Link -->
+  <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 
-<body class="riddlen-docs">
+<body>
 
-  <!-- Navigation (always included) -->
+  <!-- Navigation -->
   {% include navigation.html %}
 
   <!-- Main Content -->
-  <main class="main-content" role="main">
+  <main class="main-content">
     {{ content }}
   </main>
 
@@ -50,48 +26,34 @@
       <div class="footer-section">
         <h4>🧠 Riddlen Protocol</h4>
         <p>Where intelligence matters more than capital</p>
-        <p class="version">Documentation {{ site.riddlen.version }}</p>
       </div>
 
       <div class="footer-section">
-        <h4>🚀 v6.0 Features</h4>
+        <h4>Documentation</h4>
         <ul>
-          <li><a href="{{ site.url }}/airdrop.html">Airdrop System</a></li>
-          <li><a href="{{ site.url }}/oracle-network.html">Oracle Network</a></li>
-          <li><a href="{{ site.url }}/governance.html">DAO Governance</a></li>
-          <li><a href="{{ site.url }}/farcaster-frames.html">Farcaster Frames</a></li>
+          <li><a href="/">Overview</a></li>
+          <li><a href="/testnet/">Testnet</a></li>
+          <li><a href="/faq.html">FAQ</a></li>
         </ul>
       </div>
 
       <div class="footer-section">
-        <h4>📚 Documentation</h4>
+        <h4>Community</h4>
         <ul>
-          <li><a href="{{ site.url }}">Overview</a></li>
-          <li><a href="{{ site.url }}/testnet/">Live Testnet</a></li>
-          <li><a href="{{ site.url }}/FRONTEND_INTEGRATION.html">Developer Guide</a></li>
-          <li><a href="{{ site.url }}/faq.html">FAQ</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-section">
-        <h4>🌐 Community</h4>
-        <ul>
-          <li><a href="https://t.me/RiddlenToken" target="_blank">Official Telegram</a></li>
-          <li><a href="https://t.me/RiddlenCommunity" target="_blank">Community Chat</a></li>
+          <li><a href="https://t.me/RiddlenToken" target="_blank">Telegram</a></li>
           <li><a href="https://twitter.com/RiddlenToken" target="_blank">Twitter</a></li>
-          <li><a href="https://github.com/{{ site.repository }}" target="_blank">GitHub</a></li>
+          <li><a href="https://github.com/RiddlenBaba/riddlen" target="_blank">GitHub</a></li>
         </ul>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <p>&copy; 2025 Riddlen Protocol. Licensed under Apache 2.0.</p>
-      <p>The future is human-powered intelligence! 🧠⚡</p>
+      <p>&copy; 2025 Riddlen Protocol</p>
     </div>
   </footer>
 
   <!-- Search Script -->
-  <script src="{{ '/assets/js/search.js' | relative_url }}"></script>
+  <script src="/assets/js/search.js"></script>
 
 </body>
 </html>

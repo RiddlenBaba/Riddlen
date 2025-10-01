@@ -27,7 +27,7 @@ social:
   website: "https://riddlen.com"
 
 # Build settings
-theme: minima
+theme: null
 plugins:
   - jekyll-feed
   - jekyll-sitemap
@@ -95,25 +95,9 @@ facebook:
 defaults:
   - scope:
       path: ""
-      type: "posts"
     values:
-      layout: "post"
+      layout: "default"
       author: "Riddlen Team"
-  - scope:
-      path: ""
-      type: "pages"
-    values:
-      layout: "page"
-  - scope:
-      path: "testnet"
-    values:
-      layout: "page"
-      nav_section: "testnet"
-  - scope:
-      path: "contracts"
-    values:
-      layout: "page"
-      nav_section: "contracts"
 
 # Custom variables
 riddlen:

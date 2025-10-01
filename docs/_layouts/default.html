@@ -81,9 +81,6 @@
     }
 
     .main-content {
-      margin-left: 280px;
-      padding: 2rem 3rem;
-      max-width: 1200px;
       min-height: calc(100vh - 60px);
     }
 
@@ -186,12 +183,12 @@
       color: white;
       padding: 3rem 0 1rem;
       margin-top: 4rem;
-      margin-left: 280px;
     }
 
     .footer-wrapper {
       max-width: 1200px;
-      padding: 0 3rem;
+      margin: 0 auto;
+      padding: 0 1rem;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 2rem;
@@ -245,20 +242,6 @@
     }
 
     @media (max-width: 968px) {
-      .main-content {
-        margin-left: 0;
-        padding: 2rem 1.5rem;
-      }
-
-      .site-footer {
-        margin-left: 0;
-        padding: 2rem 0 1rem;
-      }
-
-      .footer-wrapper {
-        padding: 0 1.5rem;
-      }
-
       h1 { font-size: 2rem; }
       h2 { font-size: 1.75rem; }
       h3 { font-size: 1.35rem; }
@@ -271,15 +254,6 @@
       }
     }
 
-    @media (max-width: 480px) {
-      .main-content {
-        padding: 1.5rem 1rem;
-      }
-
-      .footer-wrapper {
-        padding: 0 1rem;
-      }
-    }
 
     /* Enhanced readability for AI training */
     code {

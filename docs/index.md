@@ -4,12 +4,12 @@ title: "Riddlen Protocol Documentation - Blockchain Development Guide"
 description: "Complete developer documentation for Riddlen Protocol - the first blockchain that rewards human intelligence through Proof-of-Solve consensus. Includes smart contracts, NFT gaming, API reference, and integration guides for Polygon network."
 keywords: "riddlen protocol, blockchain development, smart contracts, proof of solve, nft gaming, polygon network, web3 development, solidity tutorials, ethers.js, react blockchain, merit based governance, developer documentation, api reference"
 image: "/assets/images/riddlen-og-image.png"
-date: 2024-09-29
+date: 2025-10-01
 author: "Riddlen Protocol Team"
 sitemap:
   priority: 1.0
   changefreq: 'weekly'
-  lastmod: 2024-09-29
+  lastmod: 2025-10-01
 schema_type: "TechArticle"
 ai_content_type: "developer-documentation"
 ai_complexity: "intermediate"
@@ -40,9 +40,9 @@ This documentation covers the complete Riddlen Protocol ecosystem:
 **The first blockchain protocol that rewards human intelligence over computational power through Proof-of-Solve consensus.**
 
 [![Network](https://img.shields.io/badge/network-Polygon%20Amoy-purple.svg)](https://amoy.polygonscan.com/)
-[![Version](https://img.shields.io/badge/version-v5.1-blue.svg)](../contracts/white-paper-v5.2)
+[![Version](https://img.shields.io/badge/version-v6.0-blue.svg)](../contracts/RIDDLEN_V6_SUMMARY.md)
 [![Status](https://img.shields.io/badge/status-LIVE%20ON%20TESTNET-brightgreen.svg)](testnet/TESTNET_DEPLOYMENT.md)
-[![Tests](https://img.shields.io/badge/tests-187%20passing-brightgreen.svg)](../contracts/test/)
+[![Tests](https://img.shields.io/badge/tests-200%2B%20passing-brightgreen.svg)](../contracts/test/)
 
 ---
 
@@ -111,6 +111,17 @@ npm install && npm test
 
 ## 🎯 Revolutionary Features
 
+### **🎁 Three-Phase Airdrop System (NEW in v6.0)**
+**100M RDLN distributed through innovative three-phase mechanism:**
+
+1. **Phase 1: Social Proof** - Earn 5,000 RDLN for community engagement
+2. **Phase 2: RON Reputation** - Passive rewards (2K-5K RDLN) based on reputation tiers
+3. **Phase 3: Validation Work** - Active earning (500 RDLN per validation) with 25% bonus
+
+**Fair Distribution**: 15K RDLN global cap per wallet, 10K-15K participants expected
+
+[📖 Complete Airdrop Guide](airdrop.html)
+
 ### **🏆 Tiered Reward System**
 **The first NFT gaming system that rewards speed:**
 
@@ -137,33 +148,84 @@ Result: First solver earns 4x more than last solver!
 3. **HARD Riddles** → Elite RON → **ORACLE Tier**
 4. **Governance** → Vote on protocol decisions
 
+### **🔮 Oracle Network (NEW in v6.0)**
+**Enterprise data validation powered by human intelligence:**
+
+- 🏢 **External Revenue**: Companies pay RDLN for trusted data validation
+- 🧠 **RON-Based Access**: High-reputation validators earn from validation work
+- ⚖️ **Consensus Mechanism**: Multiple validators ensure accuracy (5 of 7, etc.)
+- 💰 **Validator Tiers**: Bronze (100 RON) → Silver (1K) → Gold (10K) → Platinum (100K)
+- 🛡️ **Slashing Protection**: Incorrect validators lose staked RON
+- 📊 **Fee Distribution**: 50% treasury, 30% buyback/burn, 20% validator bonuses
+
+[📖 Oracle Network Guide](oracle-network.html)
+
+### **🏛️ DAO Governance (NEW in v6.0)**
+**Progressive decentralization with intelligent founder transition:**
+
+- 🗳️ **RON-Based Voting**: 1 RON = 1 vote (earned, not bought)
+- 👑 **Transferable Founder Role**: Can be passed to community or dissolved
+- ⏰ **Three Phases**: Builder → Shared Governance → Full DAO
+- 🔄 **Dynamic Thresholds**: Proposal requirements halve every 2 years (Era-based)
+- 🛡️ **48-Hour Timelock**: Critical changes have built-in review periods
+
+[📖 Governance Guide](governance.html)
+
+### **🎮 Farcaster Frames (NEW in v6.0)**
+**Social gaming integration with 710K+ potential users:**
+
+- 🖼️ **7 Interactive Frames**: Play riddles directly in Farcaster feed
+- ⚡ **Gasless Onboarding**: First 3 mints sponsored for new users
+- 🏆 **Victory Sharing**: Auto-generate shareable victory frames
+- 📊 **Live Leaderboards**: Track top solvers in real-time
+- 🎁 **Airdrop Integration**: Check eligibility and claim via frames
+
+[📖 Farcaster Frames Guide](farcaster-frames.html)
+
 ---
 
 ## 📊 Live Status
 
-### **🌐 Testnet Contracts (Amoy)**
+### **🌐 Testnet Contracts (Amoy) - v6.0**
 | Contract | Address | Status |
 |----------|---------|--------|
 | **RDLN Token** | [`0x133029...AB0eB`](https://amoy.polygonscan.com/address/0x133029184EC460F661d05b0dC57BFC916b4AB0eB) | ✅ Verified |
-| **RON Governance** | [`0xD86b14...Ab635`](https://amoy.polygonscan.com/address/0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635) | ✅ Verified |
-| **RiddleNFT Gaming** | [`0x529e30...59e9E3`](https://amoy.polygonscan.com/address/0x529e3076cB9A48D6FAd086abE5d23ea76159e9E3) | ✅ Verified |
+| **RON Reputation** | [`0xD86b14...Ab635`](https://amoy.polygonscan.com/address/0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635) | ✅ Verified |
+| **RiddleNFT V2** | [`0x529e30...59e9E3`](https://amoy.polygonscan.com/address/0x529e3076cB9A48D6FAd086abE5d23ea76159e9E3) | ✅ Verified |
+| **RiddlenAirdrop** | [`0x4f3f22...C6FBA`](https://amoy.polygonscan.com/address/0x4f3f2202f3F865074f534aA324a259DF962C6FBA) | ✅ Verified |
+| **Oracle Network** | [`0xBd0052...40493`](https://amoy.polygonscan.com/address/0xBd005201294984eFf3c353c32c9E5a96Fd640493) | ✅ Verified |
+| **Group Manager** | [`0xEBcEf4...31899`](https://amoy.polygonscan.com/address/0xEBcEf4745A2514FE61f5847a1e66a9Ced0331899) | ✅ Verified |
 
 ### **🧪 Development Status**
-- **187 tests passing** across all smart contracts
-- **8/13 ecosystem integration tests** completed
-- **Complete user journey** from EASY → ORACLE validated
-- **Professional audit** planned for v5.2 mainnet deployment
+- **200+ tests passing** across all v6.0 smart contracts
+- **20/20 airdrop tests** completed (4s execution)
+- **Oracle Network integration** validated
+- **DAO governance system** ready for deployment
+- **Farcaster Frames** live with 7 interactive frames
+- **Professional audit** planned for v6.0 mainnet deployment
 
 ---
 
 ## 🔗 Quick Navigation
 
+### Core Documentation
 - 🌐 **[Main Website](https://riddlen.com)** - Try the live application
+- 🎁 **[Airdrop Guide](airdrop.html)** - Three-phase 100M RDLN distribution
+- 🔮 **[Oracle Network](oracle-network.html)** - Become a validator
+- 🏛️ **[Governance](governance.html)** - DAO and voting system
+- 🎮 **[Farcaster Frames](farcaster-frames.html)** - Social gaming integration
+
+### Developer Resources
 - 🚰 **[Get Testnet MATIC](https://faucet.polygon.technology/)** - Testnet tokens
 - 📋 **[GitHub Repository](https://github.com/RiddlenBaba/riddlen)** - Complete source code
-- 🎮 **[Frontend Integration](FRONTEND_INTEGRATION.html)** - Developer guide
+- 💻 **[Frontend Integration](FRONTEND_INTEGRATION.html)** - Developer guide
 - 🌐 **[Live Contracts](testnet/TESTNET_DEPLOYMENT.html)** - Testnet deployment
+- 📝 **[FAQ](faq.html)** - Common questions answered
+
+### Community
 - 🐦 **[Twitter Updates](https://twitter.com/RiddlenToken)** - Latest news
+- 💬 **[Telegram](https://t.me/RiddlenToken)** - Official announcements
+- 🔍 **[PolygonScan](https://amoy.polygonscan.com/)** - Explore contracts
 
 ---
 
@@ -201,4 +263,4 @@ Riddlen demonstrates that decentralized systems can effectively harness human co
 
 ---
 
-*Last updated: September 2024 • Riddlen Protocol v5.1*
+*Last updated: October 2025 • Riddlen Protocol v6.0*

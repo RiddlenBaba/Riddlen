@@ -1,6 +1,6 @@
 # 🎮 Frontend Integration Guide
 
-## **Riddlen v5.1 Testnet Integration**
+## **Riddlen v6.0 Testnet Integration**
 
 Ready to build the frontend for the revolutionary Riddlen ecosystem? This guide covers everything you need to integrate with our live testnet contracts.
 

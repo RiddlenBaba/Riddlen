@@ -1,9 +1,9 @@
 # 🧠 Riddlen Protocol - Complete Ecosystem
 
 [![Network](https://img.shields.io/badge/network-Polygon%20Amoy-purple.svg)](https://amoy.polygonscan.com/)
-[![Version](https://img.shields.io/badge/version-v5.2-blue.svg)](./contracts/white-paper-v5.2)
+[![Version](https://img.shields.io/badge/version-v6.0-blue.svg)](./contracts/RIDDLEN_V6_SUMMARY.md)
 [![Status](https://img.shields.io/badge/status-LIVE%20ON%20TESTNET-brightgreen.svg)](./contracts/docs/testnet/TESTNET_DEPLOYMENT.md)
-[![Tests](https://img.shields.io/badge/tests-187%20passing-brightgreen.svg)](./contracts/test/)
+[![Tests](https://img.shields.io/badge/tests-200%2B%20passing-brightgreen.svg)](./contracts/test/)
 
 **The first blockchain protocol that rewards human intelligence over computational power through Proof-of-Solve consensus.**
 

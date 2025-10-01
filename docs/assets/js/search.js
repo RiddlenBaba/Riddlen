@@ -162,15 +162,16 @@
   }
 })();
 
-// Mobile menu toggle
+// Mobile sidebar toggle
 (function() {
-  const menuToggle = document.getElementById('mobile-menu-toggle');
+  const sidebarToggle = document.getElementById('sidebar-toggle');
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
 
-  if (menuToggle && sidebar && overlay) {
-    // Toggle menu
-    menuToggle.addEventListener('click', () => {
+  if (sidebarToggle && sidebar && overlay) {
+    // Toggle sidebar
+    sidebarToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
       sidebar.classList.toggle('mobile-open');
       overlay.classList.toggle('active');
     });

@@ -1,0 +1,61 @@
+{
+  "name": "riddlen-contracts",
+  "version": "0.3.0",
+  "description": "Smart contracts for the Riddlen Protocol - Human Intelligence Validation Network",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat test",
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy.js",
+    "coverage": "npx hardhat coverage",
+    "lint": "solhint 'contracts/**/*.sol'",
+    "lint:fix": "solhint 'contracts/**/*.sol' --fix",
+    "clean": "npx hardhat clean",
+    "size": "npx hardhat size-contracts",
+    "verify": "npx hardhat verify",
+    "local-node": "npx hardhat node",
+    "deploy:sepolia": "npx hardhat run scripts/deploy.js --network sepolia",
+    "deploy:polygon": "npx hardhat run scripts/deploy.js --network polygon",
+    "deploy:mumbai": "npx hardhat run scripts/deploy.js --network mumbai"
+  },
+  "keywords": [
+    "blockchain",
+    "ethereum",
+    "polygon",
+    "smart-contracts",
+    "riddlen",
+    "nft",
+    "gaming",
+    "defi",
+    "oracle",
+    "proof-of-solve"
+  ],
+  "author": "Riddlen Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
+    "@types/chai": "^4.2.0",
+    "@types/mocha": ">=9.1.0",
+    "chai": "^4.2.0",
+    "ethers": "^6.4.0",
+    "hardhat": "^2.19.0",
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-gas-reporter": "^1.0.8",
+    "solhint": "^4.0.0",
+    "solidity-coverage": "^0.8.1",
+    "typechain": "^8.3.0"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.8.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "@openzeppelin/contracts-upgradeable": "^5.0.0",
+    "dotenv": "^16.3.1"
+  }
+}

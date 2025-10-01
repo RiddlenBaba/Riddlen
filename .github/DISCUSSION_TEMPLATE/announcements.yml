@@ -1,0 +1,58 @@
+labels: ["announcement", "official"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 📢 Official Riddlen Announcement
+
+        Use this template for official announcements from the Riddlen team.
+
+  - type: input
+    id: announcement-title
+    attributes:
+      label: Announcement Title
+      description: Brief, clear title for this announcement
+      placeholder: "v5.2 Mainnet Launch Announcement"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: announcement-type
+    attributes:
+      label: Announcement Type
+      description: What type of announcement is this?
+      options:
+        - Protocol Update
+        - Testnet Release
+        - Mainnet Release
+        - Partnership
+        - Community Event
+        - Security Update
+        - Governance Proposal
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: announcement-details
+    attributes:
+      label: Announcement Details
+      description: Full details of the announcement
+      placeholder: "Provide comprehensive details about this announcement..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: announcement-checklist
+    attributes:
+      label: Pre-announcement Checklist
+      description: Ensure all items are completed before posting
+      options:
+        - label: Team approval obtained
+          required: true
+        - label: Technical details verified
+          required: true
+        - label: Community impact assessed
+          required: false
+        - label: Cross-posted to official channels
+          required: false

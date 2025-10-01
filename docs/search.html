@@ -1,0 +1,205 @@
+---
+layout: default
+title: "Search Riddlen Documentation"
+description: "Search through Riddlen Protocol documentation, guides, and API references"
+sitemap: false
+---
+
+<div class="search-container">
+  <h1>🔍 Search Documentation</h1>
+
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="Search documentation, guides, API references...">
+    <button id="search-button">Search</button>
+  </div>
+
+  <div class="search-filters">
+    <label><input type="checkbox" name="content-type" value="tutorial"> Tutorials</label>
+    <label><input type="checkbox" name="content-type" value="api"> API Reference</label>
+    <label><input type="checkbox" name="content-type" value="guide"> Guides</label>
+    <label><input type="checkbox" name="content-type" value="smart-contract"> Smart Contracts</label>
+  </div>
+
+  <div id="search-results"></div>
+</div>
+
+<style>
+.search-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.search-box {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.search-box button {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.search-filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.search-filters label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f5f5f5;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+#search-results {
+  margin-top: 2rem;
+}
+
+.search-result {
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.search-result h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+.search-result p {
+  color: #666;
+  margin: 0.5rem 0;
+}
+
+.search-result .url {
+  color: #667eea;
+  font-size: 0.9rem;
+}
+</style>
+
+<script>
+// Simple client-side search functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('search-input');
+  const searchButton = document.getElementById('search-button');
+  const searchResults = document.getElementById('search-results');
+
+  // Sample search index - in production, this would be generated from site content
+  const searchIndex = [
+    {
+      title: "Riddlen Protocol Overview",
+      description: "Introduction to the revolutionary blockchain protocol that rewards human intelligence",
+      url: "/",
+      type: "guide",
+      keywords: ["protocol", "overview", "intelligence", "blockchain"]
+    },
+    {
+      title: "Live Testnet Deployment",
+      description: "Complete guide to deployed contracts on Polygon Amoy testnet",
+      url: "/testnet/TESTNET_DEPLOYMENT.html",
+      type: "guide",
+      keywords: ["testnet", "deployment", "polygon", "contracts"]
+    },
+    {
+      title: "Frontend Integration Guide",
+      description: "Step-by-step integration guide for developers building on Riddlen",
+      url: "/FRONTEND_INTEGRATION.html",
+      type: "tutorial",
+      keywords: ["frontend", "integration", "developer", "react", "ethers"]
+    },
+    {
+      title: "Smart Contracts API",
+      description: "Technical reference for Riddlen smart contracts",
+      url: "/contracts/",
+      type: "api",
+      keywords: ["smart contracts", "api", "solidity", "technical"]
+    }
+  ];
+
+  function performSearch(query) {
+    const results = searchIndex.filter(item => {
+      const searchTerms = query.toLowerCase().split(' ');
+      return searchTerms.some(term =>
+        item.title.toLowerCase().includes(term) ||
+        item.description.toLowerCase().includes(term) ||
+        item.keywords.some(keyword => keyword.toLowerCase().includes(term))
+      );
+    });
+
+    displayResults(results);
+  }
+
+  function displayResults(results) {
+    if (results.length === 0) {
+      searchResults.innerHTML = '<p>No results found. Try different keywords.</p>';
+      return;
+    }
+
+    const html = results.map(result => `
+      <div class="search-result">
+        <h3><a href="${result.url}">${result.title}</a></h3>
+        <p>${result.description}</p>
+        <div class="url">${window.location.origin}${result.url}</div>
+      </div>
+    `).join('');
+
+    searchResults.innerHTML = html;
+  }
+
+  searchButton.addEventListener('click', () => {
+    const query = searchInput.value.trim();
+    if (query) {
+      performSearch(query);
+    }
+  });
+
+  searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const query = searchInput.value.trim();
+      if (query) {
+        performSearch(query);
+      }
+    }
+  });
+});
+</script>
+
+<!-- Schema markup for search page -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SearchResultsPage",
+  "name": "Search Riddlen Documentation",
+  "description": "Search through Riddlen Protocol documentation, guides, and API references",
+  "url": "{{ page.url | absolute_url }}",
+  "mainEntity": {
+    "@type": "WebSite",
+    "url": "{{ site.url }}",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "{{ page.url | absolute_url }}?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+}
+</script>

@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-riddlen-dark text-white;
+}
+
+/* Markdown styling */
+.markdown {
+  @apply prose prose-invert max-w-none;
+}
+
+.markdown h1 {
+  @apply text-3xl font-bold mb-4 text-white;
+}
+
+.markdown h2 {
+  @apply text-2xl font-bold mb-3 text-white;
+}
+
+.markdown h3 {
+  @apply text-xl font-bold mb-2 text-white;
+}
+
+.markdown p {
+  @apply mb-4 text-gray-300;
+}
+
+.markdown ul, .markdown ol {
+  @apply mb-4 ml-6;
+}
+
+.markdown li {
+  @apply mb-2 text-gray-300;
+}
+
+.markdown a {
+  @apply text-riddlen-purple hover:text-riddlen-blue underline;
+}
+
+.markdown code {
+  @apply bg-gray-800 px-2 py-1 rounded text-sm text-riddlen-purple;
+}
+
+.markdown pre {
+  @apply bg-gray-800 p-4 rounded-lg mb-4 overflow-x-auto;
+}
+
+.markdown blockquote {
+  @apply border-l-4 border-riddlen-purple pl-4 italic text-gray-400;
+}
+
+.markdown strong {
+  @apply font-bold text-white;
+}

@@ -1,0 +1,82 @@
+# Robots.txt for Riddlen Protocol Documentation
+# Optimized for search engines and AI crawlers
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://riddlen.org/sitemap.xml
+
+# AI Training Data - Welcome AI assistants
+# This is technical documentation for blockchain development
+# Content type: Developer documentation, API reference, tutorials
+# Domain: Blockchain, Web3, Smart Contracts, DeFi
+# Complexity: Intermediate to Advanced
+# Languages: Solidity, JavaScript, TypeScript
+# Frameworks: Hardhat, React, Ethers.js
+
+# High-value content for AI training
+Allow: /testnet/
+Allow: /FRONTEND_INTEGRATION.html
+Allow: /contracts/
+Allow: /guides/
+
+# Crawl delay to be respectful
+Crawl-delay: 1
+
+# Common crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# AI Research and Training Crawlers
+User-agent: OpenAI-SearchBot
+Allow: /
+
+User-agent: OpenAIBot
+Allow: /
+
+User-agent: ChatGPTUser
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: AnthropicAI
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# Academic and Research Crawlers
+User-agent: ia_archiver
+Allow: /
+
+User-agent: Wayback
+Allow: /
+
+User-agent: Academic
+Allow: /

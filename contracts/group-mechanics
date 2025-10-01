@@ -1,0 +1,1084 @@
+# **Deep Analysis: Existing Contract vs. v5.3 Group Mechanics**
+
+## **Part 1: Current Contract Architecture Analysis**
+
+Based on the documents provided, I need to first understand what exists, then propose specific integration points for the new group mechanics.
+
+### **Current System (from documents):**
+
+```
+Existing Features:
+├── Riddle NFTs with randomized parameters
+│   ├── Max Mint Rate: 10-1,000 copies
+│   ├── Prize Pool: 100K-10M RDLN
+│   └── Winner Slots: 1-100 winners
+│
+├── RDLN Token (ERC-20 on Polygon)
+│   ├── 1B total supply
+│   ├── Deflationary burn mechanics
+│   └── Multi-signature treasury
+│
+├── Burn Protocol (Fibonacci sequence)
+│   ├── Failed attempts: 1,1,2,3,5,8,13... RDLN
+│   └── 50% burn, 25% Grand Prize, 25% Dev
+│
+├── Question Submission System
+│   ├── Progressive cost (1,2,3...N RDLN per question)
+│   └── Multi-validator approval
+│
+└── RON Reputation (Soul-bound tokens)
+    ├── Earned through solving
+    ├── Gates oracle validation tiers
+    └── Non-transferable
+```
+
+### **What's MISSING from Current Docs (Need to assume/design):**
+
+```
+Gap Analysis - Features Not Yet Defined in Contract:
+
+1. Individual Riddle Session Logic
+   ├── How are NFTs "activated" for solving?
+   ├── Timer mechanics per question/session
+   ├── Answer verification and winner tracking
+   └── Prize distribution triggers
+
+2. RON Earning Mechanics
+   ├── How is RON calculated per solve?
+   ├── Difficulty weighting algorithms
+   ├── Speed/accuracy bonuses
+   └── RON storage and tracking
+
+3. NFT Metadata Structure
+   ├── Question references/hashes
+   ├── Winner list storage
+   ├── Completion timestamps
+   └── Collectible attributes
+
+4. Oracle Network Infrastructure
+   ├── Query submission interface
+   ├── Validator selection logic
+   ├── Consensus mechanisms
+   └── Payment processing
+```
+
+---
+
+## **Part 2: Required New Contract Components for Groups**
+
+### **New Smart Contracts Needed:**
+
+```solidity
+// ============================================
+// NEW CONTRACT 1: Group Management System
+// ============================================
+
+contract RiddleGroupManager {
+    
+    struct Group {
+        uint256 groupId;
+        address creator;
+        address[] members;
+        mapping(address => bool) memberAccepted;
+        uint256[] memberBaseRON;
+        uint256[] memberEffectiveRON;
+        GroupState state;
+        uint256 targetRiddleId;
+        uint256 createdAt;
+        uint256 escrowBalance;
+    }
+    
+    enum GroupState {
+        FORMING,      // Accepting members
+        RESERVED,     // Locked for specific riddle
+        ACTIVE,       // Riddle in progress
+        COMPLETED,    // Finished
+        DISBANDED     // Cancelled before start
+    }
+    
+    // Track active groups per wallet
+    mapping(address => uint256) public activeGroupCount;
+    mapping(address => uint256[]) public walletActiveGroups;
+    
+    // Group storage
+    mapping(uint256 => Group) public groups;
+    uint256 public nextGroupId;
+    
+    // Configuration
+    uint256 public constant GROUP_FORMATION_FEE = 100 * 10**18; // 100 RDLN burned
+    uint256 public constant DISBAND_FEE = 10 * 10**18; // 10 RDLN burned
+    uint256 public constant MAX_GROUP_SIZE = 11;
+    
+    // Events
+    event GroupCreated(uint256 indexed groupId, address creator, uint256 timestamp);
+    event MemberInvited(uint256 indexed groupId, address member);
+    event MemberAccepted(uint256 indexed groupId, address member, uint256 effectiveRON);
+    event GroupReserved(uint256 indexed groupId, uint256 riddleId);
+    event GroupActivated(uint256 indexed groupId, uint256 riddleId);
+    event GroupCompleted(uint256 indexed groupId, bool success, uint256[] rewards);
+    event GroupDisbanded(uint256 indexed groupId, uint256 timestamp);
+}
+```
+
+```solidity
+// ============================================
+// NEW CONTRACT 2: RON Dilution Calculator
+// ============================================
+
+contract RONDilutionEngine {
+    
+    // Reference to RON reputation contract
+    IRONReputation public ronContract;
+    IGroupManager public groupManager;
+    
+    // Maximum concurrent groups by tier
+    uint256 public constant LOW_TIER_MAX = 2;      // 0-999 RON
+    uint256 public constant MID_TIER_MAX = 3;      // 1K-9,999 RON
+    uint256 public constant HIGH_TIER_MAX = 4;     // 10K-99,999 RON
+    uint256 public constant ORACLE_TIER_MAX = 5;   // 100K+ RON
+    
+    // Tier thresholds
+    uint256 public constant MID_TIER_THRESHOLD = 1000;
+    uint256 public constant HIGH_TIER_THRESHOLD = 10000;
+    uint256 public constant ORACLE_TIER_THRESHOLD = 100000;
+    
+    /**
+     * @dev Calculate effective RON for a wallet based on active groups
+     */
+    function getEffectiveRON(address wallet) public view returns (uint256) {
+        uint256 baseRON = ronContract.getRON(wallet);
+        uint256 activeGroups = groupManager.activeGroupCount(wallet);
+        
+        if (activeGroups == 0) return baseRON;
+        
+        return baseRON / activeGroups;
+    }
+    
+    /**
+     * @dev Get maximum concurrent groups allowed for wallet
+     */
+    function getMaxConcurrentGroups(address wallet) public view returns (uint256) {
+        uint256 ron = ronContract.getRON(wallet);
+        
+        if (ron >= ORACLE_TIER_THRESHOLD) return ORACLE_TIER_MAX;
+        if (ron >= HIGH_TIER_THRESHOLD) return HIGH_TIER_MAX;
+        if (ron >= MID_TIER_THRESHOLD) return MID_TIER_MAX;
+        return LOW_TIER_MAX;
+    }
+    
+    /**
+     * @dev Validate if wallet can join another group
+     */
+    function canJoinGroup(address wallet) public view returns (bool) {
+        uint256 current = groupManager.activeGroupCount(wallet);
+        uint256 max = getMaxConcurrentGroups(wallet);
+        return current < max;
+    }
+    
+    /**
+     * @dev Calculate tier of wallet based on RON
+     */
+    function getTier(address wallet) public view returns (string memory) {
+        uint256 ron = ronContract.getRON(wallet);
+        
+        if (ron >= ORACLE_TIER_THRESHOLD) return "ORACLE";
+        if (ron >= HIGH_TIER_THRESHOLD) return "HIGH";
+        if (ron >= MID_TIER_THRESHOLD) return "MID";
+        return "LOW";
+    }
+}
+```
+
+```solidity
+// ============================================
+// NEW CONTRACT 3: Group Composition Validator
+// ============================================
+
+contract GroupCompositionValidator {
+    
+    IRONDilutionEngine public dilutionEngine;
+    
+    // Tier distribution rules
+    uint256 public constant MAX_HIGH_TIER = 2;
+    uint256 public constant MAX_MID_TIER = 4;
+    uint256 public constant MAX_LOW_TIER = 5;
+    uint256 public constant MIN_MEMBERS = 3;
+    uint256 public constant MAX_MEMBERS = 11;
+    
+    // Reward distribution limits
+    uint256 public constant MAX_SINGLE_SHARE_PERCENT = 70; // No single member > 70%
+    uint256 public constant MIN_SINGLE_SHARE_PERCENT = 1;  // No member < 1%
+    
+    struct TierCount {
+        uint256 oracle;
+        uint256 high;
+        uint256 mid;
+        uint256 low;
+    }
+    
+    /**
+     * @dev Validate group composition meets tier distribution requirements
+     */
+    function validateComposition(address[] memory members) public view returns (bool, string memory) {
+        if (members.length < MIN_MEMBERS) {
+            return (false, "Group too small - minimum 3 members required");
+        }
+        
+        if (members.length > MAX_MEMBERS) {
+            return (false, "Group too large - maximum 11 members allowed");
+        }
+        
+        TierCount memory counts = countTiers(members);
+        
+        // Must have at least one from each tier (low, mid, high/oracle)
+        if (counts.low == 0) {
+            return (false, "Must have at least 1 low-tier member");
+        }
+        
+        if (counts.mid == 0) {
+            return (false, "Must have at least 1 mid-tier member");
+        }
+        
+        if (counts.high == 0 && counts.oracle == 0) {
+            return (false, "Must have at least 1 high-tier or oracle member");
+        }
+        
+        // Check maximum limits
+        uint256 highTotal = counts.high + counts.oracle;
+        if (highTotal > MAX_HIGH_TIER) {
+            return (false, "Too many high-tier members - maximum 2 allowed");
+        }
+        
+        if (counts.mid > MAX_MID_TIER) {
+            return (false, "Too many mid-tier members - maximum 4 allowed");
+        }
+        
+        if (counts.low > MAX_LOW_TIER) {
+            return (false, "Too many low-tier members - maximum 5 allowed");
+        }
+        
+        return (true, "Composition valid");
+    }
+    
+    /**
+     * @dev Count members in each tier
+     */
+    function countTiers(address[] memory members) public view returns (TierCount memory) {
+        TierCount memory counts;
+        
+        for (uint i = 0; i < members.length; i++) {
+            string memory tier = dilutionEngine.getTier(members[i]);
+            
+            if (keccak256(bytes(tier)) == keccak256(bytes("ORACLE"))) {
+                counts.oracle++;
+            } else if (keccak256(bytes(tier)) == keccak256(bytes("HIGH"))) {
+                counts.high++;
+            } else if (keccak256(bytes(tier)) == keccak256(bytes("MID"))) {
+                counts.mid++;
+            } else {
+                counts.low++;
+            }
+        }
+        
+        return counts;
+    }
+    
+    /**
+     * @dev Calculate pooled RON average for group (for tier access)
+     */
+    function calculatePooledRON(address[] memory members) public view returns (uint256) {
+        uint256 totalEffectiveRON = 0;
+        
+        for (uint i = 0; i < members.length; i++) {
+            totalEffectiveRON += dilutionEngine.getEffectiveRON(members[i]);
+        }
+        
+        return totalEffectiveRON / members.length;
+    }
+    
+    /**
+     * @dev Determine what riddle tier group can access
+     */
+    function getAccessibleRiddleTier(address[] memory members) 
+        public 
+        view 
+        returns (string memory) 
+    {
+        uint256 pooledRON = calculatePooledRON(members);
+        
+        if (pooledRON >= 100000) return "ORACLE";
+        if (pooledRON >= 10000) return "EXPERT";
+        if (pooledRON >= 1000) return "SOLVER";
+        return "NOVICE";
+    }
+}
+```
+
+```solidity
+// ============================================
+// NEW CONTRACT 4: Group Reward Distributor
+// ============================================
+
+contract GroupRewardDistributor {
+    
+    IRONDilutionEngine public dilutionEngine;
+    IRDLNToken public rdlnToken;
+    
+    struct RewardShare {
+        address wallet;
+        uint256 effectiveRON;
+        uint256 rewardAmount;
+        uint256 percentageShare; // In basis points (1% = 100)
+    }
+    
+    /**
+     * @dev Calculate RON-weighted reward distribution
+     */
+    function calculateDistribution(
+        address[] memory members,
+        uint256 totalPrize
+    ) public view returns (RewardShare[] memory) {
+        
+        uint256 totalEffectiveRON = 0;
+        RewardShare[] memory shares = new RewardShare[](members.length);
+        
+        // First pass: calculate effective RON for each member
+        for (uint i = 0; i < members.length; i++) {
+            shares[i].wallet = members[i];
+            shares[i].effectiveRON = dilutionEngine.getEffectiveRON(members[i]);
+            totalEffectiveRON += shares[i].effectiveRON;
+        }
+        
+        // Second pass: calculate reward shares
+        for (uint i = 0; i < members.length; i++) {
+            uint256 share = (totalPrize * shares[i].effectiveRON) / totalEffectiveRON;
+            shares[i].rewardAmount = share;
+            shares[i].percentageShare = (shares[i].effectiveRON * 10000) / totalEffectiveRON;
+        }
+        
+        // Validate distribution limits
+        require(validateDistributionLimits(shares, totalPrize), "Distribution violates limits");
+        
+        return shares;
+    }
+    
+    /**
+     * @dev Enforce 70% max and 1% min share limits
+     */
+    function validateDistributionLimits(
+        RewardShare[] memory shares,
+        uint256 totalPrize
+    ) internal pure returns (bool) {
+        
+        uint256 maxShare = (totalPrize * 70) / 100;
+        uint256 minShare = (totalPrize * 1) / 100;
+        
+        for (uint i = 0; i < shares.length; i++) {
+            if (shares[i].rewardAmount > maxShare) return false;
+            if (shares[i].rewardAmount < minShare) return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * @dev Execute reward distribution to group members
+     */
+    function distributeRewards(
+        address[] memory members,
+        uint256 totalPrize
+    ) external returns (bool) {
+        
+        RewardShare[] memory shares = calculateDistribution(members, totalPrize);
+        
+        for (uint i = 0; i < shares.length; i++) {
+            require(
+                rdlnToken.transfer(shares[i].wallet, shares[i].rewardAmount),
+                "Transfer failed"
+            );
+            
+            emit RewardDistributed(
+                shares[i].wallet,
+                shares[i].rewardAmount,
+                shares[i].effectiveRON,
+                shares[i].percentageShare
+            );
+        }
+        
+        return true;
+    }
+    
+    /**
+     * @dev Calculate and collect costs from group members (RON-weighted)
+     */
+    function collectGroupCosts(
+        address[] memory members,
+        uint256 totalCost
+    ) external returns (bool) {
+        
+        uint256 totalEffectiveRON = 0;
+        
+        // Calculate total effective RON
+        for (uint i = 0; i < members.length; i++) {
+            totalEffectiveRON += dilutionEngine.getEffectiveRON(members[i]);
+        }
+        
+        // Collect proportional costs from each member
+        for (uint i = 0; i < members.length; i++) {
+            uint256 effectiveRON = dilutionEngine.getEffectiveRON(members[i]);
+            uint256 memberCost = (totalCost * effectiveRON) / totalEffectiveRON;
+            
+            require(
+                rdlnToken.burnFrom(members[i], memberCost),
+                "Insufficient balance for cost share"
+            );
+            
+            emit CostCollected(members[i], memberCost, effectiveRON);
+        }
+        
+        return true;
+    }
+    
+    event RewardDistributed(
+        address indexed wallet,
+        uint256 amount,
+        uint256 effectiveRON,
+        uint256 percentageShare
+    );
+    
+    event CostCollected(
+        address indexed wallet,
+        uint256 amount,
+        uint256 effectiveRON
+    );
+}
+```
+
+---
+
+## **Part 3: Integration with Existing Riddle NFT Contract**
+
+### **Required Modifications to Existing RiddleNFT Contract:**
+
+```solidity
+// ============================================
+// MODIFICATIONS TO EXISTING RiddleNFT.sol
+// ============================================
+
+contract RiddleNFT {
+    
+    // ... EXISTING CODE ...
+    
+    // ========== NEW ADDITIONS FOR GROUP SUPPORT ==========
+    
+    IGroupManager public groupManager;
+    IGroupRewardDistributor public rewardDistributor;
+    
+    // Track if riddle session is solo or group
+    mapping(uint256 => bool) public isGroupSession;
+    mapping(uint256 => uint256) public sessionGroupId;
+    
+    /**
+     * @dev NEW: Start riddle session as a group
+     */
+    function startGroupRiddleSession(
+        uint256 riddleId,
+        uint256 groupId
+    ) external returns (uint256 sessionId) {
+        
+        // Validate group exists and is in RESERVED state
+        require(
+            groupManager.getGroupState(groupId) == GroupState.RESERVED,
+            "Group not reserved for riddle"
+        );
+        
+        // Validate group is reserved for THIS riddle
+        require(
+            groupManager.getGroupRiddleId(groupId) == riddleId,
+            "Group not reserved for this riddle"
+        );
+        
+        // Validate caller is group member
+        require(
+            groupManager.isGroupMember(groupId, msg.sender),
+            "Not a group member"
+        );
+        
+        // Get group members
+        address[] memory members = groupManager.getGroupMembers(groupId);
+        
+        // Validate group composition and calculate pooled RON
+        uint256 pooledRON = groupManager.getGroupPooledRON(groupId);
+        
+        // Validate group has sufficient pooled RON for riddle tier
+        require(
+            pooledRON >= getRiddleMinimumRON(riddleId),
+            "Insufficient pooled RON for riddle tier"
+        );
+        
+        // Collect costs from all group members (RON-weighted)
+        uint256 riddleCost = getMintCost(); // Use current biennial rate
+        rewardDistributor.collectGroupCosts(members, riddleCost);
+        
+        // Create session
+        sessionId = _createSession(riddleId, members);
+        
+        // Mark as group session
+        isGroupSession[sessionId] = true;
+        sessionGroupId[sessionId] = groupId;
+        
+        // Update group state to ACTIVE
+        groupManager.activateGroup(groupId);
+        
+        emit GroupSessionStarted(riddleId, groupId, sessionId, members);
+    }
+    
+    /**
+     * @dev MODIFIED: Complete session with group reward distribution
+     */
+    function completeSession(uint256 sessionId) internal {
+        Session storage session = sessions[sessionId];
+        
+        if (isGroupSession[sessionId]) {
+            // GROUP SESSION COMPLETION
+            
+            uint256 groupId = sessionGroupId[sessionId];
+            address[] memory members = groupManager.getGroupMembers(groupId);
+            
+            if (session.success) {
+                // Distribute rewards using RON-weighted distribution
+                uint256 prizeAmount = getRiddlePrizePerWinner(session.riddleId);
+                rewardDistributor.distributeRewards(members, prizeAmount);
+                
+                // Mint group NFT variant to all members
+                for (uint i = 0; i < members.length; i++) {
+                    _mintGroupNFT(members[i], session.riddleId, groupId);
+                }
+                
+                // Award RON to all members
+                _awardGroupRON(members, session.riddleId);
+            }
+            
+            // Complete group (releases RON dilution)
+            groupManager.completeGroup(groupId, session.success);
+            
+        } else {
+            // SOLO SESSION COMPLETION (existing logic)
+            
+            if (session.success) {
+                _transfer(address(this), session.player, session.riddleId);
+                rdlnToken.transfer(session.player, getRiddlePrizePerWinner(session.riddleId));
+                ronToken.awardRON(session.player, calculateRONReward(session.riddleId));
+            }
+        }
+        
+        emit SessionCompleted(sessionId, session.success);
+    }
+    
+    /**
+     * @dev NEW: Handle failed attempts in group sessions
+     */
+    function submitGroupAnswer(
+        uint256 sessionId,
+        string memory answer
+    ) external {
+        
+        require(isGroupSession[sessionId], "Not a group session");
+        
+        uint256 groupId = sessionGroupId[sessionId];
+        require(
+            groupManager.isGroupMember(groupId, msg.sender),
+            "Not a group member"
+        );
+        
+        Session storage session = sessions[sessionId];
+        
+        bool correct = _validateAnswer(session.riddleId, answer);
+        
+        if (!correct) {
+            // Calculate burn penalty for this attempt
+            uint256 attemptNumber = session.failedAttempts + 1;
+            uint256 burnAmount = attemptNumber * 1e18; // N RDLN per attempt
+            
+            // Collect proportional burn from all group members
+            address[] memory members = groupManager.getGroupMembers(groupId);
+            rewardDistributor.collectGroupCosts(members, burnAmount);
+            
+            session.failedAttempts++;
+            
+            emit GroupAnswerFailed(sessionId, groupId, attemptNumber, burnAmount);
+        } else {
+            _processCorrectAnswer(sessionId);
+        }
+    }
+    
+    /**
+     * @dev NEW: Mint group NFT variant
+     */
+    function _mintGroupNFT(
+        address recipient,
+        uint256 riddleId,
+        uint256 groupId
+    ) internal {
+        uint256 tokenId = _nextTokenId++;
+        
+        _safeMint(recipient, tokenId);
+        
+        // Set special group metadata
+        tokenMetadata[tokenId] = GroupNFTMetadata({
+            riddleId: riddleId,
+            groupId: groupId,
+            completedAt: block.timestamp,
+            isGroupSolve: true
+        });
+        
+        emit GroupNFTMinted(recipient, tokenId, riddleId, groupId);
+    }
+    
+    /**
+     * @dev NEW: Award RON to group members with potential bonuses
+     */
+    function _awardGroupRON(
+        address[] memory members,
+        uint256 riddleId
+    ) internal {
+        
+        uint256 baseRON = calculateRONReward(riddleId);
+        
+        for (uint i = 0; i < members.length; i++) {
+            // Base RON for all members
+            uint256 memberRON = baseRON;
+            
+            // TODO: Add bonuses for leadership, diversity, etc.
+            // uint256 bonus = calculateGroupBonuses(members[i], members);
+            // memberRON += bonus;
+            
+            ronToken.awardRON(members[i], memberRON);
+        }
+    }
+    
+    // ========== NEW EVENTS ==========
+    
+    event GroupSessionStarted(
+        uint256 indexed riddleId,
+        uint256 indexed groupId,
+        uint256 sessionId,
+        address[] members
+    );
+    
+    event GroupAnswerFailed(
+        uint256 indexed sessionId,
+        uint256 indexed groupId,
+        uint256 attemptNumber,
+        uint256 burnAmount
+    );
+    
+    event GroupNFTMinted(
+        address indexed recipient,
+        uint256 indexed tokenId,
+        uint256 riddleId,
+        uint256 groupId
+    );
+}
+```
+
+---
+
+## **Part 4: Interface Definitions**
+
+```solidity
+// ============================================
+// INTERFACES for Cross-Contract Communication
+// ============================================
+
+interface IGroupManager {
+    function getGroupState(uint256 groupId) external view returns (GroupState);
+    function getGroupRiddleId(uint256 groupId) external view returns (uint256);
+    function isGroupMember(uint256 groupId, address wallet) external view returns (bool);
+    function getGroupMembers(uint256 groupId) external view returns (address[] memory);
+    function getGroupPooledRON(uint256 groupId) external view returns (uint256);
+    function activateGroup(uint256 groupId) external;
+    function completeGroup(uint256 groupId, bool success) external;
+    function activeGroupCount(address wallet) external view returns (uint256);
+}
+
+interface IRONDilutionEngine {
+    function getEffectiveRON(address wallet) external view returns (uint256);
+    function getMaxConcurrentGroups(address wallet) external view returns (uint256);
+    function canJoinGroup(address wallet) external view returns (bool);
+    function getTier(address wallet) external view returns (string memory);
+}
+
+interface IGroupRewardDistributor {
+    function distributeRewards(address[] memory members, uint256 totalPrize) external returns (bool);
+    function collectGroupCosts(address[] memory members, uint256 totalCost) external returns (bool);
+    function calculateDistribution(address[] memory members, uint256 totalPrize) 
+        external view returns (RewardShare[] memory);
+}
+
+interface IRONReputation {
+    function getRON(address wallet) external view returns (uint256);
+    function awardRON(address wallet, uint256 amount) external;
+}
+
+interface IRDLNToken {
+    function transfer(address to, uint256 amount) external returns (bool);
+    function burnFrom(address from, uint256 amount) external returns (bool);
+    function balanceOf(address account) external view returns (uint256);
+}
+```
+
+---
+
+## **Part 5: Migration & Deployment Strategy**
+
+### **Deployment Order:**
+
+```
+Step 1: Deploy Support Contracts
+├── RONDilutionEngine.sol
+├── GroupCompositionValidator.sol
+└── GroupRewardDistributor.sol
+
+Step 2: Deploy Group Manager
+└── RiddleGroupManager.sol (references support contracts)
+
+Step 3: Upgrade Existing Contracts
+├── RiddleNFT.sol - Add group functions via proxy upgrade
+├── RONReputation.sol - Ensure compatibility with dilution engine
+└── RDLNToken.sol - Add burnFrom functionality if missing
+
+Step 4: Configuration
+├── Link contracts together (set addresses)
+├── Grant permissions (group manager can call NFT functions)
+├── Set initial parameters (fees, limits, etc.)
+└── Test with small amounts before full deployment
+
+Step 5: Gradual Rollout
+├── Week 1: Solo play only (existing functionality)
+├── Week 2: Enable group formation (no riddle attempts yet)
+├── Week 3: Enable group riddle attempts on low-tier only
+└── Week 4+: Full functionality across all tiers
+```
+
+---
+
+## **Part 6: Testing Checklist**
+
+```
+Critical Tests Before Mainnet:
+
+RON Dilution:
+├── ✓ Single group: Full RON applied
+├── ✓ Multiple groups: Proper division (2 groups = 50% each)
+├── ✓ Max groups: Enforced correctly by tier
+├── ✓ Dilution updates when joining/leaving groups
+└── ✓ Edge case: Leaving group mid-session (should fail)
+
+Composition Validation:
+├── ✓ Rejects groups without tier diversity
+├── ✓ Rejects groups exceeding tier limits
+├── ✓ Accepts valid 3-member minimum group
+├── ✓ Accepts valid 11-member maximum group
+└── ✓ Edge case: All oracle-tier members (should fail)
+
+Reward Distribution:
+├── ✓ Correct RON-weighted calculations
+├── ✓ Enforces 70% maximum share
+├── ✓ Enforces 1% minimum share
+├── ✓ Sum equals exactly prize pool (no rounding errors)
+└── ✓ Edge case: 1 RON vs 1M RON in group
+
+Cost Collection:
+├── ✓ Minting costs split correctly
+├── ✓ Burn penalties split correctly
+├── ✓ Insufficient balance handled gracefully
+├── ✓ Partial failures don't corrupt state
+└── ✓ Edge case: Member with 0 RDLN balance
+
+Group Lifecycle:
+├── ✓ FORMING → RESERVED transition
+├── ✓ RESERVED → ACTIVE on session start
+├── ✓ ACTIVE → COMPLETED on finish
+├── ✓ Any state → DISBANDED before riddle start
+└── ✓ Edge case: Disband during ACTIVE (should fail)
+
+Security Tests:
+├── ✓ Reentrancy protection on all fund transfers
+├── ✓ Access control: Only group members can submit answers
+├── ✓ Sybil resistance: Can't join same group twice
+├── ✓ Overflow protection: Large RON values
+└── ✓ Edge case: Malicious contract as member
+```
+
+---
+
+## **Part 7: Gas Optimization Considerations**
+
+```solidity
+// ============================================
+// GAS OPTIMIZATION PATTERNS
+// ============================================
+
+/**
+ * OPTIMIZATION 1: Cache array lengths
+ */
+function distributeBad(address[] memory members) external {
+    for (uint i = 0; i < members.length; i++) {  // ❌ Reads length every iteration
+        // ...
+    }
+}
+
+function distributeGood(address[] memory members) external {
+    uint256 len = members.length;  // ✓ Cache length once
+    for (uint i = 0; i < len; i++) {
+        // ...
+    }
+}
+
+/**
+ * OPTIMIZATION 2: Use unchecked for loop counters
+ */
+function distributeOptimized(address[] memory members) external {
+    uint256 len = members.length;
+    for (uint i = 0; i < len;) {
+        // ... logic ...
+        unchecked { ++i; }  // ✓ Save gas on overflow checks
+    }
+}
+
+/**
+ * OPTIMIZATION 3: Batch external calls
+ */
+function collectCostsBad(address[] memory members, uint256 cost) external {
+    for (uint i = 0; i < members.length; i++) {
+        rdlnToken.burnFrom(members[i], individualCost);  // ❌ Multiple external calls
+    }
+}
+
+// Better: Use single multicall if token supports it
+// Or: Use internal accounting + batch settle
+
+/**
+ * OPTIMIZATION 4: Pack struct data efficiently
+ */
+struct Group {
+    uint256 groupId;           // 32 bytes
+    address creator;           // 20 bytes
+    uint64 createdAt;          // 8 bytes  ✓ Same slot as creator
+    uint32 memberCount;        // 4 bytes  ✓ Same slot
+    GroupState state;          // 1 byte   ✓ Same slot (enum)
+    // Total: 2 storage slots vs 5 if not packed
+}
+
+/**
+ * OPTIMIZATION 5: Use mappings over arrays when possible
+ */
+// Instead of iterating to find member
+mapping(uint256 => mapping(address => bool)) groupMembers;
+
+// Quick lookup
+function isMember(uint256 groupId, address wallet) external view returns (bool) {
+    return groupMembers[groupId][wallet];  // ✓ O(1) instead of O(n)
+}
+```
+
+---
+
+## **Part 8: Summary Document for Claude Code**
+
+### **📋 Integration Specification Summary**
+
+```markdown
+# Riddlen Group Mechanics - Smart Contract Integration Spec
+
+## Overview
+Adding collaborative solving groups to existing Riddlen riddle NFT platform.
+Players can pool RON reputation to access higher-tier riddles while sharing
+costs and rewards proportionally based on effective RON.
+
+## Core Mechanics
+
+### 1. RON Dilution
+- Base RON divided by number of active groups
+- Example: 60,000 RON / 3 groups = 20,000 effective per group
+- Max concurrent groups based on tier (Low: 2, Mid: 3, High: 4, Oracle: 5)
+
+### 2. Group Composition Rules
+- Size: 3-11 members
+- Must have: ≥1 Low-tier, ≥1 Mid-tier, ≥1 High/Oracle-tier
+- Max: 2 High-tier, 4 Mid-tier, 5 Low-tier
+
+### 3. Reward Distribution
+- RON-weighted: Share = (Effective RON / Total Group RON) × Prize
+- Limits: No member >70% or <1% of prize
+- Same formula for cost sharing
+
+### 4. Group States
+- FORMING → RESERVED → ACTIVE → COMPLETED
+- Can DISBAND before ACTIVE (10 RDLN fee)
+- RON dilution active from RESERVED through COMPLETED
+
+## New Contracts Needed
+
+1. **RiddleGroupManager.sol**
+   - Group creation, membership, state management
+   - Tracks active groups per wallet
+
+2. **RONDilutionEngine.sol**
+   - Calculates effective RON based on active groups
+   - Enforces tier-based concurrent group limits
+
+3. **GroupCompositionValidator.sol**
+   - Validates tier distribution requirements
+   - Calculates pooled RON for tier access
+
+4. **GroupRewardDistributor.sol**
+   - RON-weighted distribution calculations
+   - Enforces 70%/1% limits
+   - Executes RDLN transfers and burns
+
+## Modifications to Existing Contracts
+
+### RiddleNFT.sol
+- Add: `startGroupRiddleSession(riddleId, groupId)`
+- Modify: `completeSession()` to handle group distributions
+- Add: `submitGroupAnswer()` with proportional burns
+- Add: Group NFT variant minting
+
+### RONReputation.sol (if not already present)
+- Ensure: `getRON(wallet)` view function
+- Ensure: `awardRON(wallet, amount)` callable by NFT contract
+
+### RDLNToken.sol
+- Ensure: `burnFrom(address, amount)` for cost collection
+- Ensure: Sufficient allowance pattern for group escrow
+
+## Integration Points
+
+```solidity
+// In RiddleNFT constructor or upgrade:
+groupManager = IGroupManager(GROUP_MANAGER_ADDRESS);
+rewardDistributor = IGroupRewardDistributor(DISTRIBUTOR_ADDRESS);
+
+// Session start flow:
+1. Group reserves for riddle (off-chain or via manager)
+2. Any member calls startGroupRiddleSession(riddleId, groupId)
+3. Validate: group state, composition, pooled RON vs riddle tier
+4. Collect costs via rewardDistributor.collectGroupCosts()
+5. Create session, mark as group, activate group
+
+// Session completion flow:
+1. Check if isGroupSession[sessionId]
+2. If yes: Call rewardDistributor.distributeRewards()
+3. Mint group NFT variants to all members
+4. Award RON to all members
+5. Call groupManager.completeGroup() (releases dilution)
+```
+
+## Deployment Checklist
+
+- [ ] Deploy RONDilutionEngine
+- [ ] Deploy GroupCompositionValidator  
+- [ ] Deploy GroupRewardDistributor
+- [ ] Deploy RiddleGroupManager
+- [ ] Upgrade RiddleNFT proxy with group functions
+- [ ] Link contracts (set addresses)
+- [ ] Grant permissions (manager → NFT, distributor → token)
+- [ ] Set parameters (fees, limits)
+- [ ] Run test suite (see Part 6)
+- [ ] Gradual mainnet rollout
+
+## Key Design Decisions
+
+1. **Why RON-weighted rewards?**
+   - High-RON members sacrifice solo earning potential
+   - Brings skill multiplier that increases success rate
+   - Fair compensation for reputation contribution
+
+2. **Why dilution on costs too?**
+   - Maintains proportionality
+   - Higher-RON members can afford larger shares
+   - Prevents gaming via cost-dumping on low-RON members
+
+3. **Why max concurrent group limits?**
+   - Prevents infinite RON leverage
+   - Forces strategic portfolio decisions
+   - Creates opportunity cost and skill expression
+
+4. **Why tier diversity requirements?**
+   - Encourages mentorship economy
+   - Prevents elite-only teams monopolizing rewards
+   - Ensures accessible entry for newcomers
+
+## Gas Optimization Notes
+
+- Cache array lengths in loops
+- Use unchecked increment for counters
+- Pack structs efficiently (see Part 7)
+- Use mappings for member lookups
+- Consider batch operations for multi-member actions
+
+## Security Considerations
+
+- Reentrancy guards on all fund transfers
+- Access control: Only members submit group answers
+- Validate group state before state transitions
+- Check sufficient balance before burns
+- Prevent joining same group multiple times
+- Sybil resistance via active participation tracking
+
+## Testing Priorities
+
+1. RON dilution math correctness
+2. Composition validation edge cases
+3. Reward distribution rounding errors
+4. Cost collection failure handling
+5. Group state machine transitions
+6. Concurrent group limit enforcement
+7. Integration with existing solo play
+
+## Frontend Integration Needs
+
+- Display effective RON per active group
+- Show dilution impact before joining groups
+- Calculate expected reward shares before session
+- Track group state visually (FORMING → ACTIVE)
+- Alert when approaching max concurrent groups
+- Show portfolio view of all active groups
+
+## Questions for Existing Contract Review
+
+1. What's the current NFT minting flow?
+2. How are riddle tiers/difficulty currently gated?
+3. Where is RON currently stored and updated?
+4. Is there existing escrow/prepayment mechanism?
+5. What's the current answer validation process?
+6. How are prizes currently distributed?
+7. Is the RiddleNFT upgradeable (proxy pattern)?
+8. What access control pattern is used?
+```
+
+---
+
+## **Final Recommendation for Claude Code**
+
+**Share this entire analysis with the instruction:**
+
+> "I have the existing Riddlen smart contracts for solo riddle solving with RON reputation. I need to add collaborative group mechanics with the following requirements:
+> 
+> 1. Groups of 3-11 players pool RON (diluted by active group count)
+> 2. RON-weighted reward and cost distribution
+> 3. Tier composition validation (need 1 each of low/mid/high, max 2/4/5)
+> 4. Group states: FORMING → RESERVED → ACTIVE → COMPLETED
+> 5. Integration with existing RiddleNFT contract
+> 
+> Please review Part 8 (Integration Spec Summary) first, then examine the existing contracts and propose:
+> - Required modifications to existing contracts
+> - New contract implementations
+> - Interface definitions
+> - Migration strategy
+> 
+> Focus on security, gas optimization, and maintaining backward compatibility with existing solo play."
+
+This gives Claude Code the full context while highlighting the critical integration spec document.

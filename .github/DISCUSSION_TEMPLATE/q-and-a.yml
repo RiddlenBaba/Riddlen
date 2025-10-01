@@ -1,0 +1,57 @@
+labels: ["question", "help-wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ❓ Question & Answer
+
+        Ask questions about Riddlen protocol, development, or usage here.
+
+  - type: dropdown
+    id: question-category
+    attributes:
+      label: Question Category
+      description: What area does your question relate to?
+      options:
+        - Smart Contracts
+        - Frontend Integration
+        - Tokenomics & Economics
+        - Governance & RON
+        - Technical Implementation
+        - User Experience
+        - Testnet Usage
+        - General Protocol
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question-details
+    attributes:
+      label: Your Question
+      description: Please provide detailed information about what you'd like to know
+      placeholder: "I'm trying to understand how..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context (Optional)
+      description: Any additional context that might help others answer your question
+      placeholder: "I'm working on... I've already tried..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: search-checklist
+    attributes:
+      label: Before Asking
+      description: Help us avoid duplicate questions
+      options:
+        - label: I searched existing discussions and issues
+          required: true
+        - label: I checked the documentation at riddlen.org
+          required: true
+        - label: I looked through the FAQ sections
+          required: false

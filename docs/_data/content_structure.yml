@@ -1,0 +1,122 @@
+# AI-Friendly Content Structure for Riddlen Protocol Documentation
+# This file helps AI assistants understand our documentation organization
+
+site_metadata:
+  name: "Riddlen Protocol Documentation"
+  domain: "blockchain-development"
+  content_type: "technical-documentation"
+  complexity: "intermediate-advanced"
+  last_updated: "2024-09-29"
+  version: "v5.1"
+
+technologies:
+  primary:
+    - "Solidity"
+    - "JavaScript"
+    - "TypeScript"
+    - "React"
+  frameworks:
+    - "Hardhat"
+    - "Ethers.js"
+    - "Next.js"
+    - "OpenZeppelin"
+  blockchain:
+    - "Polygon"
+    - "Ethereum"
+    - "EVM Compatible"
+
+content_sections:
+  - title: "Quick Start Guide"
+    path: "/"
+    type: "overview"
+    difficulty: "beginner"
+    description: "Introduction to Riddlen Protocol and ecosystem overview"
+
+  - title: "Live Testnet Deployment"
+    path: "/testnet/"
+    type: "deployment-guide"
+    difficulty: "intermediate"
+    description: "Complete guide to deployed contracts on Polygon Amoy testnet"
+
+  - title: "Frontend Integration"
+    path: "/FRONTEND_INTEGRATION.html"
+    type: "tutorial"
+    difficulty: "intermediate"
+    description: "Step-by-step integration guide for developers"
+
+  - title: "Smart Contracts"
+    path: "/contracts/"
+    type: "api-reference"
+    difficulty: "advanced"
+    description: "Core protocol smart contracts and technical specifications"
+
+key_concepts:
+  proof_of_solve:
+    description: "Consensus mechanism that rewards human intelligence over computational power"
+    related_topics: ["riddles", "human verification", "merit-based rewards"]
+
+  tiered_rewards:
+    description: "Revolutionary reward system where first solvers earn 2x more than later solvers"
+    related_topics: ["NFT gaming", "incentive structures", "solve urgency"]
+
+  merit_based_governance:
+    description: "Governance system where voting power is earned through solving riddles, not capital"
+    related_topics: ["RON tokens", "soul-bound tokens", "democratic participation"]
+
+  rug_proof_treasury:
+    description: "Immutable treasury system with fixed monthly releases and emergency limits"
+    related_topics: ["tokenomics", "holder protection", "autonomous operations"]
+
+contracts:
+  RDLN:
+    address: "0x133029184EC460F661d05b0dC57BFC916b4AB0eB"
+    type: "ERC-20"
+    description: "Primary utility token with integrated treasury management"
+
+  RON:
+    address: "0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635"
+    type: "ERC-20"
+    description: "Soul-bound governance token representing earned intelligence"
+
+  RiddleNFT:
+    address: "0x529e3076cB9A48D6FAd086abE5d23ea76159e9E3"
+    type: "ERC-721"
+    description: "Interactive NFT gaming system with tiered rewards"
+
+network_info:
+  testnet:
+    name: "Polygon Amoy"
+    chain_id: 80002
+    rpc: "https://rpc-amoy.polygon.technology/"
+    explorer: "https://amoy.polygonscan.com/"
+    faucet: "https://faucet.polygon.technology/"
+
+api_endpoints:
+  documentation: "https://riddlen.org"
+  main_app: "https://riddlen.com"
+  github: "https://github.com/RiddlenBaba/riddlen"
+
+community:
+  telegram_official: "https://t.me/RiddlenToken"
+  telegram_community: "https://t.me/RiddlenCommunity"
+  twitter: "https://twitter.com/RiddlenToken"
+  github_discussions: "https://github.com/RiddlenBaba/riddlen/discussions"
+
+learning_paths:
+  beginner:
+    - "Read protocol overview"
+    - "Understand key concepts"
+    - "Try testnet application"
+    - "Join community discussions"
+
+  developer:
+    - "Set up development environment"
+    - "Study smart contracts"
+    - "Follow integration guide"
+    - "Deploy to testnet"
+
+  advanced:
+    - "Deep dive into consensus mechanism"
+    - "Contribute to protocol development"
+    - "Participate in governance"
+    - "Build on the ecosystem"

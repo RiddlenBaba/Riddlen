@@ -1,0 +1,24 @@
+# Global Owners - Riddlen Core Team
+* @RiddlenBaba
+
+# Smart Contracts - Require security review
+/contracts/ @RiddlenBaba
+/contracts/contracts/ @RiddlenBaba
+/contracts/test/ @RiddlenBaba
+/testnet/ @RiddlenBaba
+
+# Documentation - Multiple reviewers for accuracy
+/docs/ @RiddlenBaba
+/README.md @RiddlenBaba
+/CONTRIBUTING.md @RiddlenBaba
+/SECURITY.md @RiddlenBaba
+
+# Frontend - UI/UX focus
+/frontend/ @RiddlenBaba
+
+# GitHub Configuration
+/.github/ @RiddlenBaba
+
+# Deployment Scripts - High security
+/contracts/scripts/ @RiddlenBaba
+/testnet/deploy-amoy-testnet.js @RiddlenBaba

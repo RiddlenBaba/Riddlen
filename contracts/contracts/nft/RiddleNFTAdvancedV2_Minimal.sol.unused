@@ -1,0 +1,415 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.22;
+
+import "./RiddleNFTAdvanced.sol";
+import "../interfaces/IRiddleGroupManager.sol";
+
+/**
+ * @title RiddleNFTAdvancedV2 - Minimal Group Mechanics Integration
+ * @dev Safe, minimal upgrade adding group support via GroupManager delegation
+ *
+ * Design Philosophy:
+ * - NFT is the "bridge" to group functionality
+ * - GroupManager handles all complex logic
+ * - Minimal storage additions for upgrade safety
+ * - Low risk, high reliability
+ *
+ * Key Features:
+ * - Convert NFTs to group sessions
+ * - Delegate to GroupManager for all group operations
+ * - Maintain upgrade safety with minimal storage changes
+ * - Clean separation of concerns
+ *
+ * Security:
+ * - Only 2 new storage variables (consumes 2 slots from V1's gap)
+ * - No complex logic in NFT contract
+ * - All validation handled by proven GroupManager
+ * - Maintains complete backward compatibility
+ */
+contract RiddleNFTAdvancedV2 is RiddleNFTAdvanced {
+
+    // ============ V2 STORAGE (Consumes from V1's __gap) ============
+
+    /// @notice Address of the RiddleGroupManager contract
+    IRiddleGroupManager public groupManager;
+
+    /// @notice Mapping to track which NFTs have been converted to groups
+    /// @dev tokenId => groupId (0 if not a group)
+    mapping(uint256 => uint256) public nftGroupIds;
+
+    // Note: V1 has uint256[50] private __gap
+    // We use 2 slots (address + mapping)
+    // Gap is now effectively [48]
+
+    // ============ V2 EVENTS ============
+
+    /**
+     * @dev Emitted when an NFT is converted to a group session
+     */
+    event NFTConvertedToGroup(
+        uint256 indexed tokenId,
+        uint256 indexed groupId,
+        uint256 indexed sessionId,
+        address creator,
+        uint256 lockedCosts
+    );
+
+    /**
+     * @dev Emitted when GroupManager address is updated
+     */
+    event GroupManagerUpdated(
+        address indexed oldManager,
+        address indexed newManager,
+        uint256 timestamp
+    );
+
+    // ============ V2 ERRORS ============
+
+    error NotNFTOwner(address caller, uint256 tokenId);
+    error AlreadyConvertedToGroup(uint256 tokenId, uint256 groupId);
+    error NFTHasBeenUsed(uint256 tokenId, uint256 attempts);
+    error SessionNotActive(uint256 sessionId, RiddleState state);
+    error InvalidGroupManager(address manager);
+    error NotGroupNFT(uint256 tokenId);
+    error GroupManagerNotSet();
+
+    // ============ V2 INITIALIZATION ============
+
+    /**
+     * @dev Initialize V2 upgrade with GroupManager integration
+     * @param _groupManager Address of deployed RiddleGroupManager
+     *
+     * Requirements:
+     * - Can only be called once (reinitializer modifier)
+     * - GroupManager must implement IRiddleGroupManager
+     * - GroupManager must be a valid contract
+     *
+     * Security:
+     * - Validates interface compatibility
+     * - Checks for non-zero address
+     * - Emits update event for transparency
+     */
+    function initializeV2(
+        address _groupManager
+    ) external reinitializer(2) {
+        if (_groupManager == address(0)) revert InvalidGroupManager(_groupManager);
+
+        // Validate interface - try calling a view function
+        try IRiddleGroupManager(_groupManager).activeGroupCount(address(this)) returns (uint256) {
+            groupManager = IRiddleGroupManager(_groupManager);
+            emit GroupManagerUpdated(address(0), _groupManager, block.timestamp);
+        } catch {
+            revert InvalidGroupManager(_groupManager);
+        }
+    }
+
+    // ============ GROUP CONVERSION ============
+
+    /**
+     * @dev Convert an NFT into a group session
+     * @param tokenId NFT token ID to convert
+     *
+     * This function:
+     * 1. Validates the NFT can be converted
+     * 2. Creates a group via GroupManager
+     * 3. Transfers NFT to GroupManager for custody
+     * 4. Tracks the conversion
+     *
+     * Requirements:
+     * - Caller must own the NFT
+     * - NFT must not already be a group
+     * - NFT must not have been used (no attempts)
+     * - Session must still be active
+     * - GroupManager must be initialized
+     *
+     * The NFT remains in escrow with GroupManager until group completes.
+     * Members can then make attempts through GroupManager.
+     *
+     * @notice Once converted, the NFT cannot be used for solo play
+     * @notice All costs are era-locked from the NFT's mint time
+     */
+    function convertToGroupNFT(uint256 tokenId)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 groupId)
+    {
+        // Check GroupManager is set
+        if (address(groupManager) == address(0)) revert GroupManagerNotSet();
+
+        // Validate ownership
+        address owner = ownerOf(tokenId);
+        if (owner != msg.sender) revert NotNFTOwner(msg.sender, tokenId);
+
+        // Check not already a group
+        if (nftGroupIds[tokenId] != 0) {
+            revert AlreadyConvertedToGroup(tokenId, nftGroupIds[tokenId]);
+        }
+
+        // Get NFT metadata
+        NFTMetadata memory nftMeta = nftMetadata[tokenId];
+        ParticipantData memory participant = participantData[tokenId];
+
+        // Validate NFT hasn't been used
+        if (participant.attemptCount > 0) {
+            revert NFTHasBeenUsed(tokenId, participant.attemptCount);
+        }
+
+        // Validate session is still active
+        RiddleSession storage session = riddleSessions[nftMeta.sessionId];
+        if (session.state != RiddleState.ACTIVE) {
+            revert SessionNotActive(nftMeta.sessionId, session.state);
+        }
+
+        // Calculate era and costs from NFT's mint time
+        uint256 mintEra = _calculateEraFromTimestamp(nftMeta.mintTimestamp);
+        uint256 baseAttemptCost = _calculateEraCost(INITIAL_MINT_COST / 1000, mintEra);
+        uint256 baseSubmissionCost = baseAttemptCost;
+
+        // Create group through GroupManager
+        // GroupManager will handle all group logic from here
+        groupId = groupManager.createGroupFromNFT(
+            msg.sender,
+            tokenId,
+            nftMeta.sessionId,
+            mintEra,
+            baseAttemptCost,
+            baseSubmissionCost
+        );
+
+        // Track the conversion
+        nftGroupIds[tokenId] = groupId;
+
+        // Transfer NFT to GroupManager for custody
+        // GroupManager now owns the NFT and manages the group
+        _transfer(msg.sender, address(groupManager), tokenId);
+
+        emit NFTConvertedToGroup(
+            tokenId,
+            groupId,
+            nftMeta.sessionId,
+            msg.sender,
+            baseAttemptCost
+        );
+
+        return groupId;
+    }
+
+    // ============ VIEW FUNCTIONS ============
+
+    /**
+     * @dev Check if an NFT has been converted to a group
+     * @param tokenId Token ID to check
+     * @return isGroup True if NFT is a group, false otherwise
+     */
+    function isGroupNFT(uint256 tokenId) external view returns (bool isGroup) {
+        return nftGroupIds[tokenId] != 0;
+    }
+
+    /**
+     * @dev Get the group ID associated with an NFT
+     * @param tokenId Token ID to query
+     * @return groupId Group ID (0 if not a group)
+     */
+    function getGroupIdForNFT(uint256 tokenId) external view returns (uint256 groupId) {
+        return nftGroupIds[tokenId];
+    }
+
+    /**
+     * @dev Get comprehensive group info for an NFT
+     * @param tokenId Token ID to query
+     * @return groupId Associated group ID
+     * @return isGroup Whether NFT is a group
+     * @return state Current group state (if applicable)
+     * @return memberCount Number of group members (if applicable)
+     *
+     * @notice Returns default values if NFT is not a group
+     */
+    function getGroupInfo(uint256 tokenId) external view returns (
+        uint256 groupId,
+        bool isGroup,
+        IRiddleGroupManager.GroupState state,
+        uint256 memberCount
+    ) {
+        groupId = nftGroupIds[tokenId];
+        isGroup = groupId != 0;
+
+        if (isGroup && address(groupManager) != address(0)) {
+            state = groupManager.getGroupState(groupId);
+            memberCount = groupManager.getGroupMemberCount(groupId);
+        } else {
+            state = IRiddleGroupManager.GroupState.DISBANDED;
+            memberCount = 0;
+        }
+    }
+
+    /**
+     * @dev Check if an address can convert an NFT to a group
+     * @param tokenId Token ID to check
+     * @param user Address to check
+     * @return canConvert True if user can convert this NFT
+     * @return reason Error message if cannot convert, empty if can
+     */
+    function canConvertToGroup(uint256 tokenId, address user)
+        external
+        view
+        returns (bool canConvert, string memory reason)
+    {
+        // Check GroupManager is set
+        if (address(groupManager) == address(0)) {
+            return (false, "GroupManager not initialized");
+        }
+
+        // Check ownership
+        try this.ownerOf(tokenId) returns (address owner) {
+            if (owner != user) {
+                return (false, "Not NFT owner");
+            }
+        } catch {
+            return (false, "NFT does not exist");
+        }
+
+        // Check not already a group
+        if (nftGroupIds[tokenId] != 0) {
+            return (false, "Already converted to group");
+        }
+
+        // Check not used
+        ParticipantData memory participant = participantData[tokenId];
+        if (participant.attemptCount > 0) {
+            return (false, "NFT has been used");
+        }
+
+        // Check session active
+        NFTMetadata memory nftMeta = nftMetadata[tokenId];
+        RiddleSession storage session = riddleSessions[nftMeta.sessionId];
+        if (session.state != RiddleState.ACTIVE) {
+            return (false, "Session not active");
+        }
+
+        return (true, "");
+    }
+
+    // ============ HELPER FUNCTIONS ============
+
+    /**
+     * @dev Calculate which era a timestamp falls into
+     * @param timestamp Timestamp to check
+     * @return era Era number (0, 1, 2, 3...)
+     */
+    function _calculateEraFromTimestamp(uint256 timestamp) internal view returns (uint256 era) {
+        if (timestamp < deploymentTime) return 0;
+        uint256 timeElapsed = timestamp - deploymentTime;
+        return timeElapsed / HALVING_PERIOD;
+    }
+
+    /**
+     * @dev Calculate cost for a specific era (halving)
+     * @param baseCost Initial cost (era 0)
+     * @param era Era number
+     * @return cost Halved cost for the era
+     */
+    function _calculateEraCost(uint256 baseCost, uint256 era) internal pure returns (uint256 cost) {
+        // Each era halves the cost: era0=1x, era1=0.5x, era2=0.25x, etc.
+        // Minimum 1.5 RDLN (15e17)
+        uint256 MIN_COST = 15 * 10**17;
+
+        cost = baseCost;
+        for (uint256 i = 0; i < era; i++) {
+            cost = cost / 2;
+            if (cost < MIN_COST) {
+                cost = MIN_COST;
+                break;
+            }
+        }
+
+        return cost;
+    }
+
+    // ============ ADMIN FUNCTIONS ============
+
+    /**
+     * @dev Update GroupManager address (emergency only)
+     * @param _groupManager New GroupManager address
+     *
+     * Requirements:
+     * - Only ADMIN_ROLE can call
+     * - New manager must implement IRiddleGroupManager
+     * - Validates interface before updating
+     *
+     * Security:
+     * - Should only be used if GroupManager needs to be replaced
+     * - Does NOT affect existing groups (they remain with old manager)
+     * - Only affects NEW conversions
+     *
+     * @notice Use with extreme caution - can break new group creation
+     */
+    function updateGroupManager(address _groupManager)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
+        if (_groupManager == address(0)) revert InvalidGroupManager(_groupManager);
+
+        // Validate interface
+        try IRiddleGroupManager(_groupManager).activeGroupCount(address(this)) returns (uint256) {
+            address oldManager = address(groupManager);
+            groupManager = IRiddleGroupManager(_groupManager);
+            emit GroupManagerUpdated(oldManager, _groupManager, block.timestamp);
+        } catch {
+            revert InvalidGroupManager(_groupManager);
+        }
+    }
+
+    /**
+     * @dev Emergency function to clear a stuck NFT-group mapping
+     * @param tokenId Token ID to clear
+     *
+     * Requirements:
+     * - Only ADMIN_ROLE
+     * - Should only be used if group creation failed but mapping was set
+     *
+     * @notice This is a recovery function - use only in emergencies
+     */
+    function emergencyClearGroupMapping(uint256 tokenId)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
+        uint256 oldGroupId = nftGroupIds[tokenId];
+        nftGroupIds[tokenId] = 0;
+
+        emit NFTConvertedToGroup(tokenId, 0, 0, msg.sender, 0);
+    }
+
+    // ============ AUTHORIZATION ============
+
+    /**
+     * @dev Override required by UUPS proxy pattern
+     * @param newImplementation Address of new implementation
+     *
+     * Security:
+     * - Only UPGRADER_ROLE can upgrade
+     * - Prevents unauthorized upgrades
+     */
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyRole(UPGRADER_ROLE)
+    {
+        // Additional validation could go here
+        // For now, role check is sufficient
+    }
+
+    // ============ BACKWARD COMPATIBILITY ============
+
+    /**
+     * @dev All V1 functions remain unchanged and fully functional
+     *
+     * Solo Play:
+     * - mintRiddleNFT() - Works exactly as before
+     * - submitRiddleAnswer() - Works exactly as before
+     * - claimPrize() - Works exactly as before
+     *
+     * The upgrade only ADDS group functionality, doesn't change existing features.
+     * Users can still play solo with NFTs that aren't converted to groups.
+     */
+}

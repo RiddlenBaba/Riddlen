@@ -1,0 +1,820 @@
+Riddlen Farcaster Integration: Comprehensive Due Diligence Report
+Building MiniApps with Frames.js - Best Practices Guide 2025
+Prepared for: Riddlen Project
+Date: September 30, 2025
+Focus: Frames.js implementation for Farcaster miniapp deployment
+
+Executive Summary
+This report provides comprehensive due diligence for integrating Riddlen's NFT riddle platform with Farcaster using frames.js. Based on current market conditions and technical capabilities as of September 2025, Farcaster Frames represent a strategic growth channel for Riddlen's user acquisition.
+
+Key Findings:
+
+✅ Farcaster has 710,000 users with 500,000 daily casts (strong TAM)
+✅ Frames.js is production-ready with robust debugging tools
+✅ Crypto-native audience reduces onboarding friction
+⚠️ Frames v2 (Mini Apps) launched early 2025 - newer standard to consider
+⚠️ Daily active users declined 28% in past 6 months - platform maturing
+Recommendation: Proceed with Frames.js implementation using hybrid approach (Frames v1 for discovery + Mini Apps for gameplay)
+
+1. Platform Analysis: Farcaster in 2025
+1.1 Current State
+Farcaster has approximately 710,000 total users and around 500,000 average casts per day as of late 2024. However, daily active users have declined by about 28% over the past six months.
+
+What This Means for Riddlen:
+
+Mature audience - Early crypto adopters, high purchasing power
+Less viral than peak - Need strong product-market fit, not just hype
+Quality over quantity - Engaged users more valuable than vanity metrics
+Opportunity - Less competition as hype fades, serious builders remain
+1.2 Frames Evolution
+Frames v1 (January 2024):
+
+Built on Open Graph protocol, allowing interactive experiences embedded in social feeds
+Catalyzed 400% increase in daily active users in February 2024
+Limited to image-based interactions with up to 4 buttons
+Server-side rendering for every interaction
+Frames v2 / Mini Apps (Early 2025):
+
+Supports full-screen applications with interactive experiences, onchain transactions, and real-time notifications
+Allows users to run full-fledged web apps directly in Warpcast using standard browser technology
+Client-side interactivity reduces latency
+Direct Ethereum wallet connectivity
+Strategic Implication:
+Build with Frames v1 for feed discovery, transition users to Mini Apps for full gameplay experience.
+
+2. Technical Assessment: Frames.js
+2.1 What is Frames.js?
+Frames.js is a React-based TypeScript library and framework for writing and testing Farcaster Frames, including a built-in debugger.
+
+Core Capabilities:
+
+React/JSX syntax for familiar development
+Built-in local debugger with live reloading
+Next.js integration (ideal for Riddlen's stack)
+TypeScript support for type safety
+State management through context
+Hot reloading, state management, and built-in wallet connection
+2.2 Architecture Overview
+Farcaster Feed
+    ↓
+Frame (Meta Tags)
+    ↓
+User Interaction (Button Click)
+    ↓
+POST to your API
+    ↓
+Your Backend Logic (Riddlen contracts)
+    ↓
+Return New Frame State
+    ↓
+Render in User's Feed
+For Riddlen:
+
+Step 1: Frame shows active riddle NFT
+Step 2: User clicks "Play Now" button
+Step 3: Frame calls Riddlen API for riddle details
+Step 4: User mints NFT via connected wallet
+Step 5: Frame redirects to Mini App for gameplay
+Step 6: User solves riddle, wins RDLN
+Step 7: Winners can share victory Frame
+2.3 Frames.js vs Alternatives
+Feature	Frames.js	Frog	OnchainKit
+Learning Curve	Medium	Easy	Hard
+Flexibility	High	Medium	Very High
+Debugger	Excellent	Excellent	Basic
+React Integration	Native	JSX-like	React Components
+Community	Very Active	Active	Growing
+Documentation	Comprehensive	Good	Excellent
+Best For	Complex apps	Quick prototypes	Enterprise
+Verdict for Riddlen:
+Frames.js offers the best balance of power and ease-of-use for your NFT/gaming use case.
+
+3. Security & Best Practices
+3.1 Critical Security Considerations
+Apps should proxy image requests to prevent frame servers from tracking users, avoid rendering SVGs as they may contain executable code, and sanitize redirect URLs to ensure they start with http:// or https://.
+
+Implementation for Riddlen:
+
+1. Image Proxying
+
+typescript
+// Never serve images directly from user-provided URLs
+// Use Next.js Image Optimization
+import Image from 'next/image'
+
+<Image 
+  src={proxyImageUrl(userProvidedUrl)} 
+  alt="Riddle NFT"
+  width={1200}
+  height={630}
+/>
+2. URL Sanitization
+
+typescript
+function sanitizeRedirect(url: string): string {
+  const parsed = new URL(url);
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    throw new Error('Invalid protocol');
+  }
+  // Whitelist your own domains
+  if (!parsed.hostname.endsWith('riddlen.io')) {
+    throw new Error('Unauthorized domain');
+  }
+  return url;
+}
+3. Transaction Security
+
+typescript
+// Always validate wallet signatures
+import { validateFrameMessage } from "frames.js/next";
+
+const { isValid, message } = await validateFrameMessage(body);
+if (!isValid) {
+  return errorResponse('Invalid signature');
+}
+
+// Verify user owns the FID
+const fid = message.requesterFid;
+// Check against your database
+3.2 Wallet Integration Best Practices
+Farcaster Frames support integration with popular Web3 wallets like MetaMask or WalletConnect, allowing users to authenticate their identity and enable secure interactions with the decentralized network.
+
+For Riddlen:
+
+Auto-Detect Farcaster Wallet:
+
+typescript
+import { sdk } from '@farcaster/frame-sdk'
+
+// Get user's verified address
+const context = await sdk.context;
+const userAddress = context.user.verifiedAddresses[0];
+
+// Use this for Polygon transactions
+const contract = new ethers.Contract(
+  RIDDLEN_NFT_ADDRESS,
+  abi,
+  provider
+);
+Gas Sponsorship Strategy:
+
+Sponsor first 3 riddle mints to reduce friction
+Use Biconomy or Gelato for gas abstraction
+Set spending limits per user to prevent abuse
+Transaction Flow:
+
+1. User clicks "Mint Riddle NFT"
+2. Frame calls your API with user's FID
+3. Your backend checks: first time user?
+4. If yes → sponsor gas, mint directly to their address
+5. If no → require wallet signature
+6. Show success Frame with "Play Now" button
+3.3 Data Privacy
+What You Can Access:
+
+User's Farcaster ID (FID)
+Verified wallet addresses
+Public profile data (username, bio, pfp)
+Social graph (followers, following)
+What You CANNOT Access:
+
+Private messages
+Unverified wallet balances
+Personal information beyond public profile
+GDPR Compliance:
+
+All data is blockchain-based and pseudonymous
+No PII collected through Frames
+User controls their Farcaster ID and can delete it
+Your responsibility: Don't link FIDs to off-chain PII
+4. Implementation Guide
+4.1 Setup Process
+Step 1: Install Frames.js
+
+bash
+npm install frames.js
+npm install @farcaster/frame-sdk
+Step 2: Create Frame Handler
+
+typescript
+// app/frames/route.ts
+import { createFrames } from "frames.js/next";
+
+export const frames = createFrames({
+  basePath: "/frames",
+});
+
+const handleRequest = frames(async (ctx) => {
+  const riddleId = ctx.searchParams.riddleId || "current";
+  const riddle = await getRiddleData(riddleId);
+  
+  return {
+    image: (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#1a1a2e',
+        color: 'white',
+      }}>
+        <h1>{riddle.name}</h1>
+        <p>Prize Pool: {riddle.prizePool} RDLN</p>
+        <p>Winners: {riddle.currentWinners}/{riddle.maxWinners}</p>
+      </div>
+    ),
+    buttons: [
+      <Button action="post" target="/mint">
+        🎮 Play Now ({riddle.mintCost} RDLN)
+      </Button>,
+      <Button action="link" target={`https://riddlen.io/riddle/${riddleId}`}>
+        📊 Details
+      </Button>,
+    ],
+  };
+});
+
+export const GET = handleRequest;
+export const POST = handleRequest;
+Step 3: Add to Your Page
+
+typescript
+// app/page.tsx
+import { fetchMetadata } from "frames.js/next";
+
+export async function generateMetadata() {
+  return {
+    title: "Riddlen - Solve to Earn",
+    other: await fetchMetadata(
+      new URL("/frames", process.env.NEXT_PUBLIC_URL)
+    ),
+  };
+}
+4.2 Debugging Setup
+Frames.js includes a debugger - running locally provides a URL you can paste into Warpcast frame validator with live preview and time-travel debugging.
+
+Local Development:
+
+bash
+npm run dev
+# Open http://localhost:3000/frames/debug
+Testing in Warpcast:
+
+Go to https://warpcast.com/~/developers/frames
+Paste your localhost URL (use ngrok for HTTPS)
+Click "Preview" to see your Frame
+Test all button interactions
+4.3 Riddlen-Specific Implementation
+Frame 1: Active Riddle Display
+
+typescript
+// Purpose: Show in Farcaster feed to attract players
+
+import { frames } from "./frames";
+import { Button } from "frames.js/next";
+
+const activeRiddleFrame = frames(async (ctx) => {
+  const riddle = await getActiveRiddle();
+  
+  return {
+    image: await generateRiddleImage(riddle),
+    buttons: [
+      <Button action="post" target="/mint">
+        🎮 Mint & Play ({riddle.mintCost} RDLN)
+      </Button>,
+      <Button action="link" target="/leaderboard">
+        🏆 Leaderboard
+      </Button>,
+      <Button action="link" target="/stats">
+        📊 My Stats
+      </Button>,
+    ],
+  };
+});
+Frame 2: Minting Flow
+
+typescript
+const mintFrame = frames(async (ctx) => {
+  const { isValid, message } = await validateFrameMessage(ctx.request);
+  
+  if (!isValid) {
+    return errorFrame("Invalid request");
+  }
+  
+  const userFid = message.requesterFid;
+  const userAddress = message.requesterVerifiedAddresses[0];
+  
+  // Check if user needs gas sponsorship
+  const isFirstTime = await isFirstTimeUser(userFid);
+  
+  if (isFirstTime) {
+    // Sponsor the mint
+    await mintRiddleNFT(userAddress, riddleId, { gasless: true });
+  } else {
+    // Require user signature
+    return {
+      image: "Please approve transaction in your wallet",
+      buttons: [
+        <Button action="tx" target="/tx/mint" post_url="/success">
+          Approve Mint
+        </Button>
+      ],
+    };
+  }
+  
+  return {
+    image: "NFT Minted! Ready to play?",
+    buttons: [
+      <Button action="link" target={`https://riddlen.io/play/${riddleId}`}>
+        🧠 Solve Riddle
+      </Button>
+    ],
+  };
+});
+Frame 3: Victory Share
+
+typescript
+// Auto-generated when user wins
+const victoryFrame = frames(async (ctx) => {
+  const { riddleId, winAmount, userName } = ctx.searchParams;
+  
+  return {
+    image: (
+      <div style={styles.victory}>
+        <h1>🎉 {userName} won {winAmount} RDLN!</h1>
+        <p>Riddle #{riddleId} conquered</p>
+      </div>
+    ),
+    buttons: [
+      <Button action="link" target={`https://riddlen.io/riddle/${riddleId}`}>
+        🧩 Try This Riddle
+      </Button>,
+      <Button action="link" target="https://riddlen.io">
+        🧠 Play Riddlen
+      </Button>
+    ],
+  };
+});
+4.4 State Management
+Context Pattern:
+
+typescript
+type RiddlenContext = {
+  currentRiddle: Riddle;
+  userStats: UserStats;
+  activeWallet: string;
+};
+
+const handleRequest = frames(async (ctx) => {
+  // Access previous state
+  const previousState = ctx.state as RiddlenContext;
+  
+  // Update state
+  return {
+    image: ...,
+    buttons: ...,
+    state: {
+      ...previousState,
+      currentRiddle: await getNextRiddle(),
+    }
+  };
+});
+5. Mini Apps Integration (Frames v2)
+5.1 When to Use Mini Apps vs Frames
+Mini Apps allow full-fledged web applications with client-side interactivity, while Frames set clear guidelines where users know what to expect with image-based interactions.
+
+Riddlen Strategy:
+
+Use Frames (v1) For:
+
+Initial discovery in feed
+Quick riddle previews
+Leaderboard snapshots
+Victory sharing
+Minting flow
+Use Mini Apps (v2) For:
+
+Actual riddle gameplay
+Complex multi-step riddles
+Real-time timer display
+Question submission portal
+User profile dashboard
+5.2 Mini App Setup
+Manifest File:
+
+json
+// .well-known/farcaster.json
+{
+  "accountAssociation": {
+    // Your verified Farcaster account
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Riddlen",
+    "iconUrl": "https://riddlen.io/icon.png",
+    "homeUrl": "https://riddlen.io/play",
+    "imageUrl": "https://riddlen.io/og-image.png",
+    "buttonTitle": "🧠 Solve Riddles",
+    "splashImageUrl": "https://riddlen.io/splash.png",
+    "splashBackgroundColor": "#1a1a2e",
+    "webhookUrl": "https://riddlen.io/api/webhook"
+  }
+}
+SDK Integration:
+
+typescript
+// app/play/page.tsx
+import { sdk } from '@farcaster/miniapp-sdk'
+
+export default function PlayRiddle() {
+  useEffect(() => {
+    // Signal app is ready
+    sdk.actions.ready();
+    
+    // Get user context
+    const context = await sdk.context;
+    console.log('User FID:', context.user.fid);
+    console.log('Wallet:', context.user.verifiedAddresses[0]);
+  }, []);
+  
+  return (
+    <div className="riddle-game">
+      {/* Your full riddle gameplay UI */}
+    </div>
+  );
+}
+Transition from Frame to Mini App:
+
+typescript
+// In your Frame
+<Button 
+  action="link" 
+  target="https://riddlen.io/play?miniApp=true&riddleId=42"
+>
+  🎮 Play Full Game
+</Button>
+6. Performance Optimization
+6.1 Image Generation
+Use Vercel OG for Dynamic Images:
+
+typescript
+import { ImageResponse } from '@vercel/og';
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const riddle = await getRiddle(searchParams.get('id'));
+  
+  return new ImageResponse(
+    (
+      <div style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#1a1a2e',
+      }}>
+        <h1 style={{ fontSize: 60, color: 'white' }}>
+          {riddle.name}
+        </h1>
+        <p style={{ fontSize: 40, color: '#a855f7' }}>
+          {riddle.prizePool} RDLN
+        </p>
+      </div>
+    ),
+    {
+      width: 1200,
+      height: 630,
+    }
+  );
+}
+Performance Tips:
+
+Cache generated images in CDN
+Use WebP format when possible
+Keep images under 500KB
+Optimize font loading
+6.2 Response Time
+The main challenge in Frames is that every user action requires a server response, so designing for fast responses is critical to avoid clunky experiences.
+
+Targets:
+
+< 200ms - Excellent (user perceives instant)
+< 500ms - Good (acceptable for most interactions)
+< 1000ms - Poor (users notice lag)
+> 1000ms - Unacceptable (users abandon)
+Optimization Strategies:
+
+1. Database Queries
+
+typescript
+// Bad: Multiple queries
+const riddle = await db.riddle.findUnique({ where: { id } });
+const winners = await db.winner.findMany({ where: { riddleId: id } });
+const stats = await db.stats.get(riddleId);
+
+// Good: Single query with includes
+const riddle = await db.riddle.findUnique({
+  where: { id },
+  include: {
+    winners: true,
+    stats: true,
+  },
+});
+2. Caching
+
+typescript
+import { unstable_cache } from 'next/cache';
+
+const getActiveRiddle = unstable_cache(
+  async () => {
+    return await db.riddle.findFirst({
+      where: { status: 'ACTIVE' },
+      include: { winners: true },
+    });
+  },
+  ['active-riddle'],
+  { revalidate: 60 } // Cache for 60 seconds
+);
+3. Parallel Processing
+
+typescript
+// Bad: Sequential
+const riddle = await getRiddle(id);
+const user = await getUser(fid);
+const leaderboard = await getLeaderboard();
+
+// Good: Parallel
+const [riddle, user, leaderboard] = await Promise.all([
+  getRiddle(id),
+  getUser(fid),
+  getLeaderboard(),
+]);
+7. Growth & Distribution Strategy
+7.1 Discoverability
+Channel Strategy:
+
+/riddlen - Create dedicated Farcaster channel
+/polygon - Post in Polygon community channel
+/web3games - Cross-promote with gaming community
+/nft - Showcase riddle NFTs
+Posting Cadence:
+
+Daily: New riddle announcement with Frame
+3x/week: Leaderboard updates
+2x/week: Winner spotlights
+1x/week: Community highlights
+7.2 Viral Mechanics
+Auto-Share on Win:
+
+typescript
+// When user completes riddle
+const shareFrame = {
+  image: victoryImage,
+  buttons: [
+    <Button action="link" target={`/riddle/${id}`}>
+      Challenge Accepted! 🧠
+    </Button>
+  ]
+};
+
+// Prompt user to cast
+sdk.actions.openComposer({
+  text: `Just won ${amount} RDLN solving @riddlen #${id}! Think you're smarter? 🧩`,
+  embeds: [shareFrameUrl],
+});
+Referral System:
+
+typescript
+// Track referrals via Frame state
+const riddleFrame = frames(async (ctx) => {
+  const referrer = ctx.searchParams.ref;
+  
+  if (referrer) {
+    await trackReferral(referrer, ctx.message.requesterFid);
+  }
+  
+  return {
+    image: ...,
+    buttons: [
+      <Button action="link" target={`/play?ref=${ctx.message.requesterFid}`}>
+        🎁 Invite Friends (Earn 10%)
+      </Button>
+    ]
+  };
+});
+7.3 Farcaster-Specific Features
+Composer Actions: Allow users to share riddles directly from Warpcast composer.
+
+Profile Display: Show RON score and riddles solved in user's Farcaster bio.
+
+Notifications: Send push notifications when:
+
+New riddle launches
+User is outscored on leaderboard
+Friend completes a riddle
+Reward claim available
+8. Monetization & Economics
+8.1 Revenue Streams
+1. NFT Minting Fees
+
+Current: 1,000 RDLN per mint (years 1-2)
+Halves every 2 years
+Projected revenue: 19.97M RDLN over 20 years
+2. Burn Protocol Revenue
+
+Failed attempts burn RDLN
+Accumulated: ~650K RDLN over lifecycle
+3. Oracle Network (Future)
+
+Enterprise clients pay RDLN for validation
+Validators earn from their RON reputation
+Platform takes 10-20% commission
+4. Secondary NFT Royalties
+
+10% royalty on riddle NFT resales
+Trading volume depends on collectibility
+8.2 Farcaster-Specific Costs
+Fixed Costs:
+
+Farcaster account: $5 one-time (or free with US phone)
+Custom domain: $10-50/year
+Hosting: $20-100/month (Vercel Pro)
+Variable Costs:
+
+Image generation: Vercel OG (free tier sufficient)
+API calls: Negligible
+Gas sponsorship: 0.001-0.01 ETH per mint (~$2-20)
+Break-Even Analysis:
+
+Sponsor 100 users @ $5 each = $500
+Need 500 mints @ 1,000 RDLN each
+At $0.01 per RDLN = $5,000 revenue
+ROI: 10x after 500 users
+9. Risk Assessment
+9.1 Technical Risks
+Risk	Likelihood	Impact	Mitigation
+Platform Changes	Medium	High	Monitor Farcaster updates, maintain backward compatibility
+Frames.js Breaking Changes	Low	Medium	Pin versions, test upgrades in staging
+Wallet Integration Issues	Medium	High	Extensive testing, fallback to manual connect
+Performance Degradation	Medium	High	Implement caching, monitoring, CDN
+Security Vulnerabilities	Low	Critical	Regular audits, bug bounty, secure coding practices
+9.2 Market Risks
+Risk	Likelihood	Impact	Mitigation
+Farcaster User Decline	Medium	High	Diversify to other platforms (Lens, Twitter)
+Frames Losing Popularity	Low	Medium	Build standalone app, use Frames as growth channel
+Competitor Cloning	High	Medium	Focus on community, brand, unique mechanics
+Regulatory Issues	Low	High	Legal counsel, terms of service, age verification
+9.3 Operational Risks
+Risk	Likelihood	Impact	Mitigation
+Smart Contract Bugs	Low	Critical	Multiple audits, gradual rollout, insurance
+Server Downtime	Low	High	Redundant hosting, status page, incident response
+Support Volume	High	Medium	FAQ, chatbot, community moderators
+Content Moderation	Medium	Medium	Reporting system, community guidelines, AI filtering
+10. Success Metrics & KPIs
+10.1 Phase 1: Launch (Months 1-3)
+Targets:
+
+500+ Farcaster users connect wallet
+100+ riddle NFTs minted
+50+ riddles successfully solved
+10+ daily active players
+500+ Frame impressions/day
+Red Flags:
+
+< 50 wallets connected after 1 month
+< 10% mint-to-solve conversion
+50% user drop-off after first riddle
+
+10.2 Phase 2: Growth (Months 4-6)
+Targets:
+
+2,000+ total users
+200+ daily active players
+500+ riddles solved
+50+ organic shares per week
+5,000+ Frame impressions/day
+Red Flags:
+
+Declining daily active users
+No viral growth loops working
+High churn rate (> 70% monthly)
+10.3 Phase 3: Scale (Months 7-12)
+Targets:
+
+10,000+ total users
+1,000+ daily active players
+2,000+ riddles solved
+Self-sustaining question economy
+20,000+ Frame impressions/day
+Red Flags:
+
+Platform costs exceeding revenue
+No path to oracle network adoption
+Stagnant user growth
+11. Development Timeline
+Week 1-2: Foundation
+ Set up Frames.js development environment
+ Create basic riddle display Frame
+ Test locally with debugger
+ Deploy to staging (Vercel)
+Week 3-4: Core Features
+ Implement wallet connection
+ Build minting flow with gas sponsorship
+ Create leaderboard Frame
+ Add user stats Frame
+Week 5-6: Integration
+ Connect to Riddlen smart contracts
+ Integrate with existing RDLN token
+ Test transactions on Polygon testnet
+ Build admin dashboard
+Week 7-8: Polish & Launch
+ Security audit
+ Performance optimization
+ Marketing materials
+ Soft launch to 50 beta users
+ Public launch
+Week 9-12: Growth
+ Monitor metrics daily
+ Iterate based on feedback
+ Build viral features
+ Expand to Mini Apps
+12. Conclusion & Recommendations
+12.1 Go/No-Go Decision
+GO ✅
+
+Reasons:
+
+Strong Product-Market Fit - Riddle solving aligns with Farcaster's crypto-native, intellectually curious audience
+Technical Feasibility - Frames.js is production-ready with comprehensive tooling
+Competitive Advantage - Few skill-based games on Farcaster; Riddlen's unique
+Low Initial Investment - Can launch MVP for < $5K
+Clear Growth Path - Frames for discovery → Mini Apps for gameplay → Oracle network for revenue
+Conditions:
+
+Start with Frames v1 (proven technology)
+Plan transition to Mini Apps for full experience
+Allocate 20% of development budget to iteration based on user feedback
+Set 3-month milestone to evaluate traction
+12.2 Critical Success Factors
+Must Have:
+
+< 500ms Frame response times - Speed is critical
+Gas-sponsored onboarding - Remove friction for first 3 mints
+Viral sharing mechanics - Auto-generate victory Frames
+Strong community - Active /riddlen channel with daily engagement
+Regular content - New riddles every week minimum
+Nice to Have:
+
+Composer actions for easy sharing
+Profile integrations showing RON score
+Push notifications for events
+Collaboration with Polygon Farcaster projects
+12.3 Next Steps
+Immediate Actions:
+
+This Week: Set up Frames.js development environment, create first Frame
+Week 2: Deploy staging environment, test with internal team
+Week 3: Submit for Polygon Farcaster grants (if still available)
+Week 4: Soft launch to 50 beta testers from Riddlen community
+Medium-Term:
+
+Month 2: Public launch with marketing push
+Month 3: Evaluate metrics, iterate features
+Month 4: Begin Mini Apps development
+Month 6: Launch Oracle network beta
+Long-Term:
+
+Year 1: Establish Riddlen as top Farcaster game
+Year 2: Transition focus to oracle network revenue
+Year 3: Expand to other social platforms (Lens, Bluesky)
+Appendix A: Resources
+Official Documentation:
+
+Frames.js: https://framesjs.org
+Farcaster Docs: https://docs.farcaster.xyz
+Mini Apps: https://miniapps.farcaster.xyz
+Development Tools:
+
+Frames.js GitHub: https://github.com/framesjs/frames.js
+Frame Validator: https://warpcast.com/~/developers/frames
+Neynar API: https://neynar.com (infrastructure provider)
+Community:
+
+/frames-dev channel on Farcaster
+Frames.js Discord
+Awesome Frames: https://github.com/davidfurlong/awesome-frames
+Appendix B: Code Templates
+See implementation examples in Section 4.3 for:
+
+Active Riddle Frame
+Minting Flow
+Victory Share Frame
+Mini App Integration
+Report Prepared By: Riddlen Development Team
+Last Updated: September 30, 2025
+Next Review: December 31, 2025
+

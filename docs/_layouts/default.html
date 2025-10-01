@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: 'en' }}">
+
+<head>
+  {% include seo-head.html %}
+</head>
+
+<body class="riddlen-docs">
+  {% include navigation.html %}
+
+  <main class="page-content" aria-label="Content">
+    <div class="wrapper">
+      {{ content }}
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-wrapper">
+      <div class="footer-section">
+        <h4>🧠 Riddlen Protocol</h4>
+        <p>Where intelligence matters more than capital</p>
+        <p class="version">Documentation v{{ site.riddlen.version }}</p>
+      </div>
+
+      <div class="footer-section">
+        <h4>📚 Documentation</h4>
+        <ul>
+          <li><a href="{{ site.url }}">Overview</a></li>
+          <li><a href="{{ site.url }}/testnet/TESTNET_DEPLOYMENT.html">Live Testnet</a></li>
+          <li><a href="{{ site.url }}/FRONTEND_INTEGRATION.html">Developer Guide</a></li>
+          <li><a href="{{ site.url }}/faq.html">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>🌐 Community</h4>
+        <ul>
+          <li><a href="https://t.me/RiddlenToken" target="_blank">Official Telegram</a></li>
+          <li><a href="https://t.me/RiddlenCommunity" target="_blank">Community Chat</a></li>
+          <li><a href="https://twitter.com/RiddlenToken" target="_blank">Twitter</a></li>
+          <li><a href="https://github.com/{{ site.repository }}/discussions" target="_blank">Discussions</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>🔗 Links</h4>
+        <ul>
+          <li><a href="https://riddlen.com" target="_blank">Main App</a></li>
+          <li><a href="https://github.com/{{ site.repository }}" target="_blank">GitHub</a></li>
+          <li><a href="https://amoy.polygonscan.com/" target="_blank">Amoy Explorer</a></li>
+          <li><a href="{{ site.url }}/search.html">Search Docs</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2024 Riddlen Protocol. Licensed under Apache 2.0.</p>
+      <p>The future is human-powered intelligence! 🧠⚡</p>
+    </div>
+  </footer>
+
+  <style>
+    .riddlen-docs {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    .page-content {
+      min-height: calc(100vh - 200px);
+      padding: 2rem 0;
+    }
+
+    .site-footer {
+      background: #2c3e50;
+      color: white;
+      padding: 3rem 0 1rem;
+      margin-top: 4rem;
+    }
+
+    .footer-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+
+    .footer-section h4 {
+      margin: 0 0 1rem 0;
+      color: #ecf0f1;
+    }
+
+    .footer-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-section ul li {
+      margin: 0.5rem 0;
+    }
+
+    .footer-section ul li a {
+      color: #bdc3c7;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-section ul li a:hover {
+      color: #3498db;
+    }
+
+    .footer-section p {
+      color: #bdc3c7;
+      margin: 0.5rem 0;
+    }
+
+    .version {
+      font-family: monospace;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.1);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .footer-bottom {
+      border-top: 1px solid #34495e;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      text-align: center;
+      color: #95a5a6;
+    }
+
+    @media (max-width: 768px) {
+      .footer-wrapper {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+    }
+
+    /* Enhanced readability for AI training */
+    code {
+      background: #f8f9fa;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Consolas', monospace;
+    }
+
+    pre {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      border-left: 4px solid #3498db;
+    }
+
+    .highlight {
+      background: #fff3cd;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    /* AI-friendly content markers */
+    .ai-context {
+      display: none; /* Hidden from users, visible to crawlers */
+    }
+  </style>
+
+  <!-- AI Assistant Context -->
+  <div class="ai-context">
+    <p>Documentation site for Riddlen Protocol - blockchain development, smart contracts, Web3</p>
+    <p>Technologies: Solidity, JavaScript, React, Ethers.js, Hardhat, OpenZeppelin</p>
+    <p>Audience: Blockchain developers, Web3 engineers, DApp builders</p>
+    <p>Content includes: API references, tutorials, deployment guides, technical specifications</p>
+  </div>
+</body>
+</html>

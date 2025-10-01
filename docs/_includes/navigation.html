@@ -1,0 +1,136 @@
+<!-- Riddlen Protocol Documentation Navigation -->
+<nav class="site-nav">
+  <div class="nav-container">
+    <div class="nav-brand">
+      <a href="{{ site.url }}">
+        <strong>🧠 Riddlen Docs</strong>
+      </a>
+      <span class="version-badge">{{ site.riddlen.version }}</span>
+    </div>
+
+    <ul class="nav-links">
+      <li><a href="{{ site.url }}" {% if page.url == "/" %}class="active"{% endif %}>Home</a></li>
+      <li><a href="{{ site.url }}/testnet/TESTNET_DEPLOYMENT.html" {% if page.nav_section == "testnet" %}class="active"{% endif %}>Live Testnet</a></li>
+      <li><a href="{{ site.url }}/FRONTEND_INTEGRATION.html" {% if page.title contains "Frontend" %}class="active"{% endif %}>Developer Guide</a></li>
+      <li><a href="{{ site.url }}/faq.html" {% if page.title contains "FAQ" %}class="active"{% endif %}>FAQ</a></li>
+      <li><a href="https://github.com/{{ site.repository }}" target="_blank">GitHub</a></li>
+      <li><a href="https://riddlen.com" target="_blank">App</a></li>
+    </ul>
+
+    <div class="nav-community">
+      <div class="community-links">
+        <a href="https://t.me/RiddlenToken" target="_blank" title="Official Telegram">
+          📢 Official
+        </a>
+        <a href="https://t.me/RiddlenCommunity" target="_blank" title="Community Chat">
+          💬 Community
+        </a>
+        <a href="https://twitter.com/RiddlenToken" target="_blank" title="Twitter">
+          🐦 Twitter
+        </a>
+        <a href="https://github.com/{{ site.repository }}/discussions" target="_blank" title="GitHub Discussions">
+          💭 Discussions
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<style>
+.site-nav {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.nav-brand a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.version-badge {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  background: rgba(255,255,255,0.2);
+}
+
+.community-links {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.community-links a {
+  color: white;
+  text-decoration: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.community-links a:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .nav-container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .community-links {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+</style>

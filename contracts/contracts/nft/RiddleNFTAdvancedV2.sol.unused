@@ -1,0 +1,554 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.22;
+
+import "./RiddleNFTAdvanced.sol";
+import "../interfaces/IRiddleGroupManager.sol";
+import "../interfaces/IGroupCompositionValidator.sol";
+
+/**
+ * @title RiddleNFTAdvancedV2 - Group Mechanics Integration
+ * @dev V2 upgrade adding collaborative riddle-solving via groups
+ *
+ * New Features:
+ * - Convert NFTs to group sessions
+ * - Collaborative riddle solving with pooled RON
+ * - Era-locked cost inheritance from original NFT
+ * - Group reward distribution based on contribution
+ *
+ * Integration with v5.2 Group Mechanics:
+ * - RiddleGroupManager: Group lifecycle and membership
+ * - GroupCompositionValidator: Tier validation and pooled RON
+ */
+contract RiddleNFTAdvancedV2 is RiddleNFTAdvanced {
+
+    // ============ V2 STORAGE ============
+    // IMPORTANT: Only append new storage, never modify existing
+
+    IRiddleGroupManager public groupManager;
+    IGroupCompositionValidator public groupValidator;
+
+    // Track which NFTs are converted to groups
+    mapping(uint256 => bool) public isGroupNFT;
+    mapping(uint256 => uint256) public nftToGroupId;
+
+    // Group session data
+    mapping(uint256 => GroupSessionData) public groupSessions;
+
+    struct GroupSessionData {
+        uint256 tokenId;
+        uint256 groupId;
+        uint256 sessionId;
+        uint256 startTime;
+        uint256 attemptCount;
+        bool isActive;
+        bool isCompleted;
+        bool wasSuccessful;
+        address[] contributors; // Track who participated
+        mapping(address => uint256) memberContributions; // Track attempts per member
+    }
+
+    // Storage gap for future upgrades
+    uint256[45] private __gapV2;
+
+    // ============ V2 EVENTS ============
+
+    event NFTConvertedToGroup(
+        uint256 indexed tokenId,
+        uint256 indexed groupId,
+        uint256 indexed sessionId,
+        address creator,
+        uint256 lockedMintCost
+    );
+
+    event GroupAttemptMade(
+        uint256 indexed tokenId,
+        uint256 indexed groupId,
+        address indexed member,
+        uint256 attemptNumber,
+        uint256 costPaid
+    );
+
+    event GroupSessionCompleted(
+        uint256 indexed tokenId,
+        uint256 indexed groupId,
+        bool success,
+        uint256 totalReward,
+        uint256 memberCount
+    );
+
+    event GroupRewardDistributed(
+        uint256 indexed groupId,
+        address indexed member,
+        uint256 amount,
+        uint256 percentage
+    );
+
+    // ============ V2 ERRORS ============
+
+    error AlreadyGroupNFT(uint256 tokenId);
+    error NotGroupNFT(uint256 tokenId);
+    error NotGroupMember(address user, uint256 groupId);
+    error GroupNotFinalized(uint256 groupId);
+    error GroupNotActive(uint256 groupId);
+    error NFTAlreadyUsed(uint256 tokenId);
+    error InvalidGroupState();
+
+    // ============ V2 INITIALIZATION ============
+
+    /**
+     * @dev Initialize V2 upgrade with group mechanics contracts
+     * @param _groupManager Address of RiddleGroupManager
+     * @param _groupValidator Address of GroupCompositionValidator
+     */
+    function initializeV2(
+        address _groupManager,
+        address _groupValidator
+    ) external reinitializer(2) {
+        require(_groupManager != address(0), "Invalid group manager");
+        require(_groupValidator != address(0), "Invalid group validator");
+
+        groupManager = IRiddleGroupManager(_groupManager);
+        groupValidator = IGroupCompositionValidator(_groupValidator);
+    }
+
+    // ============ GROUP CONVERSION ============
+
+    /**
+     * @dev Convert an NFT to a group session
+     * @param tokenId NFT to convert
+     *
+     * Requirements:
+     * - Caller must be NFT owner
+     * - NFT must not already be a group
+     * - NFT must not have been used (no attempts)
+     * - Session must still be in ACTIVE state
+     */
+    function convertToGroupNFT(uint256 tokenId) external nonReentrant whenNotPaused {
+        // Validation
+        if (ownerOf(tokenId) != msg.sender) revert ERC721IncorrectOwner(msg.sender, tokenId, ownerOf(tokenId));
+        if (isGroupNFT[tokenId]) revert AlreadyGroupNFT(tokenId);
+
+        NFTMetadata memory nftMeta = nftMetadata[tokenId];
+        ParticipantData memory participant = participantData[tokenId];
+
+        if (participant.attemptCount > 0) revert NFTAlreadyUsed(tokenId);
+
+        RiddleSession storage session = riddleSessions[nftMeta.sessionId];
+        require(session.state == RiddleState.ACTIVE, "Session not active");
+
+        // Calculate era from deployment time and session start
+        uint256 mintEra = _calculateMintEra(nftMeta.mintTimestamp);
+        uint256 baseAttemptCost = session.currentMintCost / 1000; // Simplified: 0.1% of mint cost
+        uint256 baseSubmissionCost = baseAttemptCost;
+
+        // Create group via GroupManager
+        uint256 groupId = groupManager.createGroupFromNFT(
+            msg.sender,
+            tokenId,
+            nftMeta.sessionId,
+            mintEra,
+            baseAttemptCost,
+            baseSubmissionCost
+        );
+
+        // Update NFT state
+        isGroupNFT[tokenId] = true;
+        nftToGroupId[tokenId] = groupId;
+
+        // Initialize group session data
+        GroupSessionData storage groupSession = groupSessions[tokenId];
+        groupSession.tokenId = tokenId;
+        groupSession.groupId = groupId;
+        groupSession.sessionId = nftMeta.sessionId;
+        groupSession.startTime = block.timestamp;
+        groupSession.isActive = false; // Not active until group finalized
+        groupSession.isCompleted = false;
+
+        // Transfer NFT to GroupManager for custody
+        _transfer(msg.sender, address(groupManager), tokenId);
+
+        emit NFTConvertedToGroup(
+            tokenId,
+            groupId,
+            nftMeta.sessionId,
+            msg.sender,
+            session.currentMintCost
+        );
+    }
+
+    // ============ GROUP RIDDLE SOLVING ============
+
+    /**
+     * @dev Activate group session after finalization
+     * @param tokenId NFT representing the group session
+     *
+     * Called by group creator after all members joined
+     */
+    function activateGroupSession(uint256 tokenId) external nonReentrant whenNotPaused {
+        if (!isGroupNFT[tokenId]) revert NotGroupNFT(tokenId);
+
+        uint256 groupId = nftToGroupId[tokenId];
+
+        // Verify caller is group creator
+        require(
+            groupManager.isGroupLeader(groupId, msg.sender),
+            "Not group leader"
+        );
+
+        // Verify group is in RESERVED state (finalized but not active)
+        IRiddleGroupManager.GroupState state = groupManager.getGroupState(groupId);
+        require(
+            state == IRiddleGroupManager.GroupState.RESERVED,
+            "Group not finalized"
+        );
+
+        // Activate group
+        groupManager.activateGroup(groupId);
+
+        // Update session state
+        GroupSessionData storage groupSession = groupSessions[tokenId];
+        groupSession.isActive = true;
+    }
+
+    /**
+     * @dev Submit a group attempt at solving the riddle
+     * @param tokenId NFT representing the group session
+     * @param answerHash Hash of the answer being submitted
+     *
+     * Any group member can submit attempts
+     * Costs are collected from all members proportionally
+     */
+    function makeGroupAttempt(
+        uint256 tokenId,
+        bytes32 answerHash
+    ) external nonReentrant whenNotPaused returns (bool correct) {
+        if (!isGroupNFT[tokenId]) revert NotGroupNFT(tokenId);
+
+        uint256 groupId = nftToGroupId[tokenId];
+        GroupSessionData storage groupSession = groupSessions[tokenId];
+
+        // Verify group is active
+        IRiddleGroupManager.GroupState state = groupManager.getGroupState(groupId);
+        if (state != IRiddleGroupManager.GroupState.ACTIVE) revert InvalidGroupState();
+
+        // Verify caller is group member
+        if (!groupManager.isGroupMember(groupId, msg.sender)) {
+            revert NotGroupMember(msg.sender, groupId);
+        }
+
+        // Get group costs (era-locked from original NFT)
+        (
+            ,
+            uint256 baseAttemptCost,
+            ,
+            uint256 nextAttemptCost
+        ) = groupManager.getGroupCosts(groupId);
+
+        // Collect costs from all group members
+        address[] memory members = groupManager.getGroupMembers(groupId);
+        uint256 costPerMember = nextAttemptCost / members.length;
+
+        for (uint256 i = 0; i < members.length; i++) {
+            rdlnToken.transferFrom(members[i], address(this), costPerMember);
+        }
+
+        // Apply burn/distribution logic
+        _distributeCosts(nextAttemptCost);
+
+        // Update attempt tracking
+        groupSession.attemptCount++;
+        groupSession.memberContributions[msg.sender]++;
+
+        // Track contributor if first attempt
+        bool isNewContributor = true;
+        for (uint256 i = 0; i < groupSession.contributors.length; i++) {
+            if (groupSession.contributors[i] == msg.sender) {
+                isNewContributor = false;
+                break;
+            }
+        }
+        if (isNewContributor) {
+            groupSession.contributors.push(msg.sender);
+        }
+
+        // Check answer
+        RiddleSession storage session = riddleSessions[groupSession.sessionId];
+        correct = (answerHash == session.correctAnswerHashes[0]); // Simplified
+
+        emit GroupAttemptMade(
+            tokenId,
+            groupId,
+            msg.sender,
+            groupSession.attemptCount,
+            nextAttemptCost
+        );
+
+        // If correct, finalize group session
+        if (correct) {
+            _finalizeGroupSession(tokenId, true);
+        }
+
+        return correct;
+    }
+
+    /**
+     * @dev Finalize group session (success or timeout)
+     * @param tokenId NFT representing the group session
+     * @param success Whether the group solved the riddle
+     */
+    function _finalizeGroupSession(uint256 tokenId, bool success) internal {
+        uint256 groupId = nftToGroupId[tokenId];
+        GroupSessionData storage groupSession = groupSessions[tokenId];
+
+        require(!groupSession.isCompleted, "Already completed");
+
+        groupSession.isCompleted = true;
+        groupSession.wasSuccessful = success;
+        groupSession.isActive = false;
+
+        // Complete group in GroupManager
+        groupManager.completeGroup(groupId, success);
+
+        // Distribute rewards if successful
+        if (success) {
+            _distributeGroupRewards(tokenId);
+        }
+
+        emit GroupSessionCompleted(
+            tokenId,
+            groupId,
+            success,
+            success ? _calculateGroupReward(tokenId) : 0,
+            groupManager.getGroupMemberCount(groupId)
+        );
+    }
+
+    /**
+     * @dev Distribute rewards to group members based on contribution
+     * @param tokenId NFT representing the group session
+     */
+    function _distributeGroupRewards(uint256 tokenId) internal {
+        uint256 groupId = nftToGroupId[tokenId];
+        GroupSessionData storage groupSession = groupSessions[tokenId];
+
+        // Calculate total reward
+        RiddleSession storage session = riddleSessions[groupSession.sessionId];
+        uint256 totalReward = _calculateGroupReward(tokenId);
+
+        // Get members and their effective RON
+        address[] memory members = groupManager.getGroupMembers(groupId);
+        uint256[] memory effectiveRONs = new uint256[](members.length);
+
+        for (uint256 i = 0; i < members.length; i++) {
+            // Use base RON as fallback if effective RON not available
+            effectiveRONs[i] = ronToken.balanceOf(members[i]);
+        }
+
+        // Calculate distribution using validator
+        (
+            uint256[] memory shares,
+            uint256[] memory percentages
+        ) = groupValidator.calculateDistribution(
+            members,
+            effectiveRONs,
+            totalReward
+        );
+
+        // Distribute rewards
+        for (uint256 i = 0; i < members.length; i++) {
+            if (shares[i] > 0) {
+                rdlnToken.transfer(members[i], shares[i]);
+
+                // Award RON for participation
+                uint256 ronReward = _calculateRONReward(
+                    session.difficulty,
+                    groupSession.memberContributions[members[i]]
+                );
+                ronToken.mint(members[i], ronReward);
+
+                emit GroupRewardDistributed(
+                    groupId,
+                    members[i],
+                    shares[i],
+                    percentages[i]
+                );
+            }
+        }
+    }
+
+    // ============ VIEW FUNCTIONS ============
+
+    /**
+     * @dev Check if an NFT is a group NFT
+     * @param tokenId Token ID to check
+     * @return isGroup True if NFT is a group
+     */
+    function isNFTGroup(uint256 tokenId) external view returns (bool isGroup) {
+        return isGroupNFT[tokenId];
+    }
+
+    /**
+     * @dev Get group ID for an NFT
+     * @param tokenId Token ID
+     * @return groupId Associated group ID (0 if not a group)
+     */
+    function getGroupId(uint256 tokenId) external view returns (uint256 groupId) {
+        return nftToGroupId[tokenId];
+    }
+
+    /**
+     * @dev Get comprehensive group session data
+     * @param tokenId Token ID
+     * @return groupId Group ID
+     * @return sessionId Riddle session ID
+     * @return isActive Whether session is active
+     * @return isCompleted Whether session is completed
+     * @return wasSuccessful Whether group solved the riddle
+     * @return attemptCount Total attempts made
+     * @return memberCount Number of group members
+     */
+    function getGroupSessionInfo(uint256 tokenId) external view returns (
+        uint256 groupId,
+        uint256 sessionId,
+        bool isActive,
+        bool isCompleted,
+        bool wasSuccessful,
+        uint256 attemptCount,
+        uint256 memberCount
+    ) {
+        if (!isGroupNFT[tokenId]) {
+            return (0, 0, false, false, false, 0, 0);
+        }
+
+        groupId = nftToGroupId[tokenId];
+        GroupSessionData storage groupSession = groupSessions[tokenId];
+
+        return (
+            groupId,
+            groupSession.sessionId,
+            groupSession.isActive,
+            groupSession.isCompleted,
+            groupSession.wasSuccessful,
+            groupSession.attemptCount,
+            groupManager.getGroupMemberCount(groupId)
+        );
+    }
+
+    // ============ HELPER FUNCTIONS ============
+
+    /**
+     * @dev Calculate mint era from timestamp
+     * @param mintTimestamp Timestamp when NFT was minted
+     * @return era Era number (0, 1, 2, 3...)
+     */
+    function _calculateMintEra(uint256 mintTimestamp) internal view returns (uint256 era) {
+        uint256 BIENNIAL_PERIOD = 730 days;
+        uint256 timeElapsed = mintTimestamp - deploymentTime;
+        return timeElapsed / BIENNIAL_PERIOD;
+    }
+
+    /**
+     * @dev Calculate total reward for group
+     * @param tokenId Token ID
+     * @return reward Total RDLN reward
+     */
+    function _calculateGroupReward(uint256 tokenId) internal view returns (uint256 reward) {
+        GroupSessionData storage groupSession = groupSessions[tokenId];
+        RiddleSession storage session = riddleSessions[groupSession.sessionId];
+
+        // Simplified: Use base prize pool divided by expected winners
+        uint256 baseReward = session.prizePool / session.winnerSlots;
+
+        // Apply tiered multiplier based on completion position
+        // For groups, use 1.5x multiplier
+        return (baseReward * 150) / 100;
+    }
+
+    /**
+     * @dev Calculate RON reward based on difficulty and contribution
+     * @param difficulty Riddle difficulty
+     * @param contributionCount Number of attempts made by member
+     * @return ronReward RON tokens to award
+     */
+    function _calculateRONReward(
+        RiddleDifficulty difficulty,
+        uint256 contributionCount
+    ) internal pure returns (uint256 ronReward) {
+        uint256 baseReward;
+
+        if (difficulty == RiddleDifficulty.EASY) {
+            baseReward = 15 * 10**18; // 15 RON
+        } else if (difficulty == RiddleDifficulty.MEDIUM) {
+            baseReward = 75 * 10**18; // 75 RON
+        } else if (difficulty == RiddleDifficulty.HARD) {
+            baseReward = 350 * 10**18; // 350 RON
+        } else {
+            baseReward = 5000 * 10**18; // 5000 RON
+        }
+
+        // Bonus for active participation (10% per contribution, max 50%)
+        uint256 bonusMultiplier = contributionCount > 5 ? 150 : 100 + (contributionCount * 10);
+        return (baseReward * bonusMultiplier) / 100;
+    }
+
+    /**
+     * @dev Distribute costs according to tokenomics
+     * @param totalCost Total cost collected
+     */
+    function _distributeCosts(uint256 totalCost) internal {
+        uint256 burnAmount = (totalCost * 50) / 100;
+        uint256 grandPrizeAmount = (totalCost * 25) / 100;
+        uint256 devOpsAmount = totalCost - burnAmount - grandPrizeAmount;
+
+        rdlnToken.burn(burnAmount);
+        rdlnToken.transfer(grandPrizeWallet, grandPrizeAmount);
+        rdlnToken.transfer(devOpsWallet, devOpsAmount);
+
+        totalBurned += burnAmount;
+    }
+
+    // ============ ADMIN FUNCTIONS ============
+
+    /**
+     * @dev Update group manager address (emergency only)
+     * @param _groupManager New group manager address
+     */
+    function updateGroupManager(address _groupManager) external onlyRole(ADMIN_ROLE) {
+        require(_groupManager != address(0), "Invalid address");
+        groupManager = IRiddleGroupManager(_groupManager);
+    }
+
+    /**
+     * @dev Update group validator address (emergency only)
+     * @param _groupValidator New validator address
+     */
+    function updateGroupValidator(address _groupValidator) external onlyRole(ADMIN_ROLE) {
+        require(_groupValidator != address(0), "Invalid address");
+        groupValidator = IGroupCompositionValidator(_groupValidator);
+    }
+
+    /**
+     * @dev Emergency timeout for stuck group sessions
+     * @param tokenId Token ID to timeout
+     */
+    function emergencyTimeoutGroup(uint256 tokenId) external onlyRole(ADMIN_ROLE) {
+        if (!isGroupNFT[tokenId]) revert NotGroupNFT(tokenId);
+
+        GroupSessionData storage groupSession = groupSessions[tokenId];
+        require(groupSession.isActive, "Not active");
+        require(!groupSession.isCompleted, "Already completed");
+        require(
+            block.timestamp > groupSession.startTime + 7 days,
+            "Too early"
+        );
+
+        _finalizeGroupSession(tokenId, false);
+    }
+
+    // ============ AUTHORIZATION ============
+
+    /**
+     * @dev Override authorization for UUPS upgrades
+     */
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+}

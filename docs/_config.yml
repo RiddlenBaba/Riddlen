@@ -1,0 +1,126 @@
+# Riddlen Protocol Documentation Site Configuration
+# This site will be served at riddlen.org
+
+# Site settings
+title: "Riddlen Protocol Documentation"
+description: "Complete developer documentation for the revolutionary Riddlen ecosystem - the first blockchain protocol that rewards human intelligence over computational power through Proof-of-Solve consensus. Build on Riddlen with smart contracts, NFT gaming, and merit-based governance."
+baseurl: ""
+url: "https://riddlen.org"
+lang: "en"
+author: "Riddlen Protocol Team"
+
+# SEO & Meta tags
+tagline: "Where Intelligence Matters More Than Capital"
+keywords: "blockchain, smart contracts, NFT gaming, proof of solve, merit based governance, human intelligence, riddles, cryptocurrency, polygon, solidity, defi, web3, ethereum, developer documentation, API, SDK"
+image: "/assets/images/riddlen-og-image.png"
+logo: "/assets/images/riddlen-logo.png"
+
+# Repository information
+repository: "RiddlenBaba/riddlen"
+github_username: "RiddlenBaba"
+
+# Social links
+social:
+  twitter: "RiddlenToken"
+  telegram: "RiddlenToken"
+  telegram_community: "RiddlenCommunity"
+  website: "https://riddlen.com"
+
+# Build settings
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-paginate
+  - jekyll-redirect-from
+  - jekyll-mentions
+  - jekyll-optional-front-matter
+
+# Pagination
+paginate: 10
+paginate_path: "/page:num/"
+
+# Navigation
+header_pages:
+  - index.md
+  - testnet/TESTNET_DEPLOYMENT.md
+  - FRONTEND_INTEGRATION.md
+
+# Collections
+collections:
+  guides:
+    output: true
+    permalink: /:collection/:name/
+  contracts:
+    output: true
+    permalink: /:collection/:name/
+
+# Markdown settings
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Exclude files
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - .git/
+  - .gitignore
+
+# Include files
+include:
+  - _pages
+
+# SEO settings
+twitter:
+  username: RiddlenToken
+
+facebook:
+  app_id:
+  publisher:
+  admins:
+
+# Google Analytics (if you want to add later)
+# google_analytics:
+
+# Defaults for different content types
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+      author: "Riddlen Team"
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "page"
+  - scope:
+      path: "testnet"
+    values:
+      layout: "page"
+      nav_section: "testnet"
+  - scope:
+      path: "contracts"
+    values:
+      layout: "page"
+      nav_section: "contracts"
+
+# Custom variables
+riddlen:
+  version: "v5.1"
+  network: "Polygon Amoy Testnet"
+  chain_id: 80002
+  contracts:
+    rdln: "0x133029184EC460F661d05b0dC57BFC916b4AB0eB"
+    ron: "0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635"
+    riddle_nft: "0x529e3076cB9A48D6FAd086abE5d23ea76159e9E3"

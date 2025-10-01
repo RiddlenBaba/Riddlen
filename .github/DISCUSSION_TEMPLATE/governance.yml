@@ -1,0 +1,92 @@
+labels: ["governance", "proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🗳️ Governance Proposal
+
+        Use this template to propose changes to the Riddlen protocol or governance structure.
+
+  - type: input
+    id: proposal-title
+    attributes:
+      label: Proposal Title
+      description: Clear, concise title for your proposal
+      placeholder: "RIP-001: Implement New Reward Distribution Mechanism"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: proposal-type
+    attributes:
+      label: Proposal Type
+      description: What type of proposal is this?
+      options:
+        - Protocol Enhancement
+        - Economic Parameter Change
+        - Governance Process Change
+        - Treasury Management
+        - Partnership Proposal
+        - Technical Upgrade
+        - Emergency Action
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal-summary
+    attributes:
+      label: Executive Summary
+      description: Brief overview of the proposal (2-3 sentences)
+      placeholder: "This proposal suggests..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal-motivation
+    attributes:
+      label: Motivation
+      description: Why is this proposal necessary? What problem does it solve?
+      placeholder: "The current system has limitations in..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal-specification
+    attributes:
+      label: Technical Specification
+      description: Detailed technical description of the proposal
+      placeholder: "The proposed changes would involve..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal-rationale
+    attributes:
+      label: Rationale
+      description: Why is this the best approach? What alternatives were considered?
+      placeholder: "This approach was chosen because..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal-impact
+    attributes:
+      label: Impact Assessment
+      description: What are the potential positive and negative impacts?
+      placeholder: "Positive impacts: ... Potential risks: ..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: proposal-requirements
+    attributes:
+      label: RON Requirements
+      description: Does the proposer meet governance requirements?
+      options:
+        - label: I hold the minimum RON tokens required for proposals
+          required: true
+        - label: I have been active in the community for the required period
+          required: true
+        - label: This proposal has been discussed in community channels
+          required: false

@@ -1,0 +1,75 @@
+labels: ["enhancement", "idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 💡 Feature Ideas & Suggestions
+
+        Share your ideas for improving the Riddlen ecosystem.
+
+  - type: input
+    id: idea-title
+    attributes:
+      label: Feature/Idea Title
+      description: Brief, descriptive title for your idea
+      placeholder: "Add mobile-optimized riddle interface"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: idea-category
+    attributes:
+      label: Category
+      description: Which area of Riddlen would this improve?
+      options:
+        - Smart Contract Features
+        - Frontend/UI Improvements
+        - Gaming & Riddles
+        - Tokenomics & Rewards
+        - Governance & DAO
+        - Developer Tools
+        - Community Features
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea-description
+    attributes:
+      label: Detailed Description
+      description: Explain your idea in detail
+      placeholder: "This feature would..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Who would benefit from this and how?
+      placeholder: "This would help users by..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important do you think this is?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve experience
+        - High - Important for adoption
+        - Critical - Essential for success
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation-thoughts
+    attributes:
+      label: Implementation Ideas (Optional)
+      description: Any thoughts on how this could be implemented?
+      placeholder: "This could be implemented by..."
+    validations:
+      required: false

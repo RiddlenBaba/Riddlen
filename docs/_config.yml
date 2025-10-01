@@ -117,10 +117,13 @@ defaults:
 
 # Custom variables
 riddlen:
-  version: "v5.1"
+  version: "v6.0"
   network: "Polygon Amoy Testnet"
   chain_id: 80002
   contracts:
     rdln: "0x133029184EC460F661d05b0dC57BFC916b4AB0eB"
     ron: "0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635"
     riddle_nft: "0x529e3076cB9A48D6FAd086abE5d23ea76159e9E3"
+    airdrop: "0x4f3f2202f3F865074f534aA324a259DF962C6FBA"
+    oracle_network: "0xBd005201294984eFf3c353c32c9E5a96Fd640493"
+    group_manager: "0xEBcEf4745A2514FE61f5847a1e66a9Ced0331899"

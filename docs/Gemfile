@@ -1,0 +1,12 @@
+source "https://rubygems.org"
+
+gem "jekyll", "~> 4.3"
+gem "riddlen-theme", path: "../riddlen-theme"
+
+group :jekyll_plugins do
+  gem "jekyll-feed"
+  gem "jekyll-sitemap"
+  gem "jekyll-seo-tag"
+  gem "jekyll-paginate"
+  gem "jekyll-redirect-from"
+end

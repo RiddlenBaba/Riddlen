@@ -1,136 +1,277 @@
 <!-- Riddlen Protocol Documentation Navigation -->
-<nav class="site-nav">
-  <div class="nav-container">
+<nav class="top-nav">
+  <div class="top-nav-container">
     <div class="nav-brand">
       <a href="{{ site.url }}">
-        <strong>🧠 Riddlen Docs</strong>
+        <strong>🧠 Riddlen Protocol</strong>
       </a>
       <span class="version-badge">{{ site.riddlen.version }}</span>
     </div>
-
-    <ul class="nav-links">
-      <li><a href="{{ site.url }}" {% if page.url == "/" %}class="active"{% endif %}>Home</a></li>
-      <li><a href="{{ site.url }}/testnet/TESTNET_DEPLOYMENT.html" {% if page.nav_section == "testnet" %}class="active"{% endif %}>Live Testnet</a></li>
-      <li><a href="{{ site.url }}/FRONTEND_INTEGRATION.html" {% if page.title contains "Frontend" %}class="active"{% endif %}>Developer Guide</a></li>
-      <li><a href="{{ site.url }}/faq.html" {% if page.title contains "FAQ" %}class="active"{% endif %}>FAQ</a></li>
-      <li><a href="https://github.com/{{ site.repository }}" target="_blank">GitHub</a></li>
-      <li><a href="https://riddlen.com" target="_blank">App</a></li>
-    </ul>
-
-    <div class="nav-community">
-      <div class="community-links">
-        <a href="https://t.me/RiddlenToken" target="_blank" title="Official Telegram">
-          📢 Official
-        </a>
-        <a href="https://t.me/RiddlenCommunity" target="_blank" title="Community Chat">
-          💬 Community
-        </a>
-        <a href="https://twitter.com/RiddlenToken" target="_blank" title="Twitter">
-          🐦 Twitter
-        </a>
-        <a href="https://github.com/{{ site.repository }}/discussions" target="_blank" title="GitHub Discussions">
-          💭 Discussions
-        </a>
-      </div>
+    <div class="top-nav-links">
+      <a href="https://riddlen.com" target="_blank">App</a>
+      <a href="https://github.com/{{ site.repository }}" target="_blank">GitHub</a>
+      <a href="https://twitter.com/RiddlenToken" target="_blank">Twitter</a>
+      <a href="https://t.me/RiddlenToken" target="_blank">Telegram</a>
     </div>
   </div>
 </nav>
 
+<div class="sidebar">
+  <div class="sidebar-content">
+    <div class="sidebar-section">
+      <h3>Getting Started</h3>
+      <ul>
+        <li><a href="{{ site.url }}" {% if page.url == "/" %}class="active"{% endif %}>Overview</a></li>
+        <li><a href="{{ site.url }}/testnet/" {% if page.url contains "/testnet/" %}class="active"{% endif %}>Testnet Deployment</a></li>
+        <li><a href="{{ site.url }}/FRONTEND_INTEGRATION.html" {% if page.title contains "Frontend" %}class="active"{% endif %}>Frontend Integration</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Core Features</h3>
+      <ul>
+        <li><a href="{{ site.url }}/guides/nft-mechanics.html" {% if page.url contains "nft-mechanics" %}class="active"{% endif %}>NFT Riddle Mechanics</a></li>
+        <li><a href="{{ site.url }}/guides/tokenomics.html" {% if page.url contains "tokenomics" %}class="active"{% endif %}>Tokenomics (RDLN/RON)</a></li>
+        <li><a href="{{ site.url }}/guides/burning-protocol.html" {% if page.url contains "burning-protocol" %}class="active"{% endif %}>Burning Protocol</a></li>
+        <li><a href="{{ site.url }}/group-mechanics.html" {% if page.url contains "group-mechanics" %}class="active"{% endif %}>Group Mechanics</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>v6.0 Features</h3>
+      <ul>
+        <li><a href="{{ site.url }}/airdrop.html" {% if page.url contains "airdrop" %}class="active"{% endif %}>🎁 Airdrop System</a></li>
+        <li><a href="{{ site.url }}/oracle-network.html" {% if page.url contains "oracle-network" %}class="active"{% endif %}>🔮 Oracle Network</a></li>
+        <li><a href="{{ site.url }}/governance.html" {% if page.url contains "governance" %}class="active"{% endif %}>🏛️ DAO Governance</a></li>
+        <li><a href="{{ site.url }}/farcaster-frames.html" {% if page.url contains "farcaster-frames" %}class="active"{% endif %}>🖼️ Farcaster Frames</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Smart Contracts</h3>
+      <ul>
+        <li><a href="{{ site.url }}/contracts/" {% if page.url contains "/contracts/" and page.url != "/contracts/" %}class="active"{% endif %}>Contract Specifications</a></li>
+        <li><a href="{{ site.url }}/contracts/RDLN-Contract-Specification.html">RDLN Token</a></li>
+        <li><a href="{{ site.url }}/contracts/RON-Reputation-System.html">RON Reputation</a></li>
+        <li><a href="{{ site.url }}/contracts/RiddlenAirdrop-specification.html">Airdrop Contract</a></li>
+        <li><a href="{{ site.url }}/contracts/TreasuryDrip-specification.html">Treasury Drip</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Developer Resources</h3>
+      <ul>
+        <li><a href="{{ site.url }}/api/" {% if page.url contains "/api/" %}class="active"{% endif %}>API Reference</a></li>
+        <li><a href="{{ site.url }}/deployment/" {% if page.url contains "/deployment/" %}class="active"{% endif %}>Deployment Guide</a></li>
+        <li><a href="{{ site.url }}/guides/DEVELOPMENT-LOG.html" {% if page.url contains "DEVELOPMENT-LOG" %}class="active"{% endif %}>Development Log</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Community</h3>
+      <ul>
+        <li><a href="{{ site.url }}/faq.html" {% if page.url contains "faq" %}class="active"{% endif %}>FAQ</a></li>
+        <li><a href="{{ site.url }}/archive/" {% if page.url contains "/archive/" %}class="active"{% endif %}>Archive</a></li>
+        <li><a href="https://t.me/RiddlenCommunity" target="_blank">Telegram Community</a></li>
+        <li><a href="https://github.com/{{ site.repository }}/discussions" target="_blank">Discussions</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
 <style>
-.site-nav {
+/* Top Navigation Bar */
+.top-nav {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 1rem 0;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
-.nav-container {
-  max-width: 1200px;
+.top-nav-container {
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  padding: 0 2rem;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .nav-brand a {
   color: white;
   text-decoration: none;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
 }
 
 .version-badge {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.25);
   color: white;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 14px;
+  font-size: 0.75rem;
   font-weight: bold;
+  border: 1px solid rgba(255,255,255,0.3);
 }
 
-.nav-links {
+.top-nav-links {
   display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0;
   gap: 1.5rem;
   align-items: center;
 }
 
-.nav-links a {
+.top-nav-links a {
   color: white;
   text-decoration: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.nav-links a:hover,
-.nav-links a.active {
-  background: rgba(255,255,255,0.2);
-}
-
-.community-links {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.community-links a {
-  color: white;
-  text-decoration: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.1);
-  font-size: 0.9rem;
   transition: all 0.2s;
-  border: 1px solid rgba(255,255,255,0.2);
+  font-weight: 500;
+  font-size: 0.95rem;
 }
 
-.community-links a:hover {
+.top-nav-links a:hover {
   background: rgba(255,255,255,0.2);
   transform: translateY(-1px);
 }
 
-@media (max-width: 768px) {
-  .nav-container {
-    flex-direction: column;
-    text-align: center;
+/* Sidebar Navigation */
+.sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 280px;
+  height: calc(100vh - 60px);
+  background: #f8f9fa;
+  border-right: 1px solid #e1e4e8;
+  overflow-y: auto;
+  padding: 2rem 0;
+  z-index: 100;
+}
+
+.sidebar-content {
+  padding: 0 1.5rem;
+}
+
+.sidebar-section {
+  margin-bottom: 2rem;
+}
+
+.sidebar-section h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #586069;
+  margin: 0 0 0.75rem 0;
+  font-weight: 600;
+}
+
+.sidebar-section ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-section li {
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-section a {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  color: #24292e;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: all 0.15s ease;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-section a:hover {
+  background: #e1e4e8;
+  color: #667eea;
+}
+
+.sidebar-section a.active {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  color: #667eea;
+  font-weight: 600;
+  border-left-color: #667eea;
+}
+
+/* Main Content Area Adjustment */
+body {
+  margin: 0;
+  padding-top: 60px;
+}
+
+.main-content {
+  margin-left: 280px;
+  padding: 2rem 3rem;
+  max-width: 1200px;
+}
+
+/* Scrollbar Styling */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Mobile Responsive */
+@media (max-width: 968px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
   }
 
-  .nav-links {
-    flex-wrap: wrap;
-    justify-content: center;
+  .sidebar.open {
+    transform: translateX(0);
   }
 
-  .community-links {
-    justify-content: center;
-    flex-wrap: wrap;
+  .main-content {
+    margin-left: 0;
+    padding: 2rem 1.5rem;
+  }
+
+  .top-nav-links {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-nav-container {
+    padding: 0 1rem;
+  }
+
+  .nav-brand a {
+    font-size: 1.1rem;
+  }
+
+  .version-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
   }
 }
 </style>

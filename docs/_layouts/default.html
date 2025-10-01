@@ -94,34 +94,51 @@
 
     h1 {
       font-size: 2.5rem;
-      border-bottom: 2px solid #667eea;
+      border-bottom: 2px solid #FFD700;
       padding-bottom: 0.5rem;
       margin-top: 0;
+      background: linear-gradient(45deg, #ffffff, #FFD700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
     }
 
     h2 {
       font-size: 2rem;
-      border-bottom: 1px solid #e1e4e8;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.3);
       padding-bottom: 0.3rem;
       margin-top: 2.5rem;
+      color: #FFD700;
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
     }
 
-    h3 { font-size: 1.5rem; margin-top: 2rem; }
-    h4 { font-size: 1.25rem; }
+    h3 {
+      font-size: 1.5rem;
+      margin-top: 2rem;
+      color: #FFD700;
+    }
+
+    h4 {
+      font-size: 1.25rem;
+      color: #ffffff;
+    }
 
     a {
-      color: #667eea;
+      color: #FFD700;
       text-decoration: none;
-      transition: color 0.15s ease;
+      transition: all 0.15s ease;
     }
 
     a:hover {
-      color: #764ba2;
-      text-decoration: underline;
+      color: #FFA500;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
     }
 
     p {
       margin: 1rem 0;
+      color: #d1d5db;
+      line-height: 1.8;
     }
 
     ul, ol {
@@ -131,6 +148,12 @@
 
     li {
       margin: 0.5rem 0;
+      color: #d1d5db;
+    }
+
+    strong {
+      color: #ffffff;
+      font-weight: 600;
     }
 
     table {
@@ -143,31 +166,39 @@
 
     table th,
     table td {
-      border: 1px solid #e1e4e8;
+      border: 1px solid rgba(255, 215, 0, 0.2);
       padding: 0.75rem;
       text-align: left;
     }
 
     table th {
-      background: #f6f8fa;
+      background: rgba(255, 215, 0, 0.1);
       font-weight: 600;
+      color: #FFD700;
+    }
+
+    table td {
+      color: #d1d5db;
     }
 
     table tr:nth-child(even) {
-      background: #fafbfc;
+      background: rgba(255, 215, 0, 0.05);
     }
 
     blockquote {
-      border-left: 4px solid #667eea;
+      border-left: 4px solid #FFD700;
       padding-left: 1rem;
       margin: 1.5rem 0;
-      color: #586069;
+      color: #d1d5db;
       font-style: italic;
+      background: rgba(255, 215, 0, 0.05);
+      padding: 1rem;
+      border-radius: 4px;
     }
 
     hr {
       border: none;
-      border-top: 2px solid #e1e4e8;
+      border-top: 2px solid rgba(255, 215, 0, 0.3);
       margin: 2.5rem 0;
     }
 
@@ -179,7 +210,8 @@
     }
 
     .site-footer {
-      background: #2c3e50;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 100%);
+      border-top: 1px solid rgba(255, 215, 0, 0.2);
       color: white;
       padding: 3rem 0 1rem;
       margin-top: 4rem;
@@ -196,7 +228,8 @@
 
     .footer-section h4 {
       margin: 0 0 1rem 0;
-      color: #ecf0f1;
+      color: #FFD700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
     }
 
     .footer-section ul {
@@ -210,35 +243,42 @@
     }
 
     .footer-section ul li a {
-      color: #bdc3c7;
+      color: #d1d5db;
       text-decoration: none;
-      transition: color 0.2s;
+      transition: all 0.2s;
     }
 
     .footer-section ul li a:hover {
-      color: #3498db;
+      color: #FFD700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
     }
 
     .footer-section p {
-      color: #bdc3c7;
+      color: #d1d5db;
       margin: 0.5rem 0;
     }
 
     .version {
       font-family: monospace;
       font-size: 0.9rem;
-      background: rgba(255,255,255,0.1);
+      background: linear-gradient(45deg, #FFD700, #FFA500);
+      color: #000;
       padding: 0.2rem 0.5rem;
       border-radius: 4px;
       display: inline-block;
+      font-weight: bold;
     }
 
     .footer-bottom {
-      border-top: 1px solid #34495e;
+      border-top: 1px solid rgba(255, 215, 0, 0.2);
       margin-top: 2rem;
       padding-top: 1rem;
       text-align: center;
-      color: #95a5a6;
+      color: #d1d5db;
+    }
+
+    .footer-bottom a {
+      color: #FFD700;
     }
 
     @media (max-width: 968px) {
@@ -257,22 +297,32 @@
 
     /* Enhanced readability for AI training */
     code {
-      background: #f8f9fa;
+      background: rgba(31, 41, 55, 0.5);
+      border: 1px solid rgba(255, 215, 0, 0.3);
       padding: 0.2rem 0.4rem;
       border-radius: 4px;
       font-family: 'Monaco', 'Consolas', monospace;
+      color: #10b981;
     }
 
     pre {
-      background: #f8f9fa;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 215, 0, 0.2);
       padding: 1rem;
       border-radius: 8px;
       overflow-x: auto;
-      border-left: 4px solid #3498db;
+      border-left: 4px solid #FFD700;
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      color: #d1d5db;
     }
 
     .highlight {
-      background: #fff3cd;
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid rgba(255, 215, 0, 0.3);
       padding: 0.2rem 0.4rem;
       border-radius: 4px;
     }

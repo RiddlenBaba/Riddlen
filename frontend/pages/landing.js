@@ -28,32 +28,33 @@ export default function Landing() {
           <div className="container">
             <div className="hero-content">
               <div className="hero-text">
-                <h1>The Web3 Riddle Economy</h1>
-                <div className="hero-subtitle">Where Human Intellect Powers the Blockchain</div>
-                <div className="proof-of-solve">⚡ Live on Polygon Amoy Testnet</div>
-                <p>Experience the functional demo of our Proof-of-Solve network. Connect your wallet, mint riddle NFTs, solve puzzles, and earn RDLN tokens through our tiered reward system.</p>
+                <h1>Where Intelligence Becomes Currency</h1>
+                <div className="hero-subtitle">The First Blockchain Game Where Smart Players Win</div>
+                <div className="proof-of-solve">⚡ Live Now on Polygon Amoy Testnet</div>
+                <p>Solve riddles. Earn crypto. Build your reputation. No luck, no bots—just pure human intellect rewarded with real value in a merit-based economy.</p>
                 
                 <div className="grand-prize-banner">
-                  <h3>🏆 Growing Grand Prize Wallet</h3>
-                  <p>25% of every transaction automatically grows the ultimate jackpot</p>
+                  <h3>🚀 We're Building the Future—Join Us!</h3>
+                  <p>Oracle network live • Airdrop validation active • First NFTs minting soon</p>
+                  <p style={{fontSize: '0.9rem', marginTop: '0.5rem', color: '#FFA500'}}>Early adopters wanted • Testers needed • It's still early!</p>
                 </div>
-                
+
                 <div className="cta-buttons">
                   <a href="/game" className="btn-primary">
-                    <i className="fas fa-play"></i> Play Demo
+                    <i className="fas fa-play"></i> Start Playing Now
                   </a>
-                  <a href="/docs" className="btn-secondary">
-                    <i className="fas fa-book"></i> Read Docs
+                  <a href="/airdrop" className="btn-secondary btn-airdrop">
+                    <i className="fas fa-gift"></i> Join Airdrop (100M RDLN)
                   </a>
-                  <a href="https://github.com/RiddlenBaba/Riddlen/tree/main/contracts" target="_blank" className="btn-secondary btn-airdrop">
-                    <i className="fas fa-external-link-alt"></i> View Contracts
+                  <a href="https://riddlen.org" target="_blank" className="btn-secondary">
+                    <i className="fas fa-book"></i> Technical Docs
                   </a>
                 </div>
-                
+
                 <div className="whitepaper-link">
                   <a href="/whitepaper" className="btn-whitepaper">
-                    <i className="fas fa-file-alt"></i> Read Complete Whitepaper v5.1
-                    <span className="whitepaper-badge">Full Technical Specs</span>
+                    <i className="fas fa-file-alt"></i> Read Complete Whitepaper v6.0
+                    <span className="whitepaper-badge">Latest Version</span>
                   </a>
                 </div>
               </div>
@@ -73,21 +74,68 @@ export default function Landing() {
 
             <div className="stats-grid" style={{marginTop: '2rem'}}>
               <div className="stat-card">
-                <div className="stat-number">LIVE</div>
-                <div className="stat-label">Polygon Amoy Testnet</div>
+                <div className="stat-number">100M</div>
+                <div className="stat-label">RDLN Airdrop Live</div>
               </div>
               <div className="stat-card">
-                <div className="stat-number">5</div>
+                <div className="stat-number">6</div>
                 <div className="stat-label">Smart Contracts Deployed</div>
               </div>
               <div className="stat-card">
-                <div className="stat-number">4</div>
-                <div className="stat-label">RON Tier System (0.5x-2x)</div>
+                <div className="stat-number">200+</div>
+                <div className="stat-label">Tests Passing</div>
               </div>
               <div className="stat-card">
-                <div className="stat-number">30s</div>
-                <div className="stat-label">Anti-Cheat Timer</div>
+                <div className="stat-number">4x</div>
+                <div className="stat-label">Higher Rewards (Fast Solvers)</div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="why-riddlen" className="why-riddlen">
+          <div className="container">
+            <h2 className="section-title">Why Play Riddlen?</h2>
+            <div className="why-grid">
+              <div className="why-card">
+                <div className="why-icon">🧠</div>
+                <h3>Your Brain is Your Asset</h3>
+                <p>No need for expensive mining rigs or huge capital. If you're smart, you can win. Solve riddles to earn RDLN tokens and build RON reputation.</p>
+              </div>
+              <div className="why-card">
+                <div className="why-icon">⚡</div>
+                <h3>Solve Fast, Earn More</h3>
+                <p>First solvers earn 4x more than late solvers through our tiered reward system. Speed matters. Intelligence matters. You matter.</p>
+              </div>
+              <div className="why-card">
+                <div className="why-icon">🏆</div>
+                <h3>Merit-Based Governance</h3>
+                <p>Earn soul-bound RON tokens that give you voting power. Build your reputation, unlock higher tiers, and shape the future of the protocol.</p>
+              </div>
+              <div className="why-card">
+                <div className="why-icon">💎</div>
+                <h3>Real Economic Value</h3>
+                <p>700M RDLN locked in prize vaults over 20 years. Rug-proof treasury with immutable monthly releases. Your rewards are safe and guaranteed.</p>
+              </div>
+              <div className="why-card">
+                <div className="why-icon">🔮</div>
+                <h3>Become a Validator</h3>
+                <p>Build your RON reputation to unlock the Oracle Network. Earn RDLN by validating data for enterprises. Turn your intelligence into sustainable income.</p>
+              </div>
+              <div className="why-card">
+                <div className="why-icon">🚀</div>
+                <h3>Join Early, Win Big</h3>
+                <p>We're still in testnet! Oracle network is live, airdrop validation is active, first NFTs are about to mint. Early adopters get the best opportunities.</p>
+              </div>
+            </div>
+
+            <div className="cta-center" style={{marginTop: '3rem', textAlign: 'center'}}>
+              <a href="/game" className="btn-primary" style={{fontSize: '1.2rem', padding: '1.2rem 3rem'}}>
+                <i className="fas fa-rocket"></i> Start Your Journey Now
+              </a>
+              <p style={{marginTop: '1rem', color: '#ccc'}}>
+                Connect your wallet and start earning. No registration, no KYC, just play.
+              </p>
             </div>
           </div>
         </section>
@@ -202,11 +250,11 @@ export default function Landing() {
             </div>
             <div className="footer-section">
               <h3>Platform</h3>
-              <a href="/game">Play Demo</a>
-              <a href="/docs">Documentation</a>
+              <a href="/game">Play Now</a>
+              <a href="/airdrop">Join Airdrop</a>
+              <a href="#why-riddlen">Why Riddlen</a>
               <a href="#how-it-works">How It Works</a>
-              <a href="#tokenomics">Tokenomics</a>
-              <a href="https://github.com/RiddlenBaba/riddlen" target="_blank">GitHub</a>
+              <a href="https://riddlen.org" target="_blank">Technical Docs →</a>
             </div>
             <div className="footer-section">
               <h3>Smart Contracts</h3>
@@ -216,11 +264,11 @@ export default function Landing() {
               <a href="https://amoy.polygonscan.com/" target="_blank">Polygon Explorer</a>
             </div>
             <div className="footer-section">
-              <h3>Network</h3>
-              <a href="https://polygon.technology/" target="_blank">Polygon</a>
-              <a href="https://faucet.polygon.technology/" target="_blank">Testnet Faucet</a>
-              <a href="/docs" target="_blank">Integration Guide</a>
-              <a href="https://metamask.io/" target="_blank">MetaMask</a>
+              <h3>Resources</h3>
+              <a href="/whitepaper">Whitepaper v6.0</a>
+              <a href="https://riddlen.org" target="_blank">Developer Docs</a>
+              <a href="https://faucet.polygon.technology/" target="_blank">Get Testnet MATIC</a>
+              <a href="https://github.com/RiddlenBaba/riddlen" target="_blank">GitHub</a>
             </div>
           </div>
           <div className="footer-bottom">
@@ -897,6 +945,53 @@ export default function Landing() {
           color: #888;
         }
 
+        .why-riddlen {
+          padding: 6rem 0;
+          background: rgba(0, 0, 0, 0.3);
+        }
+
+        .why-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          gap: 2rem;
+          margin-bottom: 2rem;
+        }
+
+        .why-card {
+          background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 165, 0, 0.05));
+          border: 1px solid rgba(255, 215, 0, 0.2);
+          border-radius: 20px;
+          padding: 2.5rem;
+          transition: all 0.3s ease;
+          position: relative;
+          backdrop-filter: blur(10px);
+        }
+
+        .why-card:hover {
+          transform: translateY(-8px);
+          border-color: rgba(255, 215, 0, 0.5);
+          box-shadow: 0 25px 50px rgba(255, 215, 0, 0.15);
+        }
+
+        .why-icon {
+          font-size: 3.5rem;
+          margin-bottom: 1.5rem;
+          text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .why-card h3 {
+          font-size: 1.4rem;
+          font-weight: 700;
+          margin-bottom: 1rem;
+          color: #FFD700;
+        }
+
+        .why-card p {
+          color: #cccccc;
+          line-height: 1.7;
+          font-size: 1.05rem;
+        }
+
         @media (max-width: 768px) {
           .nav-links {
             display: none;
@@ -924,6 +1019,10 @@ export default function Landing() {
 
           .burn-split {
             flex-direction: column;
+          }
+
+          .why-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>

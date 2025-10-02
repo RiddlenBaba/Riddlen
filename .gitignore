@@ -34,6 +34,7 @@ typechain-types/
 *.swp
 *.swo
 *~
+.claude/
 
 # OS
 .DS_Store
@@ -45,7 +46,7 @@ ehthumbs.db
 Thumbs.db
 
 # Logs
-logs
+logs/
 *.log
 
 # Temporary files

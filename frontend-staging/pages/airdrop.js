@@ -1,238 +1,459 @@
 import Head from 'next/head';
 import Header from '../components/Header';
 import GlobalStyles from '../components/GlobalStyles';
-import LiveStats from '../components/LiveStats';
-import AirdropEligibility from '../components/AirdropEligibility';
 
 export default function Airdrop() {
   return (
     <>
       <Head>
-        <title>RDLN Airdrop - Get Free Tokens | Riddlen</title>
-        <meta name="description" content="Join the Riddlen airdrop and claim your RDLN tokens. Early adopters, contributors, and community members eligible for rewards." />
+        <title>100M RDLN Airdrop - Three Ways to Earn | Riddlen</title>
+        <meta name="description" content="Earn RDLN through our revolutionary 3-phase airdrop: Social proof via Farcaster, RON reputation tiers, and validation work. 15K max per wallet!" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </Head>
 
       <GlobalStyles />
 
       <div className="floating-riddles">
-        <div className="floating-riddle">💎</div>
         <div className="floating-riddle">🎁</div>
+        <div className="floating-riddle">💎</div>
         <div className="floating-riddle">⚡</div>
       </div>
 
       <Header currentPage="airdrop" />
 
       <main style={{ paddingTop: '100px', minHeight: '100vh' }}>
-        <section className="airdrop-section">
+        {/* Hero Section */}
+        <section className="airdrop-hero">
           <div className="container">
-            <div className="airdrop-hero">
-              <h1 className="airdrop-title">🎁 RDLN Token Airdrop</h1>
-              <p className="airdrop-subtitle">Join the Proof-of-Solve revolution and claim your tokens</p>
+            <h1 className="hero-title">🎁 100M RDLN Airdrop</h1>
+            <p className="hero-subtitle">Three simultaneous ways to earn. Participate in all phases to maximize your rewards!</p>
 
-              <div className="airdrop-stats">
-                <div className="stat-item">
-                  <div className="stat-value">100M</div>
-                  <div className="stat-label">Total Airdrop Pool</div>
+            <div className="hero-stats">
+              <div className="stat-box">
+                <div className="stat-value">100M</div>
+                <div className="stat-label">Total RDLN Pool</div>
+              </div>
+              <div className="stat-box">
+                <div className="stat-value">15K</div>
+                <div className="stat-label">Max Per Wallet</div>
+              </div>
+              <div className="stat-box">
+                <div className="stat-value">3</div>
+                <div className="stat-label">Ways to Earn</div>
+              </div>
+            </div>
+
+            <div className="contract-badge">
+              <span>Airdrop Contract:</span>
+              <a href="https://amoy.polygonscan.com/address/0x4f3f2202f3F865074f534aA324a259DF962C6FBA" target="_blank" rel="noopener noreferrer">
+                0x4f3f22...C6FBA <i className="fas fa-external-link-alt"></i>
+              </a>
+            </div>
+
+            <div className="early-banner">
+              <i className="fas fa-rocket"></i>
+              <div>
+                <strong>We're Building in Public!</strong>
+                <p>Oracle network live • Validation active • First NFTs minting soon • Early testers wanted</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Three Phases Overview */}
+        <section className="phases-overview">
+          <div className="container">
+            <h2 className="section-title">Three-Phase Earning System</h2>
+            <p className="section-intro">All three phases run simultaneously. Stack your earnings across multiple phases!</p>
+
+            <div className="phases-grid">
+              {/* Phase 1: Social Proof */}
+              <div className="phase-card phase-1">
+                <div className="phase-number">Phase 1</div>
+                <div className="phase-icon">🎭</div>
+                <h3>Social Proof</h3>
+                <div className="phase-reward-badge">5,000 RDLN</div>
+                <p className="phase-desc">Join our Farcaster community and prove you're human through social engagement</p>
+
+                <div className="phase-allocation">
+                  <span className="allocation-label">Allocation:</span>
+                  <span className="allocation-value">33M RDLN</span>
                 </div>
-                <div className="stat-item">
-                  <div className="stat-value">10%</div>
-                  <div className="stat-label">Of Total Supply</div>
+
+                <div className="phase-details">
+                  <h4>How to Earn:</h4>
+                  <ol>
+                    <li>Follow @Riddlen on Farcaster/Warpcast</li>
+                    <li>Cast about Riddlen and tag us</li>
+                    <li>Submit your Farcaster username</li>
+                    <li>Get verified by our team</li>
+                    <li>Claim your 5,000 RDLN</li>
+                  </ol>
+
+                  <div className="phase-specs">
+                    <div className="spec-item">
+                      <i className="fas fa-users"></i>
+                      <span>Max 6,600 participants</span>
+                    </div>
+                    <div className="spec-item">
+                      <i className="fas fa-shield-alt"></i>
+                      <span>Human verification only</span>
+                    </div>
+                    <div className="spec-item">
+                      <i className="fas fa-check-circle"></i>
+                      <span>One-time claim</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="stat-item">
-                  <div className="stat-value">Live</div>
-                  <div className="stat-label">Status</div>
-                </div>
+
+                <a href="https://warpcast.com/riddlen" target="_blank" className="phase-btn phase-1-btn">
+                  <i className="fab fa-twitter"></i> Join on Farcaster
+                </a>
               </div>
 
-              <div className="contract-info">
-                <span>Airdrop Contract:</span>
-                <a
-                  href="https://amoy.polygonscan.com/address/0x330275259AfCeC8822A861ecbbdfD026dB1B0A13"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="contract-link"
-                >
-                  0x3302...0A13 <i className="fas fa-external-link-alt"></i>
+              {/* Phase 2: RON Reputation */}
+              <div className="phase-card phase-2">
+                <div className="phase-number">Phase 2</div>
+                <div className="phase-icon">⭐</div>
+                <h3>RON Reputation</h3>
+                <div className="phase-reward-badge">2K - 5K RDLN</div>
+                <p className="phase-desc">Passive rewards based on your soul-bound RON reputation holdings</p>
+
+                <div className="phase-allocation">
+                  <span className="allocation-label">Allocation:</span>
+                  <span className="allocation-value">33M RDLN</span>
+                </div>
+
+                <div className="phase-details">
+                  <h4>Tier Structure:</h4>
+                  <div className="tier-table">
+                    <div className="tier-row tier-header">
+                      <span>Tier</span>
+                      <span>RON Required</span>
+                      <span>Reward</span>
+                    </div>
+                    <div className="tier-row">
+                      <span className="tier-name">Tier 1</span>
+                      <span>1,000 - 4,999</span>
+                      <span className="tier-reward">2,000 RDLN</span>
+                    </div>
+                    <div className="tier-row">
+                      <span className="tier-name">Tier 2</span>
+                      <span>5,000 - 9,999</span>
+                      <span className="tier-reward">3,000 RDLN</span>
+                    </div>
+                    <div className="tier-row">
+                      <span className="tier-name">Tier 3</span>
+                      <span>10,000 - 24,999</span>
+                      <span className="tier-reward">4,000 RDLN</span>
+                    </div>
+                    <div className="tier-row tier-highlight">
+                      <span className="tier-name">Tier 4</span>
+                      <span>25,000+</span>
+                      <span className="tier-reward">5,000 RDLN</span>
+                    </div>
+                  </div>
+
+                  <div className="phase-specs">
+                    <div className="spec-item">
+                      <i className="fas fa-camera"></i>
+                      <span>Snapshot-based (trustless)</span>
+                    </div>
+                    <div className="spec-item">
+                      <i className="fas fa-trophy"></i>
+                      <span>Passive earning</span>
+                    </div>
+                    <div className="spec-item">
+                      <i className="fas fa-chart-line"></i>
+                      <span>Higher RON = Higher rewards</span>
+                    </div>
+                  </div>
+                </div>
+
+                <a href="/game" className="phase-btn phase-2-btn">
+                  <i className="fas fa-play"></i> Earn RON Now
+                </a>
+              </div>
+
+              {/* Phase 3: Validation Work */}
+              <div className="phase-card phase-3">
+                <div className="phase-number">Phase 3</div>
+                <div className="phase-icon">🔮</div>
+                <h3>Validation Work</h3>
+                <div className="phase-reward-badge">Up to 5K RDLN</div>
+                <p className="phase-desc">Active earning through Oracle Network validation + airdrop bonuses</p>
+
+                <div className="phase-allocation">
+                  <span className="allocation-label">Allocation:</span>
+                  <span className="allocation-value">34M RDLN</span>
+                </div>
+
+                <div className="phase-details">
+                  <h4>How it Works:</h4>
+                  <ol>
+                    <li>Build 1,000+ RON reputation</li>
+                    <li>Become Oracle Network validator</li>
+                    <li>Complete data validations</li>
+                    <li>Earn 500 RDLN per validation (Phase 3 bonus)</li>
+                    <li>Claim multiple times as you work!</li>
+                  </ol>
+
+                  <div className="earning-note">
+                    <i className="fas fa-info-circle"></i>
+                    <p><strong>Bonus:</strong> 25% additional reward when you complete 10+ validations</p>
+                  </div>
+
+                  <div className="phase-specs">
+                    <div className="spec-item">
+                      <i className="fas fa-sync"></i>
+                      <span>Multiple claims allowed</span>
+                    </div>
+                    <div className="spec-item">
+                      <i className="fas fa-gift"></i>
+                      <span>Bonus at 10+ validations</span>
+                    </div>
+                    <div className="spec-item">
+                      <i className="fas fa-check"></i>
+                      <span>3 validation minimum</span>
+                    </div>
+                  </div>
+                </div>
+
+                <a href="https://riddlen.com/oracle" className="phase-btn phase-3-btn">
+                  <i className="fas fa-check-double"></i> Learn About Oracle
                 </a>
               </div>
             </div>
+          </div>
+        </section>
 
-            <LiveStats />
+        {/* Earning Calculator */}
+        <section className="earning-calculator">
+          <div className="container">
+            <h2 className="section-title">Your Maximum Earning Potential</h2>
 
-            <AirdropEligibility />
+            <div className="calc-grid">
+              <div className="calc-card">
+                <h3>Airdrop Allocation (15K Max)</h3>
+                <div className="calc-breakdown">
+                  <div className="calc-row">
+                    <span>Phase 1 (Social Proof)</span>
+                    <span className="calc-value">5,000 RDLN</span>
+                  </div>
+                  <div className="calc-row">
+                    <span>Phase 2 (RON Tier 4)</span>
+                    <span className="calc-value">5,000 RDLN</span>
+                  </div>
+                  <div className="calc-row">
+                    <span>Phase 3 (Validation)</span>
+                    <span className="calc-value">5,000 RDLN</span>
+                  </div>
+                  <div className="calc-total">
+                    <span>Total Airdrop Cap:</span>
+                    <span className="total-value">15,000 RDLN</span>
+                  </div>
+                </div>
+              </div>
 
-            <div className="ways-to-get">
-              <h2 className="section-heading">How to Get RDLN Tokens</h2>
+              <div className="calc-card highlight">
+                <h3>Plus: Unlimited Oracle Earnings</h3>
+                <p className="oracle-desc">Phase 3 validators earn RDLN from the Oracle Network. Each validation request has a total reward pool that gets split among correct validators:</p>
+                <div className="oracle-earnings">
+                  <div className="oracle-row">
+                    <span>Oracle Payment (Variable Pool Share):</span>
+                    <span className="oracle-value">100 - 10,000+ RDLN</span>
+                  </div>
+                  <div className="oracle-row">
+                    <span>Phase 3 Airdrop Bonus:</span>
+                    <span className="oracle-value">500 RDLN fixed</span>
+                  </div>
+                  <div className="oracle-total">
+                    <span>Your Tier Determines Pool Access:</span>
+                    <span className="oracle-amount">Bronze→Platinum</span>
+                  </div>
+                </div>
+                <p className="oracle-note">
+                  <i className="fas fa-infinity"></i>
+                  <strong>No limit on Oracle earnings!</strong> Higher tiers access bigger reward pools. Companies set pool amounts, validators split based on stake.
+                </p>
+              </div>
+            </div>
 
-              <div className="methods-grid">
-                <div className="method-card featured">
-                  <div className="method-icon">🎁</div>
-                  <h3>Community Airdrop</h3>
-                  <p>100M RDLN tokens distributed to early adopters, contributors, and active community members across multiple waves.</p>
-                  <div className="method-details">
-                    <div className="detail-item">
-                      <i className="fas fa-check-circle"></i>
-                      <span>Early adopter rewards</span>
-                    </div>
-                    <div className="detail-item">
-                      <i className="fas fa-check-circle"></i>
-                      <span>Social engagement bonuses</span>
-                    </div>
-                    <div className="detail-item">
-                      <i className="fas fa-check-circle"></i>
-                      <span>Community contribution rewards</span>
+            <div className="example-journey">
+              <h3>Example: Complete Earning Journey</h3>
+              <div className="journey-steps">
+                <div className="journey-step">
+                  <div className="step-number">1</div>
+                  <div className="step-content">
+                    <h4>Join Farcaster</h4>
+                    <p>Complete social tasks</p>
+                    <span className="step-earn">+5,000 RDLN</span>
+                  </div>
+                </div>
+                <div className="journey-step">
+                  <div className="step-number">2</div>
+                  <div className="step-content">
+                    <h4>Build RON</h4>
+                    <p>Solve riddles, reach Tier 4</p>
+                    <span className="step-earn">+5,000 RDLN</span>
+                  </div>
+                </div>
+                <div className="journey-step">
+                  <div className="step-number">3</div>
+                  <div className="step-content">
+                    <h4>Become Validator</h4>
+                    <p>Complete 10 validations</p>
+                    <span className="step-earn">+5,000 RDLN (Phase 3)</span>
+                  </div>
+                </div>
+                <div className="journey-step">
+                  <div className="step-number">4</div>
+                  <div className="step-content">
+                    <h4>Keep Validating</h4>
+                    <p>Unlimited Oracle earnings</p>
+                    <span className="step-earn">Variable (pool shares)</span>
+                  </div>
+                </div>
+              </div>
+              <div className="journey-total">
+                <strong>Total Airdrop:</strong> 15,000 RDLN max + unlimited Oracle earnings (varies by request pools)
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Farcaster Integration */}
+        <section className="farcaster-section">
+          <div className="container">
+            <div className="farcaster-content">
+              <div className="farcaster-text">
+                <h2>🎮 Play on Farcaster Frames</h2>
+                <p className="farcaster-intro">Experience Riddlen directly in your Warpcast feed with our interactive mini-app!</p>
+
+                <div className="farcaster-features">
+                  <div className="feature">
+                    <i className="fas fa-gamepad"></i>
+                    <div>
+                      <h4>Interactive Gaming</h4>
+                      <p>Solve riddles without leaving Warpcast</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => document.querySelector('.eligibility-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                    className="claim-btn"
-                  >
-                    <i className="fas fa-gift"></i> Check Eligibility
-                  </button>
+                  <div className="feature">
+                    <i className="fas fa-rocket"></i>
+                    <div>
+                      <h4>Gasless Onboarding</h4>
+                      <p>First 3 mints sponsored for new users</p>
+                    </div>
+                  </div>
+                  <div className="feature">
+                    <i className="fas fa-trophy"></i>
+                    <div>
+                      <h4>Live Leaderboards</h4>
+                      <p>Track top solvers in real-time</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="method-card">
-                  <div className="method-icon">💧</div>
-                  <h3>Testnet Faucet</h3>
-                  <p>Get free testnet RDLN to try out the platform on Polygon Amoy testnet.</p>
-                  <div className="method-details">
-                    <div className="detail-item">
-                      <i className="fas fa-check-circle"></i>
-                      <span>Instant claim (10 RDLN)</span>
-                    </div>
-                    <div className="detail-item">
-                      <i className="fas fa-check-circle"></i>
-                      <span>Once per 24 hours</span>
-                    </div>
-                    <div className="detail-item">
-                      <i className="fas fa-check-circle"></i>
-                      <span>Test platform features</span>
-                    </div>
-                  </div>
-                  <a
-                    href="https://faucet.polygon.technology/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="faucet-btn"
-                  >
-                    <i className="fas fa-faucet"></i> Claim from Faucet
+                <div className="farcaster-status">
+                  <i className="fas fa-flask"></i>
+                  <p><strong>Currently Testing:</strong> Our Farcaster Frames mini-app is live at frames.riddlen.com. Full integration coming soon!</p>
+                </div>
+
+                <div className="farcaster-buttons">
+                  <a href="https://frames.riddlen.com" target="_blank" className="btn-frames">
+                    <i className="fas fa-external-link-alt"></i> Try Frames Demo
+                  </a>
+                  <a href="https://warpcast.com/riddlen" target="_blank" className="btn-warpcast">
+                    <i className="fab fa-twitter"></i> Follow @Riddlen
                   </a>
                 </div>
-
-                <div className="method-card">
-                  <div className="method-icon">💱</div>
-                  <h3>DEX Swap (Coming Soon)</h3>
-                  <p>Trade MATIC for RDLN on decentralized exchanges once liquidity pools are live.</p>
-                  <div className="method-details">
-                    <div className="detail-item">
-                      <i className="fas fa-info-circle"></i>
-                      <span>100M RDLN liquidity pool</span>
-                    </div>
-                    <div className="detail-item">
-                      <i className="fas fa-info-circle"></i>
-                      <span>Locked for up to 10 years</span>
-                    </div>
-                    <div className="detail-item">
-                      <i className="fas fa-info-circle"></i>
-                      <span>Permanent market depth</span>
-                    </div>
-                  </div>
-                  <button className="swap-btn disabled">
-                    <i className="fas fa-exchange-alt"></i> Coming Soon
-                  </button>
-                </div>
-
-                <div className="method-card">
-                  <div className="method-icon">🧩</div>
-                  <h3>Solve Riddles</h3>
-                  <p>Earn RDLN by solving cryptographic riddles. First solvers get the largest rewards!</p>
-                  <div className="method-details">
-                    <div className="detail-item">
-                      <i className="fas fa-check-circle"></i>
-                      <span>700M RDLN in prize pools</span>
-                    </div>
-                    <div className="detail-item">
-                      <i className="fas fa-check-circle"></i>
-                      <span>Tiered reward multipliers</span>
-                    </div>
-                    <div className="detail-item">
-                      <i className="fas fa-check-circle"></i>
-                      <span>Progress through RON tiers</span>
-                    </div>
-                  </div>
-                  <a href="/game" className="play-btn">
-                    <i className="fas fa-play"></i> Play Now
-                  </a>
-                </div>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="eligibility-section">
-              <h2 className="section-heading">Airdrop Eligibility Criteria</h2>
-              <div className="eligibility-grid">
-                <div className="eligibility-card">
-                  <div className="eligibility-icon">👥</div>
-                  <h4>Early Adopters</h4>
-                  <p>Users who join during testnet phase and actively participate in platform testing.</p>
-                </div>
-                <div className="eligibility-card">
-                  <div className="eligibility-icon">🔧</div>
-                  <h4>Contributors</h4>
-                  <p>Community members who contribute code, riddles, documentation, or platform improvements.</p>
-                </div>
-                <div className="eligibility-card">
-                  <div className="eligibility-icon">📢</div>
-                  <h4>Social Engagement</h4>
-                  <p>Active followers on X, Telegram community participants, and content creators.</p>
-                </div>
-                <div className="eligibility-card">
-                  <div className="eligibility-icon">🎯</div>
-                  <h4>Riddle Solvers</h4>
-                  <p>Users who solve riddles and demonstrate engagement with the core game mechanics.</p>
-                </div>
+        {/* How to Participate */}
+        <section className="how-to-participate">
+          <div className="container">
+            <h2 className="section-title">How to Participate</h2>
+
+            <div className="steps-grid">
+              <div className="step-card">
+                <div className="step-icon">1</div>
+                <h3>Connect Your Wallet</h3>
+                <p>Use MetaMask on Polygon Amoy testnet. Get free testnet MATIC from the faucet.</p>
+                <a href="https://faucet.polygon.technology/" target="_blank" className="step-link">Get Testnet MATIC →</a>
+              </div>
+
+              <div className="step-card">
+                <div className="step-icon">2</div>
+                <h3>Join Farcaster</h3>
+                <p>Follow @Riddlen on Warpcast, complete social tasks, and claim your 5K RDLN.</p>
+                <a href="https://warpcast.com/riddlen" target="_blank" className="step-link">Join Farcaster →</a>
+              </div>
+
+              <div className="step-card">
+                <div className="step-icon">3</div>
+                <h3>Earn RON</h3>
+                <p>Solve riddles to build soul-bound reputation and unlock higher airdrop tiers.</p>
+                <a href="/game" className="step-link">Start Solving →</a>
+              </div>
+
+              <div className="step-card">
+                <div className="step-icon">4</div>
+                <h3>Become Validator</h3>
+                <p>Reach 1,000 RON to unlock Oracle Network and earn through validation work.</p>
+                <a href="https://riddlen.com/oracle" className="step-link">Learn More →</a>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="airdrop-timeline">
-              <h2 className="section-heading">Airdrop Timeline</h2>
-              <div className="timeline">
-                <div className="timeline-item completed">
-                  <div className="timeline-marker"></div>
-                  <div className="timeline-content">
-                    <h4>Wave 1: Testnet Launch</h4>
-                    <p className="timeline-status">✅ Completed</p>
-                    <p>Early adopters who test the platform during Polygon Amoy testnet phase.</p>
-                  </div>
-                </div>
-                <div className="timeline-item active">
-                  <div className="timeline-marker"></div>
-                  <div className="timeline-content">
-                    <h4>Wave 2: Community Growth</h4>
-                    <p className="timeline-status">🟢 Active Now</p>
-                    <p>Social engagement rewards for X followers, Telegram members, and content creators.</p>
-                  </div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-marker"></div>
-                  <div className="timeline-content">
-                    <h4>Wave 3: Mainnet Launch</h4>
-                    <p className="timeline-status">⚪ Planned</p>
-                    <p>Rewards for users who helped test and improve the platform before mainnet.</p>
-                  </div>
-                </div>
+        {/* Important Information */}
+        <section className="important-info">
+          <div className="container">
+            <h2 className="section-title">Important Information</h2>
+
+            <div className="info-grid">
+              <div className="info-card">
+                <i className="fas fa-exclamation-circle"></i>
+                <h3>Testnet Status</h3>
+                <p>We're currently on Polygon Amoy testnet. All 6 contracts are deployed and operational. Oracle network is live, airdrop validation is active!</p>
+              </div>
+
+              <div className="info-card">
+                <i className="fas fa-users"></i>
+                <h3>Fair Distribution</h3>
+                <p>15K RDLN max per wallet across all phases. 100M total allocation ensures wide distribution to 6,600+ early participants.</p>
+              </div>
+
+              <div className="info-card">
+                <i className="fas fa-shield-alt"></i>
+                <h3>Bot Protection</h3>
+                <p>Human verification required for Phase 1. Snapshot-based Phase 2 prevents manipulation. RON requirement for Phase 3 ensures quality validators.</p>
+              </div>
+
+              <div className="info-card">
+                <i className="fas fa-infinity"></i>
+                <h3>Beyond Airdrop</h3>
+                <p>The 15K airdrop cap is just the beginning. Oracle Network offers unlimited earning potential through validation work!</p>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="cta-section">
-              <h2>Ready to Get Started?</h2>
-              <p>Connect your wallet and join the Riddlen community today!</p>
+        {/* CTA Section */}
+        <section className="cta-section">
+          <div className="container">
+            <div className="cta-box">
+              <h2>Ready to Claim Your RDLN?</h2>
+              <p>Start earning today through our three-phase airdrop system</p>
               <div className="cta-buttons">
-                <a href="/game" className="btn-primary">
-                  <i className="fas fa-gamepad"></i> Play Demo
+                <a href="/game" className="btn-cta-primary">
+                  <i className="fas fa-rocket"></i> Start Earning Now
                 </a>
-                <a href="https://t.me/RiddlenCommunity" target="_blank" rel="noopener noreferrer" className="btn-secondary">
-                  <i className="fab fa-telegram"></i> Join Community
+                <a href="/faq" className="btn-cta-secondary">
+                  <i className="fas fa-question-circle"></i> View FAQ
                 </a>
               </div>
             </div>
@@ -240,518 +461,888 @@ export default function Airdrop() {
         </section>
       </main>
 
-      <footer className="footer">
-        <div className="container">
-          <div className="footer-content">
-            <div className="footer-section">
-              <h3>Riddlen Economy</h3>
-              <p>The world's first Proof-of-Solve blockchain where human intellect powers decentralized finance through cryptographic riddles and NFT gaming.</p>
-              <div className="social-links">
-                <a href="https://x.com/RiddlenToken" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
-                <a href="https://t.me/RiddlenToken" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i className="fab fa-telegram"></i></a>
-                <a href="https://t.me/RiddlenCommunity" target="_blank" rel="noopener noreferrer" aria-label="Community"><i className="fas fa-users"></i></a>
-                <a href="https://github.com/RiddlenBaba/riddlen/discussions" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i className="fab fa-github"></i></a>
-              </div>
-            </div>
-            <div className="footer-section">
-              <h3>Platform</h3>
-              <a href="/game">Play Demo</a>
-              <a href="/docs">Documentation</a>
-              <a href="/dashboard">Dashboard</a>
-              <a href="/airdrop">Airdrop</a>
-              <a href="https://github.com/RiddlenBaba/riddlen" target="_blank">GitHub</a>
-            </div>
-            <div className="footer-section">
-              <h3>Smart Contracts</h3>
-              <a href="https://amoy.polygonscan.com/address/0x133029184EC460F661d05b0dC57BFC916b4AB0eB" target="_blank">RDLN Token</a>
-              <a href="https://amoy.polygonscan.com/address/0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635" target="_blank">RON Token</a>
-              <a href="https://amoy.polygonscan.com/address/0x529e3076cB9A48D6FAd086abE5d23ea76159e9E3" target="_blank">Riddle NFT</a>
-              <a href="https://amoy.polygonscan.com/" target="_blank">Polygon Explorer</a>
-            </div>
-            <div className="footer-section">
-              <h3>Network</h3>
-              <a href="https://polygon.technology/" target="_blank">Polygon</a>
-              <a href="https://faucet.polygon.technology/" target="_blank">Testnet Faucet</a>
-              <a href="/docs" target="_blank">Integration Guide</a>
-              <a href="https://metamask.io/" target="_blank">MetaMask</a>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <p>&copy; 2025 Riddlen. The Web3 Riddle Economy. Built on Polygon with Proof-of-Solve.</p>
-          </div>
-        </div>
-      </footer>
-
-      <style jsx>{`
-        .airdrop-section {
-          padding: 2rem 0 4rem;
-        }
-
+      <style jsx global>{`
+        /* Hero Section */
         .airdrop-hero {
-          text-align: center;
-          margin-bottom: 4rem;
+          background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+          padding: 4rem 0;
+          border-bottom: 1px solid rgba(255, 215, 0, 0.2);
         }
 
-        .airdrop-title {
+        .hero-title {
+          text-align: center;
           font-size: 3.5rem;
           font-weight: 800;
-          margin-bottom: 1rem;
-          background: linear-gradient(45deg, #FFD700, #FFA500, #FF6347);
+          background: linear-gradient(45deg, #ffffff, #FFD700);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
+          margin-bottom: 1rem;
         }
 
-        .airdrop-subtitle {
+        .hero-subtitle {
+          text-align: center;
           font-size: 1.3rem;
           color: #cccccc;
           margin-bottom: 3rem;
+          max-width: 800px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
-        .airdrop-stats {
-          display: flex;
-          justify-content: center;
-          gap: 3rem;
-          flex-wrap: wrap;
+        .hero-stats {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 2rem;
+          max-width: 900px;
+          margin: 0 auto 2rem;
         }
 
-        .stat-item {
+        .stat-box {
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 215, 0, 0.3);
+          border-radius: 15px;
+          padding: 1.5rem;
           text-align: center;
+          transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+          border-color: rgba(255, 215, 0, 0.6);
+          transform: translateY(-3px);
         }
 
         .stat-value {
           font-size: 2.5rem;
           font-weight: 800;
           color: #FFD700;
-          text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+          margin-bottom: 0.5rem;
         }
 
         .stat-label {
-          font-size: 0.9rem;
-          color: #999;
-          text-transform: uppercase;
-          letter-spacing: 1px;
+          color: #cccccc;
+          font-size: 0.95rem;
         }
 
-        .contract-info {
+        .contract-badge {
           text-align: center;
-          margin-top: 2rem;
+          margin: 2rem 0;
           padding: 1rem;
           background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 215, 0, 0.2);
           border-radius: 10px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 0.75rem;
-          flex-wrap: wrap;
+          max-width: 600px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
-        .contract-info span {
-          color: #aaaaaa;
-          font-size: 0.9rem;
+        .contract-badge span {
+          color: #cccccc;
+          margin-right: 1rem;
         }
 
-        .contract-link {
+        .contract-badge a {
           color: #FFD700;
           text-decoration: none;
-          font-family: monospace;
           font-weight: 600;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          transition: all 0.3s ease;
+          transition: color 0.3s ease;
         }
 
-        .contract-link:hover {
+        .contract-badge a:hover {
           color: #FFA500;
-          transform: translateX(2px);
         }
 
-        .section-heading {
+        .early-banner {
+          background: linear-gradient(45deg, rgba(255, 99, 71, 0.2), rgba(255, 215, 0, 0.2));
+          border: 2px solid rgba(255, 215, 0, 0.5);
+          border-radius: 15px;
+          padding: 1.5rem;
+          max-width: 900px;
+          margin: 2rem auto 0;
+          display: flex;
+          gap: 1.5rem;
+          align-items: center;
+        }
+
+        .early-banner i {
+          font-size: 3rem;
+          color: #FFD700;
+          flex-shrink: 0;
+        }
+
+        .early-banner strong {
+          color: #FFD700;
+          font-size: 1.3rem;
+          display: block;
+          margin-bottom: 0.5rem;
+        }
+
+        .early-banner p {
+          color: #cccccc;
+          margin: 0;
+        }
+
+        /* Phases Overview */
+        .phases-overview {
+          padding: 5rem 0;
+        }
+
+        .section-title {
           text-align: center;
-          font-size: 2.5rem;
+          font-size: 2.8rem;
           font-weight: 800;
-          margin-bottom: 2rem;
           background: linear-gradient(45deg, #ffffff, #FFD700);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
+          margin-bottom: 1rem;
         }
 
-        .ways-to-get {
-          margin: 4rem 0;
+        .section-intro {
+          text-align: center;
+          font-size: 1.2rem;
+          color: #cccccc;
+          margin-bottom: 4rem;
         }
 
-        .methods-grid {
+        .phases-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 2rem;
-          margin-top: 2rem;
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          gap: 2.5rem;
         }
 
-        .method-card {
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 215, 0, 0.2);
+        .phase-card {
+          background: rgba(0, 0, 0, 0.4);
+          border: 2px solid;
           border-radius: 20px;
-          padding: 2rem;
+          padding: 2.5rem;
+          position: relative;
           transition: all 0.3s ease;
         }
 
-        .method-card.featured {
-          border: 2px solid rgba(255, 215, 0, 0.5);
-          box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+        .phase-card.phase-1 {
+          border-color: rgba(255, 99, 71, 0.5);
+          background: linear-gradient(135deg, rgba(255, 99, 71, 0.15), rgba(255, 69, 0, 0.08));
         }
 
-        .method-card:hover {
-          transform: translateY(-5px);
-          border-color: rgba(255, 215, 0, 0.4);
-          box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+        .phase-card.phase-2 {
+          border-color: rgba(138, 43, 226, 0.5);
+          background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(148, 0, 211, 0.08));
         }
 
-        .method-icon {
-          font-size: 3rem;
-          margin-bottom: 1rem;
+        .phase-card.phase-3 {
+          border-color: rgba(255, 215, 0, 0.5);
+          background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.08));
         }
 
-        .method-card h3 {
+        .phase-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 30px 60px rgba(255, 215, 0, 0.2);
+        }
+
+        .phase-number {
+          position: absolute;
+          top: -15px;
+          left: 20px;
+          background: linear-gradient(45deg, #FFD700, #FFA500);
+          color: #000;
+          padding: 0.5rem 1.5rem;
+          border-radius: 20px;
+          font-weight: 700;
+        }
+
+        .phase-icon {
+          font-size: 4rem;
+          text-align: center;
+          margin: 1rem 0;
+        }
+
+        .phase-card h3 {
           color: #FFD700;
-          font-size: 1.5rem;
+          font-size: 2rem;
+          font-weight: 700;
+          text-align: center;
           margin-bottom: 1rem;
         }
 
-        .method-card p {
+        .phase-reward-badge {
+          background: rgba(255, 215, 0, 0.2);
+          border: 1px solid rgba(255, 215, 0, 0.5);
+          color: #FFD700;
+          text-align: center;
+          padding: 0.75rem;
+          border-radius: 10px;
+          font-size: 1.3rem;
+          font-weight: 700;
+          margin-bottom: 1rem;
+        }
+
+        .phase-desc {
           color: #cccccc;
+          text-align: center;
+          margin-bottom: 1.5rem;
           line-height: 1.6;
+        }
+
+        .phase-allocation {
+          display: flex;
+          justify-content: center;
+          gap: 1rem;
+          padding: 1rem;
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 10px;
           margin-bottom: 1.5rem;
         }
 
-        .method-details {
-          margin: 1.5rem 0;
+        .allocation-label {
+          color: #FFA500;
         }
 
-        .detail-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin: 0.75rem 0;
-          color: #aaaaaa;
-          font-size: 0.9rem;
-        }
-
-        .detail-item i {
+        .allocation-value {
           color: #FFD700;
+          font-weight: 700;
         }
 
-        .claim-btn, .faucet-btn, .swap-btn, .play-btn {
-          width: 100%;
-          padding: 1rem;
-          border-radius: 50px;
-          font-weight: 600;
-          font-size: 1rem;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          transition: all 0.3s ease;
-          text-decoration: none;
+        .phase-details {
+          margin-top: 1.5rem;
         }
 
-        .claim-btn {
-          background: linear-gradient(45deg, #FFD700, #FFA500);
-          color: #000;
-        }
-
-        .claim-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
-        }
-
-        .faucet-btn {
-          background: linear-gradient(45deg, #3b82f6, #2563eb);
-          color: #fff;
-        }
-
-        .faucet-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
-        }
-
-        .swap-btn {
-          background: rgba(100, 100, 100, 0.3);
-          color: #999;
-          cursor: not-allowed;
-        }
-
-        .swap-btn.disabled {
-          opacity: 0.6;
-        }
-
-        .play-btn {
-          background: linear-gradient(45deg, #10b981, #059669);
-          color: #fff;
-        }
-
-        .play-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
-        }
-
-        .eligibility-section {
-          margin: 4rem 0;
-        }
-
-        .eligibility-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 2rem;
-          margin-top: 2rem;
-        }
-
-        .eligibility-card {
-          background: rgba(0, 0, 0, 0.2);
-          border: 1px solid rgba(255, 215, 0, 0.15);
-          border-radius: 15px;
-          padding: 2rem;
-          text-align: center;
-          transition: all 0.3s ease;
-        }
-
-        .eligibility-card:hover {
-          border-color: rgba(255, 215, 0, 0.3);
-          transform: translateY(-5px);
-        }
-
-        .eligibility-icon {
-          font-size: 2.5rem;
+        .phase-details h4 {
+          color: #FFA500;
+          font-size: 1.1rem;
           margin-bottom: 1rem;
         }
 
-        .eligibility-card h4 {
+        .phase-details ol {
+          color: #cccccc;
+          padding-left: 1.5rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .phase-details ol li {
+          padding: 0.4rem 0;
+          line-height: 1.5;
+        }
+
+        .tier-table {
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 10px;
+          overflow: hidden;
+          margin-bottom: 1.5rem;
+        }
+
+        .tier-row {
+          display: grid;
+          grid-template-columns: 1fr 1.5fr 1fr;
+          gap: 1rem;
+          padding: 0.75rem 1rem;
+          align-items: center;
+        }
+
+        .tier-header {
+          background: rgba(255, 215, 0, 0.2);
           color: #FFD700;
-          font-size: 1.2rem;
-          margin-bottom: 0.75rem;
-        }
-
-        .eligibility-card p {
-          color: #aaaaaa;
+          font-weight: 700;
           font-size: 0.9rem;
-          line-height: 1.6;
         }
 
-        .airdrop-timeline {
-          margin: 4rem 0;
+        .tier-row:not(.tier-header):not(:last-child) {
+          border-bottom: 1px solid rgba(255, 215, 0, 0.1);
         }
 
-        .timeline {
-          max-width: 800px;
-          margin: 2rem auto;
-          position: relative;
+        .tier-row:not(.tier-header) {
+          color: #cccccc;
         }
 
-        .timeline::before {
-          content: '';
-          position: absolute;
-          left: 20px;
-          top: 0;
-          bottom: 0;
-          width: 2px;
-          background: linear-gradient(to bottom, #FFD700, rgba(255, 215, 0, 0.2));
+        .tier-highlight {
+          background: rgba(255, 215, 0, 0.1);
         }
 
-        .timeline-item {
-          position: relative;
-          padding-left: 60px;
+        .tier-name {
+          color: #FFD700;
+          font-weight: 600;
+        }
+
+        .tier-reward {
+          color: #FFD700;
+          font-weight: 600;
+          text-align: right;
+        }
+
+        .phase-specs {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        .spec-item {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          color: #cccccc;
+          font-size: 0.95rem;
+        }
+
+        .spec-item i {
+          color: #FFD700;
+          width: 20px;
+        }
+
+        .earning-note {
+          background: rgba(138, 43, 226, 0.15);
+          border: 1px solid rgba(138, 43, 226, 0.4);
+          border-radius: 10px;
+          padding: 1rem;
+          margin: 1.5rem 0;
+          display: flex;
+          gap: 0.75rem;
+        }
+
+        .earning-note i {
+          color: #8A2BE2;
+          font-size: 1.2rem;
+          flex-shrink: 0;
+        }
+
+        .earning-note p {
+          color: #cccccc;
+          margin: 0;
+        }
+
+        .phase-btn {
+          display: block;
+          text-align: center;
+          padding: 1rem;
+          border-radius: 50px;
+          text-decoration: none;
+          font-weight: 700;
+          margin-top: 1.5rem;
+          transition: all 0.3s ease;
+        }
+
+        .phase-1-btn {
+          background: linear-gradient(45deg, #FF6347, #FF4500);
+          color: #ffffff;
+        }
+
+        .phase-2-btn {
+          background: linear-gradient(45deg, #8A2BE2, #9370DB);
+          color: #ffffff;
+        }
+
+        .phase-3-btn {
+          background: linear-gradient(45deg, #FFD700, #FFA500);
+          color: #000000;
+        }
+
+        .phase-btn:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 15px 35px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Earning Calculator */
+        .earning-calculator {
+          padding: 5rem 0;
+          background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(255, 165, 0, 0.03));
+        }
+
+        .calc-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+          gap: 2.5rem;
           margin-bottom: 3rem;
         }
 
-        .timeline-marker {
-          position: absolute;
-          left: 11px;
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: rgba(100, 100, 100, 0.5);
+        .calc-card {
+          background: rgba(0, 0, 0, 0.4);
           border: 2px solid rgba(255, 215, 0, 0.3);
+          border-radius: 20px;
+          padding: 2.5rem;
         }
 
-        .timeline-item.completed .timeline-marker {
-          background: #10b981;
-          border-color: #10b981;
-          box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        .calc-card.highlight {
+          border-color: rgba(138, 43, 226, 0.5);
+          background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(148, 0, 211, 0.08));
         }
 
-        .timeline-item.active .timeline-marker {
-          background: #FFD700;
-          border-color: #FFD700;
-          box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-          animation: pulse-timeline 2s ease-in-out infinite;
+        .calc-card h3 {
+          color: #FFD700;
+          font-size: 1.8rem;
+          margin-bottom: 1.5rem;
         }
 
-        @keyframes pulse-timeline {
-          0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
-          50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.9); }
+        .oracle-desc {
+          color: #cccccc;
+          margin-bottom: 1.5rem;
+          line-height: 1.6;
         }
 
-        .timeline-content {
+        .calc-breakdown, .oracle-earnings {
+          margin-bottom: 1.5rem;
+        }
+
+        .calc-row, .oracle-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 0.75rem 0;
+          color: #cccccc;
+          border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        .calc-value, .oracle-value {
+          color: #FFD700;
+          font-weight: 600;
+        }
+
+        .calc-total, .oracle-total {
+          display: flex;
+          justify-content: space-between;
+          padding: 1rem 0 0;
+          margin-top: 1rem;
+          border-top: 2px solid rgba(255, 215, 0, 0.3);
+          font-size: 1.2rem;
+          font-weight: 700;
+        }
+
+        .total-value, .oracle-amount {
+          color: #FFD700;
+          font-size: 1.5rem;
+        }
+
+        .oracle-note {
+          background: rgba(255, 215, 0, 0.1);
+          border: 1px solid rgba(255, 215, 0, 0.3);
+          border-radius: 10px;
+          padding: 1rem;
+          color: #cccccc;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .oracle-note i {
+          color: #FFD700;
+          font-size: 1.5rem;
+        }
+
+        .example-journey {
+          background: rgba(0, 0, 0, 0.4);
+          border: 2px solid rgba(255, 215, 0, 0.3);
+          border-radius: 20px;
+          padding: 2.5rem;
+        }
+
+        .example-journey h3 {
+          color: #FFD700;
+          font-size: 2rem;
+          margin-bottom: 2rem;
+          text-align: center;
+        }
+
+        .journey-steps {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+
+        .journey-step {
           background: rgba(0, 0, 0, 0.3);
           border: 1px solid rgba(255, 215, 0, 0.2);
           border-radius: 15px;
           padding: 1.5rem;
+          text-align: center;
+          transition: all 0.3s ease;
         }
 
-        .timeline-item.active .timeline-content {
-          border-color: rgba(255, 215, 0, 0.4);
+        .journey-step:hover {
+          border-color: rgba(255, 215, 0, 0.5);
+          transform: translateY(-5px);
         }
 
-        .timeline-content h4 {
+        .step-number {
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(45deg, #FFD700, #FFA500);
+          color: #000;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 1.2rem;
+          margin: 0 auto 1rem;
+        }
+
+        .step-content h4 {
           color: #FFD700;
-          font-size: 1.3rem;
           margin-bottom: 0.5rem;
         }
 
-        .timeline-status {
-          color: #aaaaaa;
+        .step-content p {
+          color: #cccccc;
           font-size: 0.9rem;
           margin-bottom: 0.75rem;
         }
 
-        .timeline-content p {
+        .step-earn {
+          color: #FFD700;
+          font-weight: 700;
+          font-size: 1.1rem;
+        }
+
+        .journey-total {
+          background: rgba(255, 215, 0, 0.2);
+          border: 1px solid rgba(255, 215, 0, 0.5);
+          border-radius: 10px;
+          padding: 1.5rem;
+          text-align: center;
+          font-size: 1.3rem;
+          color: #FFD700;
+        }
+
+        /* Farcaster Section */
+        .farcaster-section {
+          padding: 5rem 0;
+          background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(148, 0, 211, 0.05));
+        }
+
+        .farcaster-text h2 {
+          font-size: 2.5rem;
+          font-weight: 800;
+          background: linear-gradient(45deg, #ffffff, #8A2BE2);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-bottom: 1rem;
+        }
+
+        .farcaster-intro {
+          color: #cccccc;
+          font-size: 1.2rem;
+          margin-bottom: 2rem;
+        }
+
+        .farcaster-features {
+          display: grid;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+
+        .feature {
+          display: flex;
+          align-items: flex-start;
+          gap: 1.5rem;
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(138, 43, 226, 0.3);
+          border-radius: 15px;
+          padding: 1.5rem;
+          transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+          border-color: rgba(138, 43, 226, 0.6);
+          transform: translateX(5px);
+        }
+
+        .feature i {
+          font-size: 2.5rem;
+          color: #8A2BE2;
+          flex-shrink: 0;
+        }
+
+        .feature h4 {
+          color: #9370DB;
+          font-size: 1.2rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .feature p {
+          color: #cccccc;
+          margin: 0;
+        }
+
+        .farcaster-status {
+          background: rgba(138, 43, 226, 0.15);
+          border: 1px solid rgba(138, 43, 226, 0.4);
+          border-radius: 10px;
+          padding: 1rem;
+          margin: 2rem 0;
+          display: flex;
+          gap: 0.75rem;
+        }
+
+        .farcaster-status i {
+          color: #8A2BE2;
+          font-size: 1.2rem;
+          flex-shrink: 0;
+        }
+
+        .farcaster-status p {
+          color: #cccccc;
+          margin: 0;
+        }
+
+        .farcaster-buttons {
+          display: flex;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+        }
+
+        .btn-frames, .btn-warpcast {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 1rem 2rem;
+          border-radius: 50px;
+          text-decoration: none;
+          font-weight: 700;
+          transition: all 0.3s ease;
+        }
+
+        .btn-frames {
+          background: linear-gradient(45deg, #8A2BE2, #9370DB);
+          color: #ffffff;
+        }
+
+        .btn-warpcast {
+          background: transparent;
+          color: #8A2BE2;
+          border: 2px solid #8A2BE2;
+        }
+
+        .btn-frames:hover, .btn-warpcast:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 15px 30px rgba(138, 43, 226, 0.3);
+        }
+
+        .btn-warpcast:hover {
+          background: rgba(138, 43, 226, 0.1);
+        }
+
+        /* How to Participate */
+        .how-to-participate {
+          padding: 5rem 0;
+        }
+
+        .steps-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 2rem;
+        }
+
+        .step-card {
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 215, 0, 0.2);
+          border-radius: 15px;
+          padding: 2rem;
+          text-align: center;
+          transition: all 0.3s ease;
+        }
+
+        .step-card:hover {
+          border-color: rgba(255, 215, 0, 0.5);
+          transform: translateY(-5px);
+        }
+
+        .step-icon {
+          width: 60px;
+          height: 60px;
+          background: linear-gradient(45deg, #FFD700, #FFA500);
+          color: #000;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.8rem;
+          font-weight: 700;
+          margin: 0 auto 1.5rem;
+        }
+
+        .step-card h3 {
+          color: #FFD700;
+          font-size: 1.3rem;
+          margin-bottom: 1rem;
+        }
+
+        .step-card p {
           color: #cccccc;
           line-height: 1.6;
+          margin-bottom: 1rem;
         }
 
-        .cta-section {
+        .step-link {
+          color: #FFD700;
+          text-decoration: none;
+          font-weight: 600;
+          transition: color 0.3s ease;
+        }
+
+        .step-link:hover {
+          color: #FFA500;
+        }
+
+        /* Important Info */
+        .important-info {
+          padding: 5rem 0;
+          background: rgba(0, 0, 0, 0.2);
+        }
+
+        .info-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 2rem;
+        }
+
+        .info-card {
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 215, 0, 0.2);
+          border-radius: 15px;
+          padding: 2rem;
           text-align: center;
-          margin: 4rem 0;
-          padding: 3rem;
-          background: linear-gradient(45deg, rgba(255, 215, 0, 0.1), rgba(255, 99, 71, 0.1));
-          border: 2px solid rgba(255, 215, 0, 0.3);
-          border-radius: 20px;
         }
 
-        .cta-section h2 {
-          font-size: 2rem;
+        .info-card i {
+          font-size: 3rem;
           color: #FFD700;
           margin-bottom: 1rem;
         }
 
-        .cta-section p {
-          font-size: 1.1rem;
+        .info-card h3 {
+          color: #FFD700;
+          font-size: 1.3rem;
+          margin-bottom: 1rem;
+        }
+
+        .info-card p {
           color: #cccccc;
-          margin-bottom: 2rem;
+          line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .cta-section {
+          padding: 5rem 0;
+          background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+        }
+
+        .cta-box {
+          background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1));
+          border: 2px solid rgba(255, 215, 0, 0.4);
+          border-radius: 25px;
+          padding: 4rem;
+          text-align: center;
+        }
+
+        .cta-box h2 {
+          color: #FFD700;
+          font-size: 2.8rem;
+          font-weight: 800;
+          margin-bottom: 1rem;
+        }
+
+        .cta-box > p {
+          color: #cccccc;
+          font-size: 1.3rem;
+          margin-bottom: 2.5rem;
         }
 
         .cta-buttons {
           display: flex;
-          gap: 1rem;
           justify-content: center;
+          gap: 1.5rem;
           flex-wrap: wrap;
         }
 
-        .btn-primary {
+        .btn-cta-primary {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.75rem;
           background: linear-gradient(45deg, #FFD700, #FFA500);
           color: #000;
-          padding: 1rem 2rem;
+          padding: 1.2rem 3rem;
           border-radius: 50px;
           text-decoration: none;
-          font-weight: 600;
+          font-weight: 700;
+          font-size: 1.2rem;
           transition: all 0.3s ease;
+        }
+
+        .btn-cta-secondary {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
-        }
-
-        .btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 15px 35px rgba(255, 215, 0, 0.4);
-        }
-
-        .btn-secondary {
+          gap: 0.75rem;
           background: transparent;
           color: #FFD700;
-          padding: 1rem 2rem;
           border: 2px solid #FFD700;
+          padding: 1.2rem 3rem;
           border-radius: 50px;
           text-decoration: none;
-          font-weight: 600;
+          font-weight: 700;
+          font-size: 1.2rem;
           transition: all 0.3s ease;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
         }
 
-        .btn-secondary:hover {
+        .btn-cta-primary:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 20px 40px rgba(255, 215, 0, 0.5);
+        }
+
+        .btn-cta-secondary:hover {
           background: rgba(255, 215, 0, 0.1);
-          transform: translateY(-2px);
+          transform: translateY(-3px);
         }
 
+        /* Responsive */
         @media (max-width: 768px) {
-          .airdrop-title {
+          .hero-title {
             font-size: 2.5rem;
           }
 
-          .airdrop-stats {
-            gap: 2rem;
-          }
-
-          .methods-grid {
+          .hero-stats {
             grid-template-columns: 1fr;
           }
 
-          .eligibility-grid {
+          .early-banner {
+            flex-direction: column;
+            text-align: center;
+          }
+
+          .phases-grid {
             grid-template-columns: 1fr;
           }
 
-          .timeline::before {
-            left: 10px;
+          .calc-grid {
+            grid-template-columns: 1fr;
           }
 
-          .timeline-item {
-            padding-left: 50px;
+          .journey-steps {
+            grid-template-columns: 1fr;
           }
 
-          .timeline-marker {
-            left: 1px;
+          .steps-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .info-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .farcaster-buttons {
+            flex-direction: column;
           }
 
           .cta-buttons {
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
           }
-        }
 
-        .social-links {
-          display: flex;
-          gap: 1rem;
-          margin-top: 1rem;
-        }
+          .tier-row {
+            grid-template-columns: 1fr;
+            text-align: center;
+          }
 
-        .social-links a {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.2);
-          color: #FFD700;
-          transition: all 0.3s ease;
-          text-decoration: none;
-        }
-
-        .social-links a:hover {
-          background: rgba(255, 215, 0, 0.2);
-          border-color: rgba(255, 215, 0, 0.4);
-          transform: translateY(-2px);
-          box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .social-links i {
-          font-size: 1.1rem;
+          .tier-reward {
+            text-align: center;
+          }
         }
       `}</style>
     </>

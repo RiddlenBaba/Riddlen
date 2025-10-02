@@ -18,6 +18,7 @@ const navigation = [
     items: [
       { title: 'Tokenomics', href: '/docs/tokenomics' },
       { title: 'NFT Mechanics', href: '/docs/nft-mechanics' },
+      { title: 'Group Mechanics', href: '/docs/group-mechanics' },
       { title: 'Burning Protocol', href: '/docs/burning-protocol' },
       { title: 'RON Reputation System', href: '/docs/ron-reputation' },
     ]

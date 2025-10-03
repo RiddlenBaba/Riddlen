@@ -20,6 +20,15 @@ This file helps Claude Code understand your project structure and preferences.
 - Implement reentrancy guards for state-changing functions
 - Add comprehensive input validation
 - Follow CEI (Checks-Effects-Interactions) pattern
+- **NEVER read .env files** - they contain sensitive deployment keys and API secrets
+
+## ⚠️ IMPORTANT: Files to NEVER Access
+- **.env files** (all variants: .env, .env.local, .env.production, etc.)
+- **Private keys** (*.key, *.pem, deployment keys, etc.)
+- **Secrets/credentials** (any file with "secret", "token", "apikey" in name)
+- **Wallet mnemonics** or **private keys** in any form
+
+See `.claudeignore` in project root for complete list.
 
 ## Code Style
 - Use NatSpec documentation for all public functions

@@ -1,0 +1,61 @@
+# Claude Code Ignore File
+# Files and directories that Claude should NOT read or access
+
+# Environment variables and secrets
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+*.env
+
+# Private keys and credentials
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+private-keys/
+credentials/
+
+# API keys and tokens
+*secret*
+*token*
+*apikey*
+
+# Sensitive configuration
+config.secret.js
+config.private.js
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups that might contain sensitive data
+*.backup
+*.bak
+backup/
+
+# Private notes and documentation
+PRIVATE*
+private/
+personal/
+notes/
+
+# Git and version control metadata
+.git/
+.git-backup/
+
+# CI/CD secrets
+.github/workflows/*-secrets.yml
+
+# Cloud provider credentials
+.aws/
+.gcloud/
+.azure/
+
+# SSH keys
+id_rsa
+id_rsa.pub
+*.ppk

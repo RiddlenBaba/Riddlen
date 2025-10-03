@@ -57,11 +57,20 @@ const NETWORK = {
 
 ## Security & Best Practices
 - Never hardcode private keys - use environment variables
+- **NEVER read .env files** - they contain sensitive secrets and API keys
 - Validate all user inputs before blockchain interactions
 - Implement proper error handling for contract calls
 - Use Wagmi hooks for robust wallet connections
 - Add loading states for all blockchain operations
 - Type-safe contract interactions with Viem
+
+## ⚠️ IMPORTANT: Files to NEVER Access
+- **.env files** (all variants: .env, .env.local, .env.production, etc.)
+- **Private keys** (*.key, *.pem, id_rsa, etc.)
+- **Secrets/credentials** (any file with "secret", "token", "apikey" in name)
+- **Database files** (*.db, *.sqlite, etc.)
+
+See `.claudeignore` in project root for complete list.
 
 ## Development Workflow
 1. **Use the integration guide** at `../docs/FRONTEND_INTEGRATION.md`

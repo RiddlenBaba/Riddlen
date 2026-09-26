@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:answers": "node scripts/check-answers.mjs",
+    "generate:abi": "node scripts/generate-game-abi.mjs"
   },
   "keywords": [],
   "author": "",

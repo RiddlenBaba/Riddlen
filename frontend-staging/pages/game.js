@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Header from '../components/Header';
 import GlobalStyles from '../components/GlobalStyles';
-import RiddleGame from '../components/RiddleGame';
+import CommitRevealGame from '../components/CommitRevealGame';
 import GroupMechanics from '../components/GroupMechanics';
 
 export default function Game() {
@@ -39,7 +39,7 @@ export default function Game() {
             </div>
 
             {/* Game Interface */}
-            <RiddleGame />
+            <CommitRevealGame />
 
             {/* Group Mechanics Section */}
             <div style={{ marginTop: '4rem', paddingTop: '4rem', borderTop: '2px solid rgba(255, 215, 0, 0.2)' }}>

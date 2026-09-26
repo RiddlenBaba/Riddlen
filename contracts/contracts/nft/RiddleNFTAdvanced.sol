@@ -261,6 +261,75 @@ contract RiddleNFTAdvanced is
     // Storage gap for upgradeability
     uint256[50] private __gap;
 
+    // ============ COMMIT-REVEAL ANSWER VERIFICATION ============
+    //
+    // 1. Game master commits keccak256(abi.encode(address(this), sessionId, answers, salt))
+    //    before the session starts. The secret salt stops dictionary attacks on stored hashes.
+    // 2. Players commit keccak256(abi.encode(address(this), player, sessionId, answers, nonce))
+    //    before endTime. Binding the player address makes copied commitments worthless.
+    //    Commit time determines ranking, so the fastest correct solvers still win.
+    // 3. After endTime the game master reveals (answers, salt); players then reveal theirs
+    //    within REVEAL_WINDOW. Answers must be normalized identically off-chain.
+    // 4. Anyone finalizes (paginated): first `winnerSlots` correct commits win; every
+    //    committed participant without a correct reveal pays the failed-attempt penalty.
+
+    uint256 public constant REVEAL_WINDOW = 2 days;
+
+    struct PlayerCommit {
+        bytes32 commitment;
+        uint64 committedAt;
+        uint32 seq;
+        bool correct;
+    }
+
+    struct CommitRevealSession {
+        bytes32 solutionCommitment;
+        bytes32 solutionHash;
+        uint64 solutionRevealedAt;
+        uint32 finalizeCursor;
+        uint32 winnersAssigned;
+        bool finalized;
+        address[] commitOrder;
+        mapping(address => PlayerCommit) commits;
+        mapping(address => uint256) tokenOf;
+    }
+
+    /// @custom:storage-location erc7201:riddlen.storage.RiddleNFTAdvanced.CommitReveal
+    struct CommitRevealStorage {
+        mapping(uint256 => CommitRevealSession) sessions;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("riddlen.storage.RiddleNFTAdvanced.CommitReveal")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant COMMIT_REVEAL_STORAGE =
+        0xf027b97ca25447bdae0d5cfe1f765071229648c394cf7f6bc5c584f66df52b00;
+
+    function _cr(uint256 sessionId) private view returns (CommitRevealSession storage s) {
+        CommitRevealStorage storage $;
+        assembly { $.slot := COMMIT_REVEAL_STORAGE }
+        s = $.sessions[sessionId];
+    }
+
+    error SolutionNotCommitted();
+    error SolutionAlreadyCommitted();
+    error SolutionMismatch();
+    error SolutionNotRevealed();
+    error SessionStillOpen();
+    error SessionClosed();
+    error RevealWindowClosed();
+    error RevealWindowOpen();
+    error NoCommitment();
+    error CommitmentMismatch();
+    error AlreadyRevealed();
+    error AlreadyFinalized();
+    error TooEarly();
+
+    event SolutionCommitted(uint256 indexed sessionId, bytes32 commitment);
+    event AnswerCommitted(uint256 indexed sessionId, address indexed player, uint256 seq);
+    event SolutionRevealed(uint256 indexed sessionId, string[] answers);
+    event AnswerRevealed(uint256 indexed sessionId, address indexed player, bool correct);
+    event SessionFinalized(uint256 indexed sessionId, uint256 winners);
+    event RONAwardFailed(uint256 indexed sessionId, address indexed player);
+
     // ============ EVENTS ============
 
     event RiddleSessionCreated(
@@ -482,12 +551,26 @@ contract RiddleNFTAdvanced is
     /**
      * @dev Start a riddle session for participant access
      */
+    /**
+     * @dev Commit the session's salted solution. Must be done before the session starts.
+     * @param commitment keccak256(abi.encode(address(this), sessionId, answers, salt))
+     */
+    function commitSolution(uint256 sessionId, bytes32 commitment) external onlyRole(GAME_MASTER_ROLE) {
+        CommitRevealSession storage cr = _cr(sessionId);
+        if (cr.solutionCommitment != bytes32(0)) revert SolutionAlreadyCommitted();
+        require(riddleSessions[sessionId].state == RiddleState.INACTIVE, "Session already started");
+        cr.solutionCommitment = commitment;
+        emit SolutionCommitted(sessionId, commitment);
+    }
+
     function startRiddleSession(uint256 sessionId) external onlyRole(GAME_MASTER_ROLE) {
         RiddleSession storage session = riddleSessions[sessionId];
         require(session.state == RiddleState.INACTIVE, "Session already started");
+        if (_cr(sessionId).solutionCommitment == bytes32(0)) revert SolutionNotCommitted();
 
         session.state = RiddleState.ACTIVE;
         session.startTime = block.timestamp;
+        session.endTime = block.timestamp + session.sessionDuration;
 
         emit RiddleSessionStarted(sessionId, session.startTime, session.endTime);
     }
@@ -506,6 +589,7 @@ contract RiddleNFTAdvanced is
     {
         RiddleSession storage session = riddleSessions[sessionId];
 
+        if (block.timestamp >= session.endTime) revert SessionClosed();
         require(session.totalMinted < session.maxMints, "Max mints reached");
         require(session.participants[msg.sender] == ParticipantStatus.NOT_PARTICIPATING, "Already participating");
 
@@ -513,11 +597,8 @@ contract RiddleNFTAdvanced is
         IRON.AccessTier userTier = ronToken.getUserTier(msg.sender);
         require(_hasAccessToRiddle(userTier, session.difficulty), "Insufficient access tier");
 
-        // Process payment
+        // Process payment: RDLN pulls mintCost from the player and distributes it
         uint256 mintCost = session.currentMintCost;
-        require(rdlnToken.transferFrom(msg.sender, address(this), mintCost), "Payment failed");
-
-        // Distribute mint cost according to burn protocol
         _distributeMintCost(mintCost);
 
         // Mint access NFT
@@ -533,7 +614,7 @@ contract RiddleNFTAdvanced is
         participant.sessionId = sessionId;
         participant.tokenId = tokenId;
         participant.startTime = block.timestamp;
-        participant.deviceFingerprint = _generateDeviceFingerprint(msg.sender);
+        _cr(sessionId).tokenOf[msg.sender] = tokenId;
 
         emit RiddleAccessMinted(sessionId, tokenId, msg.sender, mintCost);
 
@@ -541,93 +622,176 @@ contract RiddleNFTAdvanced is
     }
 
     /**
-     * @dev Submit answer attempt (Core game interaction)
+     * @dev Commit an answer. Re-committing replaces the previous one and moves the
+     * player to the back of the ranking.
+     * @param commitment keccak256(abi.encode(address(this), msg.sender, sessionId, answers, nonce))
      */
-    function submitAnswer(
-        uint256 sessionId,
-        uint256 questionIndex,
-        bytes32 answerHash
-    ) external onlyParticipant(sessionId) antiCheat(sessionId) {
+    function commitAnswer(uint256 sessionId, bytes32 commitment)
+        external
+        onlyParticipant(sessionId)
+        antiCheat(sessionId)
+    {
         RiddleSession storage session = riddleSessions[sessionId];
-        require(session.state == RiddleState.ACTIVE || session.state == RiddleState.IN_PROGRESS, "Invalid session state");
+        require(session.state == RiddleState.ACTIVE, "Session not active");
+        if (block.timestamp >= session.endTime) revert SessionClosed();
 
-        ParticipantData storage participant = participantData[_getTokenIdForUser(sessionId, msg.sender)];
-        require(!participant.completed, "Already completed");
+        CommitRevealSession storage cr = _cr(sessionId);
+        ParticipantData storage participant = participantData[cr.tokenOf[msg.sender]];
+        require(block.timestamp - participant.startTime >= MIN_SOLVE_TIME, "Minimum solve time not met");
         require(participant.attemptCount < MAX_ATTEMPTS_PER_SESSION, "Max attempts reached");
-        require(questionIndex < session.questionIds.length, "Invalid question index");
-
-        // Time validation
-        uint256 timeElapsed = block.timestamp - participant.startTime;
-        require(timeElapsed >= MIN_SOLVE_TIME, "Minimum solve time not met");
-        require(timeElapsed <= session.sessionDuration, "Session time expired");
-
-        // Record attempt
         participant.attemptCount++;
-        participant.answerHashes.push(answerHash);
-        participant.solveTimes.push(timeElapsed);
 
-        // Check if answer is correct
-        bool isCorrect = (answerHash == session.correctAnswerHashes[questionIndex]);
+        uint256 seq = cr.commitOrder.length;
+        cr.commitOrder.push(msg.sender);
+        cr.commits[msg.sender] = PlayerCommit(commitment, uint64(block.timestamp), uint32(seq), false);
 
-        if (isCorrect) {
-            // Advance to next question or complete if all answered
-            if (questionIndex == session.questionIds.length - 1) {
-                _completeRiddle(sessionId, msg.sender, timeElapsed);
-            }
-        } else {
-            // Apply burn penalty for incorrect attempt
-            uint256 burnAmount = participant.attemptCount * 10**18; // Progressive burn
-            _applyBurnPenalty(msg.sender, burnAmount);
-        }
-
-        emit RiddleAttemptSubmitted(sessionId, msg.sender, participant.attemptCount, session.sessionDuration - timeElapsed);
+        emit AnswerCommitted(sessionId, msg.sender, seq);
     }
 
     /**
-     * @dev Complete riddle and distribute rewards
+     * @dev Reveal the session solution after it closes. Anyone may verify it against
+     * the commitment made before the session started.
      */
-    function _completeRiddle(uint256 sessionId, address solver, uint256 solveTime) internal {
+    function revealSolution(uint256 sessionId, string[] calldata answers, bytes32 salt)
+        external
+        onlyRole(GAME_MASTER_ROLE)
+    {
         RiddleSession storage session = riddleSessions[sessionId];
-        ParticipantData storage participant = participantData[_getTokenIdForUser(sessionId, solver)];
-
-        // Mark as completed
-        participant.completed = true;
-        participant.successful = true;
-        participant.completionTime = block.timestamp;
-        session.participants[solver] = ParticipantStatus.COMPLETED_SUCCESS;
-        session.successfulSolvers++;
-
-        // Check if within winner slots
-        bool isWinner = session.successfulSolvers <= session.winnerSlots;
-
-        if (isWinner) {
-            session.winners.push(solver);
-
-            // Calculate prize amount
-            uint256 prizeAmount = session.prizePool / session.winnerSlots;
-
-            // Apply bonuses
-            bool wasFirstSolver = (session.successfulSolvers == 1);
-            if (wasFirstSolver) {
-                prizeAmount = (prizeAmount * 150) / 100; // 1.5x bonus for first solver
-            }
-
-            participant.prizeAmount = prizeAmount;
-            session.totalPrizesDistributed += prizeAmount;
-
-            // Award RON reputation
-            _awardRONReward(solver, session.difficulty, wasFirstSolver, false);
-
-            emit RiddleCompleted(sessionId, solver, solveTime, prizeAmount, wasFirstSolver);
+        CommitRevealSession storage cr = _cr(sessionId);
+        if (session.endTime == 0 || block.timestamp < session.endTime) revert SessionStillOpen();
+        if (cr.solutionRevealedAt != 0) revert AlreadyRevealed();
+        if (keccak256(abi.encode(address(this), sessionId, answers, salt)) != cr.solutionCommitment) {
+            revert SolutionMismatch();
         }
 
-        // Update total completed
+        cr.solutionHash = keccak256(abi.encode(answers));
+        cr.solutionRevealedAt = uint64(block.timestamp);
+        session.state = RiddleState.IN_PROGRESS;
+
+        emit SolutionRevealed(sessionId, answers);
+    }
+
+    /**
+     * @dev Reveal a committed answer within REVEAL_WINDOW of the solution reveal.
+     */
+    function revealAnswer(uint256 sessionId, string[] calldata answers, bytes32 nonce) external {
+        CommitRevealSession storage cr = _cr(sessionId);
+        if (cr.solutionRevealedAt == 0) revert SolutionNotRevealed();
+        if (block.timestamp > cr.solutionRevealedAt + REVEAL_WINDOW) revert RevealWindowClosed();
+
+        PlayerCommit storage c = cr.commits[msg.sender];
+        if (c.commitment == bytes32(0)) revert NoCommitment();
+        if (c.correct) revert AlreadyRevealed();
+        if (keccak256(abi.encode(address(this), msg.sender, sessionId, answers, nonce)) != c.commitment) {
+            revert CommitmentMismatch();
+        }
+
+        c.correct = keccak256(abi.encode(answers)) == cr.solutionHash;
+        emit AnswerRevealed(sessionId, msg.sender, c.correct);
+    }
+
+    /**
+     * @dev Rank correct answers by commit time, assign prizes and RON, and penalize
+     * unrevealed or wrong commitments. Paginated; anyone may call after the reveal window.
+     */
+    function finalizeSession(uint256 sessionId, uint256 maxSteps) external nonReentrant {
+        RiddleSession storage session = riddleSessions[sessionId];
+        CommitRevealSession storage cr = _cr(sessionId);
+        if (cr.solutionRevealedAt == 0) revert SolutionNotRevealed();
+        if (block.timestamp <= cr.solutionRevealedAt + REVEAL_WINDOW) revert RevealWindowOpen();
+        if (cr.finalized) revert AlreadyFinalized();
+
+        uint256 end = cr.finalizeCursor + maxSteps;
+        if (end > cr.commitOrder.length) end = cr.commitOrder.length;
+
+        for (uint256 i = cr.finalizeCursor; i < end; i++) {
+            address player = cr.commitOrder[i];
+            PlayerCommit storage c = cr.commits[player];
+            if (c.seq != i) continue; // superseded by a later re-commit
+            _settle(sessionId, session, cr, player, c);
+        }
+
+        cr.finalizeCursor = uint32(end);
+        if (end == cr.commitOrder.length) {
+            cr.finalized = true;
+            session.state = RiddleState.COMPLETED;
+            emit SessionFinalized(sessionId, cr.winnersAssigned);
+        }
+    }
+
+    function _settle(
+        uint256 sessionId,
+        RiddleSession storage session,
+        CommitRevealSession storage cr,
+        address player,
+        PlayerCommit storage c
+    ) private {
+        ParticipantData storage participant = participantData[cr.tokenOf[player]];
+        participant.completed = true;
+        participant.completionTime = c.committedAt;
         session.totalCompleted++;
 
-        // Check if session should close
-        if (session.successfulSolvers >= session.winnerSlots || session.totalMinted >= session.maxMints) {
-            session.state = RiddleState.COMPLETED;
+        if (!c.correct) {
+            session.participants[player] = ParticipantStatus.COMPLETED_FAILURE;
+            try rdlnToken.burnFailedAttempt(player) returns (uint256 burned) {
+                totalBurned += burned;
+                session.totalBurned += burned;
+            } catch {}
+            return;
         }
+
+        participant.successful = true;
+        session.participants[player] = ParticipantStatus.COMPLETED_SUCCESS;
+        session.successfulSolvers++;
+        if (cr.winnersAssigned >= session.winnerSlots) return;
+
+        bool wasFirstSolver = cr.winnersAssigned == 0;
+        cr.winnersAssigned++;
+        session.winners.push(player);
+
+        // First solver gets 1.5 shares; sized so a full session pays out at most prizePool
+        uint256 share = (session.prizePool * 2) / (session.winnerSlots * 2 + 1);
+        uint256 prizeAmount = wasFirstSolver ? (share * 3) / 2 : share;
+        participant.prizeAmount = prizeAmount;
+        session.totalPrizesDistributed += prizeAmount;
+
+        try ronToken.awardRON(
+            player, _toRONDifficulty(session.difficulty), wasFirstSolver, false, "Riddle completion"
+        ) returns (uint256) {} catch {
+            emit RONAwardFailed(sessionId, player);
+        }
+
+        emit RiddleCompleted(
+            sessionId, player, c.committedAt - participant.startTime, prizeAmount, wasFirstSolver
+        );
+    }
+
+    function getCommitRevealState(uint256 sessionId) external view returns (
+        bytes32 solutionCommitment,
+        uint256 solutionRevealedAt,
+        uint256 commitCount,
+        uint256 finalizeCursor,
+        uint256 winnersAssigned,
+        bool finalized
+    ) {
+        CommitRevealSession storage cr = _cr(sessionId);
+        return (
+            cr.solutionCommitment,
+            cr.solutionRevealedAt,
+            cr.commitOrder.length,
+            cr.finalizeCursor,
+            cr.winnersAssigned,
+            cr.finalized
+        );
+    }
+
+    function getPlayerCommit(uint256 sessionId, address player) external view returns (
+        bytes32 commitment,
+        uint256 committedAt,
+        bool correct
+    ) {
+        PlayerCommit storage c = _cr(sessionId).commits[player];
+        return (c.commitment, c.committedAt, c.correct);
     }
 
     // ============ QUESTION GENERATION SYSTEM ============
@@ -767,18 +931,17 @@ contract RiddleNFTAdvanced is
     }
 
     /**
-     * @dev Distribute mint cost according to burn protocol (50% burn, 25% grand prize, 25% dev/ops)
+     * @dev Distribute mint cost according to revolutionary creator economy
+     * New tokenomics: 10% grand prize, 30% dev/ops, 30% contributors, 30% validators
      */
     function _distributeMintCost(uint256 amount) internal {
-        uint256 burnAmount = (amount * 50) / 100;
-        uint256 grandPrizeAmount = (amount * 25) / 100;
-        uint256 devOpsAmount = amount - burnAmount - grandPrizeAmount;
-
-        // Use the RDLN burn mechanism for NFT minting
+        // Use the RDLN revolutionary reward distribution
         rdlnToken.burnNFTMint(msg.sender, amount);
-        totalBurned += burnAmount;
 
-        emit BurnDistribution(amount, burnAmount, grandPrizeAmount, devOpsAmount);
+        // The RDLN token now handles distribution internally with new tokenomics:
+        // 10% grand prize, 30% dev/ops, 30% contributors, 30% validators
+
+        emit BurnDistribution(amount, 0, amount * 10 / 100, amount * 30 / 100);
     }
 
     // ============ ANTI-CHEATING MECHANISMS ============
@@ -786,7 +949,7 @@ contract RiddleNFTAdvanced is
     /**
      * @dev Comprehensive anti-cheating validation
      */
-    function _checkAntiCheat(address user, uint256 sessionId) internal {
+    function _checkAntiCheat(address user, uint256) internal {
         // Check minimum time between actions
         uint256 timeSinceLastActivity = block.timestamp - lastActivityTime[user];
         require(timeSinceLastActivity >= MIN_SOLVE_TIME, "Action too fast");
@@ -794,28 +957,8 @@ contract RiddleNFTAdvanced is
         // Update activity time
         lastActivityTime[user] = block.timestamp;
 
-        // Check device fingerprint consistency
-        bytes32 currentFingerprint = _generateDeviceFingerprint(user);
-        if (knownDeviceFingerprints[currentFingerprint]) {
-            suspiciousActivityScores[user]++;
-
-            if (suspiciousActivityScores[user] >= SUSPICIOUS_ACTIVITY_THRESHOLD) {
-                emit SuspiciousActivityDetected(
-                    user,
-                    sessionId,
-                    "Device fingerprint collision",
-                    suspiciousActivityScores[user]
-                );
-                revert("Suspicious activity detected");
-            }
-        } else {
-            knownDeviceFingerprints[currentFingerprint] = true;
-        }
-    }
-
-    function _generateDeviceFingerprint(address user) internal view returns (bytes32) {
-        // Simplified device fingerprinting (in production, would include more data)
-        return keccak256(abi.encodePacked(user, block.timestamp / 1 days, tx.origin));
+        // Device fingerprinting removed: keccak(user, day, tx.origin) always collides with the
+        // same user's own earlier actions, so it only ever locked out honest repeat players.
     }
 
     // ============ ACHIEVEMENT NFT SYSTEM ============
@@ -861,48 +1004,25 @@ contract RiddleNFTAdvanced is
 
     // ============ ORACLE INTEGRATION ============
 
-    /**
-     * @dev Award RON reputation for successful solving
-     */
-    function _awardRONReward(address solver, RiddleDifficulty difficulty, bool isFirstSolver, bool isSpeedSolver) internal {
-        // Convert difficulty to RON enum
-        IRON.RiddleDifficulty ronDifficulty;
-        if (difficulty == RiddleDifficulty.EASY) ronDifficulty = IRON.RiddleDifficulty.EASY;
-        else if (difficulty == RiddleDifficulty.MEDIUM) ronDifficulty = IRON.RiddleDifficulty.MEDIUM;
-        else if (difficulty == RiddleDifficulty.HARD) ronDifficulty = IRON.RiddleDifficulty.HARD;
-        else ronDifficulty = IRON.RiddleDifficulty.LEGENDARY;
-
-        ronToken.awardRON(solver, ronDifficulty, isFirstSolver, isSpeedSolver, "Riddle completion");
+    function _toRONDifficulty(RiddleDifficulty difficulty) internal pure returns (IRON.RiddleDifficulty) {
+        if (difficulty == RiddleDifficulty.EASY) return IRON.RiddleDifficulty.EASY;
+        if (difficulty == RiddleDifficulty.MEDIUM) return IRON.RiddleDifficulty.MEDIUM;
+        if (difficulty == RiddleDifficulty.HARD) return IRON.RiddleDifficulty.HARD;
+        return IRON.RiddleDifficulty.LEGENDARY;
     }
 
     // ============ UTILITY FUNCTIONS ============
 
     function _hasAccessToRiddle(IRON.AccessTier userTier, RiddleDifficulty difficulty) internal pure returns (bool) {
-        // EASY riddles are open to everyone to start earning RON
-        if (difficulty == RiddleDifficulty.EASY) return true;
-        // MEDIUM riddles require SOLVER tier - earned from completing EASY riddles
-        if (difficulty == RiddleDifficulty.MEDIUM) return userTier >= IRON.AccessTier.SOLVER;
-        // HARD riddles require EXPERT tier - advanced players
-        if (difficulty == RiddleDifficulty.HARD) return userTier >= IRON.AccessTier.EXPERT;
-        // ORACLE riddles require ORACLE tier - elite governance access
-        return userTier >= IRON.AccessTier.ORACLE;
+        // Based on ecosystem report: Remove purchase tier-gating
+        // Anyone can buy any riddle with RDLN (no RON requirement for purchases)
+        // This allows zero-barrier entry while maintaining progression incentives
+        return true;
+
+        // NOTE: RON still gates validation income in the Oracle Network,
+        // but does not restrict riddle purchases
     }
 
-    function _getTokenIdForUser(uint256 sessionId, address user) internal view returns (uint256) {
-        // Simplified lookup - in production would use more efficient mapping
-        for (uint256 i = 1; i <= totalSupply(); i++) {
-            if (participantData[i].user == user && participantData[i].sessionId == sessionId) {
-                return i;
-            }
-        }
-        revert("Token not found");
-    }
-
-    function _applyBurnPenalty(address user, uint256 amount) internal {
-        require(rdlnToken.transferFrom(user, address(this), amount), "Burn penalty failed");
-        rdlnToken.burnFailedAttempt(user);
-        totalBurned += amount;
-    }
 
     // ============ ADMIN FUNCTIONS ============
 

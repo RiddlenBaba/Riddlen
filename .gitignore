@@ -93,3 +93,10 @@ notes/
 *.pfx.git-backup/
 
 .git-backup/
+
+# Foundry
+contracts/foundry-out/
+contracts/cache_forge/
+
+# Game-master secrets (session salts and answers) — never commit
+contracts/game-master/

@@ -46,7 +46,7 @@ export const config = createConfig({
   chains: [polygonAmoy],
   connectors: [injected()],
   transports: {
-    [polygonAmoy.id]: http('https://rpc-amoy.polygon.technology/'),
+    [polygonAmoy.id]: http('https://polygon-amoy-bor-rpc.publicnode.com'),
   },
 });
 
@@ -319,7 +319,7 @@ const amoyNetwork = {
     symbol: 'MATIC',
     decimals: 18
   },
-  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+  rpcUrls: ['https://polygon-amoy-bor-rpc.publicnode.com'],
   blockExplorerUrls: ['https://amoy.polygonscan.com/']
 };
 

@@ -115,7 +115,7 @@ const { data: balance } = useReadContract({
             <pre><code>{`import { ethers } from 'ethers';
 
 const provider = new ethers.JsonRpcProvider(
-  'https://rpc-amoy.polygon.technology/'
+  'https://polygon-amoy-bor-rpc.publicnode.com'
 );
 const rdlnContract = new ethers.Contract(
   '0x133029184EC460F661d05b0dC57BFC916b4AB0eB',
@@ -134,7 +134,7 @@ const rdlnContract = new ethers.Contract(
               </div>
               <div className="config-row">
                 <span className="config-label">RPC URL:</span>
-                <span className="config-value">https://rpc-amoy.polygon.technology/</span>
+                <span className="config-value">https://polygon-amoy-bor-rpc.publicnode.com</span>
               </div>
               <div className="config-row">
                 <span className="config-label">Chain ID:</span>

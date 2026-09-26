@@ -23,7 +23,7 @@ export const config = createConfig({
     }),
   ],
   transports: {
-    [polygonAmoy.id]: http('https://rpc-amoy.polygon.technology/')
+    [polygonAmoy.id]: http('https://polygon-amoy-bor-rpc.publicnode.com')
   },
 });
 
@@ -37,7 +37,7 @@ export const CONTRACTS = {
 export const NETWORK_CONFIG = {
   chainId: 80002,
   name: 'Polygon Amoy Testnet',
-  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+  rpcUrls: ['https://polygon-amoy-bor-rpc.publicnode.com'],
   blockExplorerUrls: ['https://amoy.polygonscan.com/'],
   nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 }
 };

@@ -87,7 +87,7 @@ network_info:
   testnet:
     name: "Polygon Amoy"
     chain_id: 80002
-    rpc: "https://rpc-amoy.polygon.technology/"
+    rpc: "https://polygon-amoy-bor-rpc.publicnode.com"
     explorer: "https://amoy.polygonscan.com/"
     faucet: "https://faucet.polygon.technology/"
 

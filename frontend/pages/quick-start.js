@@ -74,7 +74,7 @@ export default function QuickStart() {
                       </div>
                       <div className="config-item">
                         <span className="config-label">RPC URL:</span>
-                        <span className="config-value">https://rpc-amoy.polygon.technology/</span>
+                        <span className="config-value">https://polygon-amoy-bor-rpc.publicnode.com</span>
                       </div>
                       <div className="config-item">
                         <span className="config-label">Chain ID:</span>

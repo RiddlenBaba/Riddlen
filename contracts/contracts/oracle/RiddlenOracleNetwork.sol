@@ -84,11 +84,23 @@ contract RiddlenOracleNetwork is
     uint256 public constant MAX_DEADLINE = 7 days;              // Max 7 days
     uint256 public constant VALIDATOR_COOLDOWN = 5 minutes;     // 5 min between validations
 
-    // RON tier requirements (immutable)
-    uint256 public constant BRONZE_MIN_RON = 100e18;            // 100 RON
-    uint256 public constant SILVER_MIN_RON = 1_000e18;          // 1,000 RON
-    uint256 public constant GOLD_MIN_RON = 10_000e18;           // 10,000 RON
-    uint256 public constant PLATINUM_MIN_RON = 100_000e18;      // 100,000 RON
+    // RON tier requirements (updated 2025 - aligned with ecosystem report)
+    uint256 public constant SEEKER_MIN_RON = 1_000e18;         // 1,000 RON (was BRONZE: 100)
+    uint256 public constant SOLVER_MIN_RON = 10_000e18;        // 10,000 RON (was SILVER: 1,000)
+    uint256 public constant VALIDATOR_MIN_RON = 25_000e18;     // 25,000 RON (was GOLD: 10,000)
+    uint256 public constant ORACLE_MIN_RON = 50_000e18;        // 50,000 RON (was PLATINUM: 100,000)
+
+    // Contributor staking requirements (RON) - Low risk for question submission
+    uint256 public constant MIN_CONTRIBUTOR_STAKE = 1e18;       // 1 RON minimum stake (aligned with era costs)
+    uint256 public constant MAX_CONTRIBUTOR_STAKE = 100e18;     // 100 RON maximum stake
+    uint256 public constant CONTRIBUTOR_COOLDOWN = 1 hours;      // 1 hour between submissions
+    uint256 public constant QUESTION_APPROVAL_PERIOD = 24 hours; // 24 hours for approval
+
+    // Contributor tier requirements (based on quality score)
+    uint256 public constant BRONZE_MIN_QUALITY = 5000;          // 50%
+    uint256 public constant SILVER_MIN_QUALITY = 7000;          // 70%
+    uint256 public constant GOLD_MIN_QUALITY = 8500;            // 85%
+    uint256 public constant PLATINUM_MIN_QUALITY = 9500;        // 95%
 
     // Minimum accuracy thresholds (basis points)
     uint256 public constant SILVER_MIN_ACCURACY = 7000;         // 70%
@@ -125,10 +137,10 @@ contract RiddlenOracleNetwork is
     }
 
     enum ValidatorTier {
-        Bronze,         // Entry level
-        Silver,         // Experienced
-        Gold,           // Expert
-        Platinum        // Elite
+        Seeker,         // Entry level (1K RON)
+        Solver,         // Experienced (10K RON)
+        Validator,      // Expert (25K RON)
+        Oracle          // Elite (50K RON)
     }
 
     // =============================================================
@@ -183,6 +195,39 @@ contract RiddlenOracleNetwork is
         uint256 lastValidationTime;    // For rate limiting
     }
 
+    /**
+     * @dev Contributor profile and reputation
+     * Contributors stake RON to submit questions, get RON back + RDLN if approved, lose RON if rejected
+     */
+    struct ContributorProfile {
+        uint256 totalQuestionsSubmitted;
+        uint256 acceptedQuestions;
+        uint256 rejectedQuestions;
+        uint256 questionsInUse;          // Currently active questions
+        uint256 totalEarnedRDLN;
+        uint256 totalSlashedRON;         // RON burned for rejected questions
+        uint256 currentStakedRON;        // RON currently staked in pending questions
+        bool isSuspended;
+        uint256 suspendedUntil;
+        uint256 lastSubmissionTime;     // For rate limiting
+        uint256 qualityScore;           // 0-10000 basis points (0-100%)
+    }
+
+    /**
+     * @dev Question submission with staking
+     */
+    struct QuestionSubmission {
+        uint256 questionId;
+        address contributor;
+        uint256 stakeAmount;            // RON staked (returned if approved, burned if rejected)
+        uint256 timestamp;
+        bool approved;
+        bool resolved;                  // Final decision made
+        uint256 validationCount;        // Times used for validation
+        uint256 reportCount;            // Times reported as low quality
+        string questionIPFS;            // IPFS hash of question content
+    }
+
     // =============================================================
     //                        STATE VARIABLES
     // =============================================================
@@ -202,6 +247,12 @@ contract RiddlenOracleNetwork is
     // Validator management
     mapping(address => ValidatorProfile) public validatorProfiles;
     mapping(address => uint256[]) public validatorRequests;
+
+    // Contributor management
+    mapping(address => ContributorProfile) public contributorProfiles;
+    mapping(uint256 => QuestionSubmission) public questionSubmissions;
+    mapping(address => uint256[]) public contributorQuestions;
+    uint256 public questionCounter;
 
     // Circuit breaker tracking
     mapping(uint256 => uint256) public dailyRequestCount;      // day => count
@@ -358,6 +409,73 @@ contract RiddlenOracleNetwork is
     error EmergencyLimitReached();
     error InvalidAddress();
     error InvalidAmount();
+
+    // ============ CONTRIBUTOR STAKING ERRORS ============
+    error InsufficientRONForContributor();
+    error ContributorSuspended();
+    error QuestionNotFound();
+    error QuestionAlreadyResolved();
+    error UnauthorizedAction();
+    error ContributorCooldownActive();
+    error InvalidStakeAmount();
+
+    // ============ CONTRIBUTOR STAKING EVENTS ============
+
+    event QuestionSubmitted(
+        uint256 indexed questionId,
+        address indexed contributor,
+        uint256 stakeAmount,
+        string questionIPFS,
+        uint256 timestamp
+    );
+
+    event QuestionApproved(
+        uint256 indexed questionId,
+        address indexed contributor,
+        address indexed approver,
+        uint256 qualityScore,
+        uint256 timestamp
+    );
+
+    event QuestionRejected(
+        uint256 indexed questionId,
+        address indexed contributor,
+        address indexed rejector,
+        string reason,
+        uint256 slashAmount,
+        uint256 timestamp
+    );
+
+    event QuestionUsed(
+        uint256 indexed questionId,
+        address indexed contributor,
+        uint256 usageCount,
+        uint256 rewardAmount,
+        uint256 timestamp
+    );
+
+    event ContributorSlashed(
+        address indexed contributor,
+        uint256 questionId,
+        uint256 slashAmount,
+        string reason,
+        uint256 timestamp
+    );
+
+    event ContributorRewarded(
+        address indexed contributor,
+        uint256 questionId,
+        uint256 rewardAmount,
+        uint256 newQualityScore,
+        uint256 timestamp
+    );
+
+    event ContributorStakeWithdrawn(
+        address indexed contributor,
+        uint256 amount,
+        uint256 remainingStake,
+        uint256 timestamp
+    );
 
     // =============================================================
     //                        INITIALIZATION
@@ -919,33 +1037,61 @@ contract RiddlenOracleNetwork is
             accuracy = (profile.correctValidations * 10000) / profile.totalValidations;
         }
 
-        // Platinum tier
-        if (ronBalance >= PLATINUM_MIN_RON && accuracy >= PLATINUM_MIN_ACCURACY) {
-            return ValidatorTier.Platinum;
+        // Oracle tier (50K RON threshold, was Platinum)
+        if (ronBalance >= ORACLE_MIN_RON && accuracy >= PLATINUM_MIN_ACCURACY) {
+            return ValidatorTier.Oracle;
         }
 
-        // Gold tier
-        if (ronBalance >= GOLD_MIN_RON && accuracy >= GOLD_MIN_ACCURACY) {
-            return ValidatorTier.Gold;
+        // Validator tier (25K RON threshold, was Gold)
+        if (ronBalance >= VALIDATOR_MIN_RON && accuracy >= GOLD_MIN_ACCURACY) {
+            return ValidatorTier.Validator;
         }
 
-        // Silver tier
-        if (ronBalance >= SILVER_MIN_RON && accuracy >= SILVER_MIN_ACCURACY) {
-            return ValidatorTier.Silver;
+        // Solver tier (10K RON threshold, was Silver)
+        if (ronBalance >= SOLVER_MIN_RON && accuracy >= SILVER_MIN_ACCURACY) {
+            return ValidatorTier.Solver;
         }
 
-        // Bronze tier (default)
-        return ValidatorTier.Bronze;
+        // Seeker tier (1K RON threshold, was Bronze)
+        if (ronBalance >= SEEKER_MIN_RON) {
+            return ValidatorTier.Seeker;
+        }
+
+        // Below minimum threshold - still Seeker but no validation access
+        return ValidatorTier.Seeker;
     }
 
     /**
-     * @dev Get minimum stake amount for tier
+     * @dev Get minimum stake amount based on validation complexity and tier
+     * Stakes should reflect the work complexity, not just tier status
      */
     function _getMinStakeForTier(ValidatorTier tier) internal pure returns (uint256) {
-        if (tier == ValidatorTier.Platinum) return 10_000e18; // 10,000 RON
-        if (tier == ValidatorTier.Gold) return 1_000e18;      // 1,000 RON
-        if (tier == ValidatorTier.Silver) return 100e18;      // 100 RON
-        return 10e18;                                         // 10 RON (Bronze)
+        // Base stakes for basic validation work
+        if (tier == ValidatorTier.Oracle) return 50e18;        // 50 RON base
+        if (tier == ValidatorTier.Validator) return 25e18;     // 25 RON base
+        if (tier == ValidatorTier.Solver) return 10e18;        // 10 RON base
+        return 5e18;                                           // 5 RON base (Seeker)
+    }
+
+    /**
+     * @dev Get stake amount based on validation work complexity
+     * @param tier Validator tier
+     * @param complexity Work complexity: 0=simple, 1=medium, 2=complex, 3=critical
+     */
+    function getStakeForWork(ValidatorTier tier, uint8 complexity)
+        public
+        pure
+        returns (uint256)
+    {
+        uint256 baseStake = _getMinStakeForTier(tier);
+
+        // Multiply by complexity factor
+        if (complexity == 0) return baseStake;                 // Simple: 1x
+        if (complexity == 1) return baseStake * 2;             // Medium: 2x
+        if (complexity == 2) return baseStake * 5;             // Complex: 5x
+        if (complexity == 3) return baseStake * 10;            // Critical: 10x
+
+        return baseStake; // Default to simple
     }
 
     /**
@@ -1213,6 +1359,365 @@ contract RiddlenOracleNetwork is
             abi.encode(amount, reason),
             block.timestamp
         );
+    }
+
+    // =============================================================
+    //                        CONTRIBUTOR STAKING FUNCTIONS
+    // =============================================================
+
+    /**
+     * @dev Submit a question with RON stake
+     * @param questionIPFS IPFS hash of question content
+     * @param stakeAmount Amount of RON to stake
+     */
+    function submitQuestionWithStake(
+        string calldata questionIPFS,
+        uint256 stakeAmount
+    ) external nonReentrant whenNotPaused returns (uint256) {
+        // Input validation
+        if (bytes(questionIPFS).length == 0) revert InvalidRequest();
+        if (stakeAmount < MIN_CONTRIBUTOR_STAKE) revert InvalidStakeAmount();
+        if (stakeAmount > MAX_CONTRIBUTOR_STAKE) revert InvalidStakeAmount();
+
+        ContributorProfile storage profile = contributorProfiles[msg.sender];
+
+        // Check suspension
+        if (profile.isSuspended && block.timestamp < profile.suspendedUntil) {
+            revert ContributorSuspended();
+        }
+
+        // Reinstate if suspension expired
+        if (profile.isSuspended && block.timestamp >= profile.suspendedUntil) {
+            profile.isSuspended = false;
+        }
+
+        // Check cooldown
+        if (block.timestamp < profile.lastSubmissionTime + CONTRIBUTOR_COOLDOWN) {
+            revert ContributorCooldownActive();
+        }
+
+        // Check available RON balance (including already staked amount)
+        uint256 availableRON = ronToken.balanceOf(msg.sender) - profile.currentStakedRON;
+        if (availableRON < stakeAmount) revert InsufficientRONForContributor();
+
+        // Lock RON stake (similar to validator staking)
+        profile.currentStakedRON += stakeAmount;
+
+        // Create question submission
+        uint256 questionId = ++questionCounter;
+
+        questionSubmissions[questionId] = QuestionSubmission({
+            questionId: questionId,
+            contributor: msg.sender,
+            stakeAmount: stakeAmount,
+            timestamp: block.timestamp,
+            approved: false,
+            resolved: false,
+            validationCount: 0,
+            reportCount: 0,
+            questionIPFS: questionIPFS
+        });
+
+        // Update contributor profile
+        profile.totalQuestionsSubmitted++;
+        profile.lastSubmissionTime = block.timestamp;
+
+        // Track contributor questions
+        contributorQuestions[msg.sender].push(questionId);
+
+        emit QuestionSubmitted(
+            questionId,
+            msg.sender,
+            stakeAmount,
+            questionIPFS,
+            block.timestamp
+        );
+
+        return questionId;
+    }
+
+    /**
+     * @dev Approve a question submission (admin/operator only)
+     * @param questionId The question to approve
+     * @param qualityScore Quality score (0-10000 basis points)
+     */
+    function approveQuestion(
+        uint256 questionId,
+        uint256 qualityScore
+    ) external onlyRole(OPERATOR_ROLE) {
+        QuestionSubmission storage question = questionSubmissions[questionId];
+        if (question.contributor == address(0)) revert QuestionNotFound();
+        if (question.resolved) revert QuestionAlreadyResolved();
+
+        // Validate quality score
+        if (qualityScore > 10000) revert InvalidAmount();
+
+        // Mark as approved and resolved
+        question.approved = true;
+        question.resolved = true;
+
+        ContributorProfile storage profile = contributorProfiles[question.contributor];
+        profile.acceptedQuestions++;
+
+        // Return RON stake to contributor since question was approved
+        profile.currentStakedRON -= question.stakeAmount;
+
+        // Update quality score (weighted average)
+        if (profile.totalQuestionsSubmitted == 1) {
+            profile.qualityScore = qualityScore;
+        } else {
+            // Weighted average: 70% historical, 30% new score
+            profile.qualityScore = (profile.qualityScore * 7 + qualityScore * 3) / 10;
+        }
+
+        emit QuestionApproved(
+            questionId,
+            question.contributor,
+            msg.sender,
+            qualityScore,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Reject a question submission and slash stake
+     * @param questionId The question to reject
+     * @param reason Reason for rejection
+     * @param slashPercentage Percentage to slash (0-10000 basis points)
+     */
+    function rejectQuestion(
+        uint256 questionId,
+        string calldata reason,
+        uint256 slashPercentage
+    ) external onlyRole(OPERATOR_ROLE) {
+        QuestionSubmission storage question = questionSubmissions[questionId];
+        if (question.contributor == address(0)) revert QuestionNotFound();
+        if (question.resolved) revert QuestionAlreadyResolved();
+
+        // Validate slash percentage
+        if (slashPercentage > 10000) revert InvalidAmount();
+
+        // Mark as resolved
+        question.resolved = true;
+
+        ContributorProfile storage profile = contributorProfiles[question.contributor];
+        profile.rejectedQuestions++;
+
+        // Calculate slash amount
+        uint256 slashAmount = (question.stakeAmount * slashPercentage) / 10000;
+        uint256 returnAmount = question.stakeAmount - slashAmount;
+
+        // Update profile
+        profile.currentStakedRON -= question.stakeAmount;
+        profile.totalSlashedRON += slashAmount;
+
+        // Burn the entire RON stake for rejected questions
+        // Note: RON is a reputation token, so we just burn it (don't transfer anywhere)
+
+        // Update quality score (penalty for rejection)
+        uint256 penalty = slashPercentage / 10; // Convert to quality score penalty
+        if (profile.qualityScore > penalty) {
+            profile.qualityScore -= penalty;
+        } else {
+            profile.qualityScore = 0;
+        }
+
+        // Check if contributor should be suspended
+        _checkContributorSuspension(question.contributor);
+
+        emit QuestionRejected(
+            questionId,
+            question.contributor,
+            msg.sender,
+            reason,
+            slashAmount,
+            block.timestamp
+        );
+
+        emit ContributorSlashed(
+            question.contributor,
+            questionId,
+            slashAmount,
+            reason,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Reward contributor when their question is used for validation
+     * @param questionId The question that was used
+     * @param usageCount Number of times used
+     * @param rewardAmount RDLN reward amount
+     */
+    function rewardQuestionUsage(
+        uint256 questionId,
+        uint256 usageCount,
+        uint256 rewardAmount
+    ) external onlyRole(OPERATOR_ROLE) {
+        QuestionSubmission storage question = questionSubmissions[questionId];
+        if (question.contributor == address(0)) revert QuestionNotFound();
+        if (!question.approved) revert UnauthorizedAction();
+
+        // Update usage count
+        question.validationCount += usageCount;
+
+        ContributorProfile storage profile = contributorProfiles[question.contributor];
+        profile.questionsInUse++;
+        profile.totalEarnedRDLN += rewardAmount;
+
+        // Improve quality score for successful usage
+        uint256 bonus = usageCount * 10; // 10 points per usage
+        if (profile.qualityScore + bonus <= 10000) {
+            profile.qualityScore += bonus;
+        } else {
+            profile.qualityScore = 10000;
+        }
+
+        // Transfer reward
+        rdlnToken.transfer(question.contributor, rewardAmount);
+
+        emit QuestionUsed(
+            questionId,
+            question.contributor,
+            usageCount,
+            rewardAmount,
+            block.timestamp
+        );
+
+        emit ContributorRewarded(
+            question.contributor,
+            questionId,
+            rewardAmount,
+            profile.qualityScore,
+            block.timestamp
+        );
+    }
+
+    // Note: No need for withdrawContributorStake function anymore
+    // RON is automatically returned in approveQuestion() or burned in rejectQuestion()
+
+    /**
+     * @dev Get contributor tier based on quality score
+     */
+    function getContributorTier(address contributor) public view returns (ValidatorTier) {
+        uint256 qualityScore = contributorProfiles[contributor].qualityScore;
+
+        if (qualityScore >= PLATINUM_MIN_QUALITY) {
+            return ValidatorTier.Oracle;
+        } else if (qualityScore >= GOLD_MIN_QUALITY) {
+            return ValidatorTier.Validator;
+        } else if (qualityScore >= SILVER_MIN_QUALITY) {
+            return ValidatorTier.Solver;
+        } else {
+            return ValidatorTier.Seeker;
+        }
+    }
+
+    /**
+     * @dev Check if contributor should be suspended
+     */
+    function _checkContributorSuspension(address contributor) internal {
+        ContributorProfile storage profile = contributorProfiles[contributor];
+
+        if (profile.totalQuestionsSubmitted < 5) return; // Need minimum submissions
+
+        uint256 rejectionRate = (profile.rejectedQuestions * 10000) / profile.totalQuestionsSubmitted;
+
+        // Suspend if rejection rate is above 50% or quality score is too low
+        if ((rejectionRate > 5000 || profile.qualityScore < 3000) && !profile.isSuspended) {
+            profile.isSuspended = true;
+            profile.suspendedUntil = block.timestamp + SUSPENSION_DURATION;
+
+            emit ValidatorSuspended(
+                contributor,
+                profile.suspendedUntil,
+                profile.qualityScore,
+                "High rejection rate or low quality score",
+                block.timestamp
+            );
+        }
+    }
+
+    /**
+     * @dev Get contributor profile and stats
+     */
+    function getContributorProfile(address contributor) external view returns (
+        ValidatorTier tier,
+        uint256 totalSubmitted,
+        uint256 acceptedQuestions,
+        uint256 rejectionRate,
+        uint256 qualityScore,
+        uint256 totalEarned,
+        uint256 currentStaked,
+        bool isSuspended
+    ) {
+        ContributorProfile memory profile = contributorProfiles[contributor];
+        tier = getContributorTier(contributor);
+
+        rejectionRate = 0;
+        if (profile.totalQuestionsSubmitted > 0) {
+            rejectionRate = (profile.rejectedQuestions * 10000) / profile.totalQuestionsSubmitted;
+        }
+
+        return (
+            tier,
+            profile.totalQuestionsSubmitted,
+            profile.acceptedQuestions,
+            rejectionRate,
+            profile.qualityScore,
+            profile.totalEarnedRDLN,
+            profile.currentStakedRON,
+            profile.isSuspended
+        );
+    }
+
+    /**
+     * @dev Get question submission details
+     */
+    function getQuestionSubmission(uint256 questionId) external view returns (
+        address contributor,
+        uint256 stakeAmount,
+        uint256 timestamp,
+        bool approved,
+        bool resolved,
+        uint256 validationCount,
+        string memory questionIPFS
+    ) {
+        QuestionSubmission memory question = questionSubmissions[questionId];
+        return (
+            question.contributor,
+            question.stakeAmount,
+            question.timestamp,
+            question.approved,
+            question.resolved,
+            question.validationCount,
+            question.questionIPFS
+        );
+    }
+
+    /**
+     * @dev Get contributor's pending questions (paginated)
+     */
+    function getContributorQuestions(
+        address contributor,
+        uint256 limit,
+        uint256 offset
+    ) external view returns (uint256[] memory) {
+        uint256[] storage allQuestions = contributorQuestions[contributor];
+
+        if (offset >= allQuestions.length) {
+            return new uint256[](0);
+        }
+
+        uint256 remaining = allQuestions.length - offset;
+        uint256 resultLength = remaining > limit ? limit : remaining;
+
+        uint256[] memory result = new uint256[](resultLength);
+        for (uint256 i = 0; i < resultLength; i++) {
+            result[i] = allQuestions[offset + i];
+        }
+
+        return result;
     }
 
     // =============================================================

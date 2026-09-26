@@ -16,7 +16,12 @@
     "local-node": "npx hardhat node",
     "deploy:sepolia": "npx hardhat run scripts/deploy.js --network sepolia",
     "deploy:polygon": "npx hardhat run scripts/deploy.js --network polygon",
-    "deploy:mumbai": "npx hardhat run scripts/deploy.js --network mumbai"
+    "deploy:mumbai": "npx hardhat run scripts/deploy.js --network mumbai",
+    "deploy:forwarder": "npx hardhat run scripts/deploy-forwarder.js",
+    "upgrade:gasless": "npx hardhat run scripts/upgrade-gasless.js",
+    "upgrade:airdrop-gasless": "npx hardhat run scripts/upgrade-airdrop-gasless.js",
+    "upgrade:creator-economy": "npx hardhat run scripts/upgrade-creator-economy.js",
+    "setup:defender": "node scripts/defender-setup.js"
   },
   "keywords": [
     "blockchain",
@@ -56,6 +61,7 @@
     "@chainlink/contracts": "^0.8.0",
     "@openzeppelin/contracts": "^5.0.0",
     "@openzeppelin/contracts-upgradeable": "^5.0.0",
+    "@openzeppelin/defender-sdk": "^1.12.0",
     "dotenv": "^16.3.1"
   }
 }

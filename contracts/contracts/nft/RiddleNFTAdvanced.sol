@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../interfaces/IRDLN.sol";
 import "../interfaces/IRON.sol";
+import "../humanity/IHumanityGate.sol";
 
 /**
  * @title RiddleNFTAdvanced - Revolutionary NFT-as-Game System
@@ -297,16 +298,21 @@ contract RiddleNFTAdvanced is
     /// @custom:storage-location erc7201:riddlen.storage.RiddleNFTAdvanced.CommitReveal
     struct CommitRevealStorage {
         mapping(uint256 => CommitRevealSession) sessions;
+        // Humanity gate: once set, every entry must prove a unique verified human
+        IHumanityGate humanityGate;
+        mapping(uint256 => mapping(bytes32 => bool)) humanEntered;
     }
 
     // keccak256(abi.encode(uint256(keccak256("riddlen.storage.RiddleNFTAdvanced.CommitReveal")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant COMMIT_REVEAL_STORAGE =
         0xf027b97ca25447bdae0d5cfe1f765071229648c394cf7f6bc5c584f66df52b00;
 
-    function _cr(uint256 sessionId) private view returns (CommitRevealSession storage s) {
-        CommitRevealStorage storage $;
+    function _crs() private pure returns (CommitRevealStorage storage $) {
         assembly { $.slot := COMMIT_REVEAL_STORAGE }
-        s = $.sessions[sessionId];
+    }
+
+    function _cr(uint256 sessionId) private view returns (CommitRevealSession storage s) {
+        s = _crs().sessions[sessionId];
     }
 
     error SolutionNotCommitted();
@@ -322,6 +328,8 @@ contract RiddleNFTAdvanced is
     error AlreadyRevealed();
     error AlreadyFinalized();
     error TooEarly();
+    error HumanProofRequired();
+    error HumanAlreadyEntered(bytes32 humanId);
 
     event SolutionCommitted(uint256 indexed sessionId, bytes32 commitment);
     event AnswerCommitted(uint256 indexed sessionId, address indexed player, uint256 seq);
@@ -329,6 +337,8 @@ contract RiddleNFTAdvanced is
     event AnswerRevealed(uint256 indexed sessionId, address indexed player, bool correct);
     event SessionFinalized(uint256 indexed sessionId, uint256 winners);
     event RONAwardFailed(uint256 indexed sessionId, address indexed player);
+    event HumanityGateUpdated(address indexed gate);
+    event HumanEntered(uint256 indexed sessionId, bytes32 indexed humanId, address indexed player);
 
     // ============ EVENTS ============
 
@@ -587,15 +597,37 @@ contract RiddleNFTAdvanced is
         notEmergencyMode
         returns (uint256)
     {
+        if (address(_crs().humanityGate) != address(0)) revert HumanProofRequired();
+        return _enter(sessionId);
+    }
+
+    /**
+     * @dev Enter a session as a verified human: one entry per human per session, whichever
+     * wallet they use. `proof` format is defined by the configured humanity gate.
+     */
+    function enterAsHuman(uint256 sessionId, bytes calldata proof)
+        external
+        nonReentrant
+        onlyActiveSession(sessionId)
+        antiCheat(sessionId)
+        notEmergencyMode
+        returns (uint256)
+    {
+        CommitRevealStorage storage $ = _crs();
+        if (address($.humanityGate) == address(0)) revert HumanProofRequired();
+        bytes32 humanId = $.humanityGate.verifyHuman(msg.sender, sessionId, proof);
+        if ($.humanEntered[sessionId][humanId]) revert HumanAlreadyEntered(humanId);
+        $.humanEntered[sessionId][humanId] = true;
+        emit HumanEntered(sessionId, humanId, msg.sender);
+        return _enter(sessionId);
+    }
+
+    function _enter(uint256 sessionId) private returns (uint256) {
         RiddleSession storage session = riddleSessions[sessionId];
 
         if (block.timestamp >= session.endTime) revert SessionClosed();
         require(session.totalMinted < session.maxMints, "Max mints reached");
         require(session.participants[msg.sender] == ParticipantStatus.NOT_PARTICIPATING, "Already participating");
-
-        // Check RON access requirements
-        IRON.AccessTier userTier = ronToken.getUserTier(msg.sender);
-        require(_hasAccessToRiddle(userTier, session.difficulty), "Insufficient access tier");
 
         // Process payment: RDLN pulls mintCost from the player and distributes it
         uint256 mintCost = session.currentMintCost;
@@ -619,6 +651,19 @@ contract RiddleNFTAdvanced is
         emit RiddleAccessMinted(sessionId, tokenId, msg.sender, mintCost);
 
         return tokenId;
+    }
+
+    function setHumanityGate(address gate) external onlyRole(ADMIN_ROLE) {
+        _crs().humanityGate = IHumanityGate(gate);
+        emit HumanityGateUpdated(gate);
+    }
+
+    function humanityGate() external view returns (address) {
+        return address(_crs().humanityGate);
+    }
+
+    function humanEntered(uint256 sessionId, bytes32 humanId) external view returns (bool) {
+        return _crs().humanEntered[sessionId][humanId];
     }
 
     /**
@@ -1012,17 +1057,6 @@ contract RiddleNFTAdvanced is
     }
 
     // ============ UTILITY FUNCTIONS ============
-
-    function _hasAccessToRiddle(IRON.AccessTier userTier, RiddleDifficulty difficulty) internal pure returns (bool) {
-        // Based on ecosystem report: Remove purchase tier-gating
-        // Anyone can buy any riddle with RDLN (no RON requirement for purchases)
-        // This allows zero-barrier entry while maintaining progression incentives
-        return true;
-
-        // NOTE: RON still gates validation income in the Oracle Network,
-        // but does not restrict riddle purchases
-    }
-
 
     // ============ ADMIN FUNCTIONS ============
 

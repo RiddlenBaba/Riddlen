@@ -69,10 +69,10 @@ describe("RiddleNFTAdvanced - upgrade from deployed version", function () {
         const { nft, admin } = await upgraded();
         expect(await nft.currentSessionId()).to.equal(2);
         expect(await nft.currentQuestionId()).to.equal(2);
-        const [creator, content, , , validated] = await nft.getQuestionData(1);
-        expect(creator).to.equal(admin.address);
-        expect(content).to.equal("what am I?");
-        expect(validated).to.equal(true);
+        const question = await nft.questions(1);
+        expect(question.creator).to.equal(admin.address);
+        expect(question.content).to.equal("what am I?");
+        expect(question.validated).to.equal(true);
         expect(await nft.hasRole(await nft.GAME_MASTER_ROLE(), admin.address)).to.equal(true);
         expect((await nft.riddleSessions(1)).title).to.equal("legacy");
     });

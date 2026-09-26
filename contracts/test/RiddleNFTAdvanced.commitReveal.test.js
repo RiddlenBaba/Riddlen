@@ -55,15 +55,6 @@ describe("RiddleNFTAdvanced - commit-reveal answers", function () {
         for (const v of [v1, v2, v3]) await nft.grantRole(QV, v.address);
 
         const questionIds = [];
-        await rdln.mintPrizePool(admin.address, ethers.parseEther("1000"));
-        await rdln.approve(nftAddress, ethers.MaxUint256);
-        for (let i = 0; i < ANSWERS.length; i++) {
-            await nft.submitQuestion(`q${i}`, 1, ethers.id(`salted-${i}`), [], LEGENDARY);
-            const id = (await nft.currentQuestionId()) - 1n;
-            for (const v of [v1, v2, v3]) await nft.connect(v).validateQuestion(id, true);
-            questionIds.push(id);
-        }
-
         await rdln.mintPrizePool(nftAddress, ethers.parseEther("50000000"));
         for (const p of players) {
             await rdln.mintPrizePool(p.address, ethers.parseEther("10000"));

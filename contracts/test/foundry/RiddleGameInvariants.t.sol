@@ -201,21 +201,8 @@ contract RiddleGameInvariants is Test {
         ron.grantRole(ron.GAME_ROLE(), address(nft));
         for (uint160 v = 1; v <= 3; v++) nft.grantRole(nft.QUESTION_VALIDATOR_ROLE(), address(0x1000 + v));
 
-        rdln.approve(address(nft), type(uint256).max);
-        uint256[] memory qids = new uint256[](2);
-        for (uint256 i = 0; i < 2; i++) {
-            qids[i] = nft.submitQuestion(
-                "q", RiddleNFTAdvanced.QuestionType.FILL_BLANK, keccak256(abi.encode(i)),
-                new string[](0), RiddleNFTAdvanced.RiddleDifficulty.LEGENDARY
-            );
-        }
         vm.stopPrank();
-        for (uint256 i = 0; i < 2; i++) {
-            for (uint160 v = 1; v <= 3; v++) {
-                vm.prank(address(0x1000 + v));
-                nft.validateQuestion(qids[i], true);
-            }
-        }
+        uint256[] memory qids = new uint256[](0);
 
         address[] memory players = new address[](8);
         for (uint160 i = 0; i < 8; i++) players[i] = address(0xB000 + i);

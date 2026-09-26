@@ -281,6 +281,7 @@ contract RiddleNFTAdvanced is
         uint64 committedAt;
         uint32 seq;
         bool correct;
+        bytes32 answerHash; // consensus sessions: revealed answer
     }
 
     struct CommitRevealSession {
@@ -293,7 +294,14 @@ contract RiddleNFTAdvanced is
         address[] commitOrder;
         mapping(address => PlayerCommit) commits;
         mapping(address => uint256) tokenOf;
+        // Consensus ("Read the Room") sessions: the most common revealed answers win
+        bool consensus;
+        uint32 topCount;
+        mapping(bytes32 => uint32) answerCount;
     }
+
+    /// @notice Minimum number of players who must share an answer for it to win a consensus session
+    uint256 public constant MIN_CONSENSUS = 2;
 
     /// @custom:storage-location erc7201:riddlen.storage.RiddleNFTAdvanced.CommitReveal
     struct CommitRevealStorage {
@@ -329,6 +337,7 @@ contract RiddleNFTAdvanced is
     error AlreadyFinalized();
     error TooEarly();
     error HumanProofRequired();
+    error ConsensusSession();
     error HumanAlreadyEntered(bytes32 humanId);
 
     event SolutionCommitted(uint256 indexed sessionId, bytes32 commitment);
@@ -338,6 +347,7 @@ contract RiddleNFTAdvanced is
     event SessionFinalized(uint256 indexed sessionId, uint256 winners);
     event RONAwardFailed(uint256 indexed sessionId, address indexed player);
     event HumanityGateUpdated(address indexed gate);
+    event ConsensusModeEnabled(uint256 indexed sessionId);
     event HumanEntered(uint256 indexed sessionId, bytes32 indexed humanId, address indexed player);
 
     // ============ EVENTS ============
@@ -568,19 +578,39 @@ contract RiddleNFTAdvanced is
     function commitSolution(uint256 sessionId, bytes32 commitment) external onlyRole(GAME_MASTER_ROLE) {
         CommitRevealSession storage cr = _cr(sessionId);
         if (cr.solutionCommitment != bytes32(0)) revert SolutionAlreadyCommitted();
+        if (cr.consensus) revert ConsensusSession();
         require(riddleSessions[sessionId].state == RiddleState.INACTIVE, "Session already started");
         cr.solutionCommitment = commitment;
         emit SolutionCommitted(sessionId, commitment);
     }
 
+    /**
+     * @dev Turn a session into a consensus session: there is no hidden solution, and the most
+     * common revealed answers (shared by at least MIN_CONSENSUS players) win.
+     */
+    function enableConsensusMode(uint256 sessionId) external onlyRole(GAME_MASTER_ROLE) {
+        CommitRevealSession storage cr = _cr(sessionId);
+        require(riddleSessions[sessionId].state == RiddleState.INACTIVE, "Session already started");
+        if (cr.solutionCommitment != bytes32(0)) revert SolutionAlreadyCommitted();
+        cr.consensus = true;
+        emit ConsensusModeEnabled(sessionId);
+    }
+
+    function isConsensusSession(uint256 sessionId) external view returns (bool) {
+        return _cr(sessionId).consensus;
+    }
+
     function startRiddleSession(uint256 sessionId) external onlyRole(GAME_MASTER_ROLE) {
         RiddleSession storage session = riddleSessions[sessionId];
+        CommitRevealSession storage cr = _cr(sessionId);
         require(session.state == RiddleState.INACTIVE, "Session already started");
-        if (_cr(sessionId).solutionCommitment == bytes32(0)) revert SolutionNotCommitted();
+        if (!cr.consensus && cr.solutionCommitment == bytes32(0)) revert SolutionNotCommitted();
 
         session.state = RiddleState.ACTIVE;
         session.startTime = block.timestamp;
         session.endTime = block.timestamp + session.sessionDuration;
+        // Consensus sessions have nothing to reveal: the reveal window opens when entries close
+        if (cr.consensus) cr.solutionRevealedAt = uint64(session.endTime);
 
         emit RiddleSessionStarted(sessionId, session.startTime, session.endTime);
     }
@@ -688,7 +718,7 @@ contract RiddleNFTAdvanced is
 
         uint256 seq = cr.commitOrder.length;
         cr.commitOrder.push(msg.sender);
-        cr.commits[msg.sender] = PlayerCommit(commitment, uint64(block.timestamp), uint32(seq), false);
+        cr.commits[msg.sender] = PlayerCommit(commitment, uint64(block.timestamp), uint32(seq), false, bytes32(0));
 
         emit AnswerCommitted(sessionId, msg.sender, seq);
     }
@@ -703,6 +733,7 @@ contract RiddleNFTAdvanced is
     {
         RiddleSession storage session = riddleSessions[sessionId];
         CommitRevealSession storage cr = _cr(sessionId);
+        if (cr.consensus) revert ConsensusSession();
         if (session.endTime == 0 || block.timestamp < session.endTime) revert SessionStillOpen();
         if (cr.solutionRevealedAt != 0) revert AlreadyRevealed();
         if (keccak256(abi.encode(address(this), sessionId, answers, salt)) != cr.solutionCommitment) {
@@ -721,17 +752,25 @@ contract RiddleNFTAdvanced is
      */
     function revealAnswer(uint256 sessionId, string[] calldata answers, bytes32 nonce) external {
         CommitRevealSession storage cr = _cr(sessionId);
-        if (cr.solutionRevealedAt == 0) revert SolutionNotRevealed();
+        if (cr.solutionRevealedAt == 0 || block.timestamp < cr.solutionRevealedAt) revert SolutionNotRevealed();
         if (block.timestamp > cr.solutionRevealedAt + REVEAL_WINDOW) revert RevealWindowClosed();
 
         PlayerCommit storage c = cr.commits[msg.sender];
         if (c.commitment == bytes32(0)) revert NoCommitment();
-        if (c.correct) revert AlreadyRevealed();
+        if (c.correct || c.answerHash != bytes32(0)) revert AlreadyRevealed();
         if (keccak256(abi.encode(address(this), msg.sender, sessionId, answers, nonce)) != c.commitment) {
             revert CommitmentMismatch();
         }
 
-        c.correct = keccak256(abi.encode(answers)) == cr.solutionHash;
+        bytes32 answerHash = keccak256(abi.encode(answers));
+        if (cr.consensus) {
+            // Counted now, judged at finalize once every reveal is in
+            c.answerHash = answerHash;
+            uint32 count = ++cr.answerCount[answerHash];
+            if (count > cr.topCount) cr.topCount = count;
+        } else {
+            c.correct = answerHash == cr.solutionHash;
+        }
         emit AnswerRevealed(sessionId, msg.sender, c.correct);
     }
 
@@ -775,6 +814,12 @@ contract RiddleNFTAdvanced is
         participant.completed = true;
         participant.completionTime = c.committedAt;
         session.totalCompleted++;
+
+        if (cr.consensus) {
+            c.correct = c.answerHash != bytes32(0)
+                && cr.topCount >= MIN_CONSENSUS
+                && cr.answerCount[c.answerHash] == cr.topCount;
+        }
 
         if (!c.correct) {
             session.participants[player] = ParticipantStatus.COMPLETED_FAILURE;
@@ -839,76 +884,7 @@ contract RiddleNFTAdvanced is
         return (c.commitment, c.committedAt, c.correct);
     }
 
-    // ============ QUESTION GENERATION SYSTEM ============
 
-    /**
-     * @dev Submit question for community validation
-     * Progressive pricing: 1st question = 1 RDLN, Nth question = N RDLN
-     */
-    function submitQuestion(
-        string calldata content,
-        QuestionType questionType,
-        bytes32 correctAnswerHash,
-        string[] calldata options,
-        RiddleDifficulty difficulty
-    ) external returns (uint256) {
-        // Calculate submission cost
-        uint256 submissionCount = questionSubmissionCosts[msg.sender] + 1;
-        uint256 cost = submissionCount * 10**18; // Progressive pricing
-
-        require(rdlnToken.transferFrom(msg.sender, address(this), cost), "Payment failed");
-        questionSubmissionCosts[msg.sender] = submissionCount;
-
-        uint256 questionId = currentQuestionId++;
-        Question storage question = questions[questionId];
-
-        question.id = questionId;
-        question.creator = msg.sender;
-        question.content = content;
-        question.questionType = questionType;
-        question.correctAnswerHash = correctAnswerHash;
-        question.options = options;
-        question.difficulty = difficulty;
-        question.active = true;
-
-        emit QuestionSubmitted(questionId, msg.sender, difficulty, cost);
-
-        return questionId;
-    }
-
-    /**
-     * @dev Validate submitted question
-     */
-    function validateQuestion(uint256 questionId, bool approved)
-        external
-        onlyRole(QUESTION_VALIDATOR_ROLE)
-    {
-        Question storage question = questions[questionId];
-        require(question.active, "Question not active");
-        require(!question.validatedBy[msg.sender], "Already validated");
-
-        question.validatedBy[msg.sender] = approved;
-        question.validatorCount++;
-
-        if (approved) {
-            question.positiveVotes++;
-        } else {
-            question.negativeVotes++;
-        }
-
-        // Check if consensus reached
-        if (question.validatorCount >= MIN_VALIDATORS_PER_QUESTION) {
-            uint256 approvalRate = (question.positiveVotes * 100) / question.validatorCount;
-
-            if (approvalRate >= VALIDATION_CONSENSUS_THRESHOLD) {
-                question.validated = true;
-            } else if (approvalRate < (100 - VALIDATION_CONSENSUS_THRESHOLD)) {
-                question.active = false; // Rejected
-            }
-        }
-
-        emit QuestionValidated(questionId, msg.sender, approved, question.validatorCount);
-    }
 
     // ============ RANDOMIZED PARAMETER SYSTEM ============
 
@@ -1117,24 +1093,6 @@ contract RiddleNFTAdvanced is
         );
     }
 
-    function getQuestionData(uint256 questionId) external view returns (
-        address creator,
-        string memory content,
-        QuestionType questionType,
-        RiddleDifficulty difficulty,
-        bool validated,
-        uint256 timesUsed
-    ) {
-        Question storage question = questions[questionId];
-        return (
-            question.creator,
-            question.content,
-            question.questionType,
-            question.difficulty,
-            question.validated,
-            question.timesUsed
-        );
-    }
 
     // ============ ERC721 OVERRIDES ============
 

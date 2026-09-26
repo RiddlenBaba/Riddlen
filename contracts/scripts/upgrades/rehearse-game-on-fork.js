@@ -29,7 +29,7 @@ async function main() {
     await network.provider.request({ method: "hardhat_impersonateAccount", params: [deployerAddress] });
     await network.provider.send("hardhat_setBalance", [deployerAddress, "0x56BC75E2D63100000"]);
     const admin = await ethers.getSigner(deployerAddress);
-    const [, alice, bob, carol, v1, v2, v3] = await ethers.getSigners();
+    const [, alice, bob, carol] = await ethers.getSigners();
 
     const nft = await ethers.getContractAt("RiddleNFTAdvanced", NFT_PROXY, admin);
     await nft.getCommitRevealState(0).catch(() => {
@@ -45,20 +45,12 @@ async function main() {
     }
 
     await rdln.mintPrizePool(NFT_PROXY, E(20_000_000));
-    await rdln.mintPrizePool(admin.address, E(1_000));
     for (const p of [alice, bob, carol]) await rdln.mintPrizePool(p.address, E(5_000));
-
-    const QV = await nft.QUESTION_VALIDATOR_ROLE();
-    for (const v of [v1, v2, v3]) await nft.grantRole(QV, v.address);
-    await rdln.approve(NFT_PROXY, ethers.MaxUint256);
-    await nft.submitQuestion("I speak without a mouth and hear without ears. What am I?", 1,
-        ethers.id("creator-salted-hash"), [], 0);
-    const questionId = (await nft.currentQuestionId()) - 1n;
-    for (const v of [v1, v2, v3]) await nft.connect(v).validateQuestion(questionId, true);
 
     const answers = ["echo"];
     const salt = ethers.hexlify(ethers.randomBytes(32));
-    await nft.createRiddleSession("Fork rehearsal", "d", "classic", 0, [questionId], 3600);
+    await nft.createRiddleSession("Fork rehearsal", "I speak without a mouth and hear without ears. What am I?",
+        "classic", 0, [], 3600);
     const sessionId = (await nft.currentSessionId()) - 1n;
     await nft.commitSolution(sessionId, ethers.keccak256(coder.encode(
         ["address", "uint256", "string[]", "bytes32"], [NFT_PROXY, sessionId, answers, salt]

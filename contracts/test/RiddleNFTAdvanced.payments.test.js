@@ -49,13 +49,6 @@ describe("RiddleNFTAdvanced - payments and anti-cheat", function () {
         return id;
     }
 
-    async function validatedQuestion(nft, admin, validators, answer) {
-        await nft.connect(admin).submitQuestion("q", 0, answer, [], 0);
-        const id = (await nft.currentQuestionId()) - 1n;
-        for (const v of validators) await nft.connect(v).validateQuestion(id, true);
-        return id;
-    }
-
     it("charges the mint cost exactly once", async function () {
         const { rdln, nft, nftAddress, player } = await loadFixture(deployFixture);
         const session = await openSession(nft);

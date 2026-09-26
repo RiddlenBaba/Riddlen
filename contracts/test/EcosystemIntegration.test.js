@@ -31,7 +31,8 @@ describe("Riddlen Ecosystem Integration Tests", function () {
                 devOpsWallet.address, // _liquidityWallet
                 treasuryWallet.address, // _airdropWallet
                 grandPrizeWallet.address, // _grandPrizeWallet
-                devOpsWallet.address  // _operationsWallet
+                devOpsWallet.address, // _operationsWallet
+                ethers.Wallet.createRandom().address // _trustedForwarder (unused EOA)
             ],
             {
                 initializer: 'initialize',

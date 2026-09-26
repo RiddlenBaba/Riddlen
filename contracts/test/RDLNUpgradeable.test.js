@@ -17,7 +17,8 @@ describe("RDLNUpgradeable", function () {
                 owner.address,        // _liquidityWallet (placeholder)
                 owner.address,        // _airdropWallet (placeholder)
                 grandPrizeWallet.address,  // _grandPrizeWallet
-                owner.address         // _operationsWallet (placeholder)
+                owner.address,        // _operationsWallet (placeholder)
+                ethers.Wallet.createRandom().address // _trustedForwarder (unused EOA)
             ],
             { initializer: 'initialize' }
         );

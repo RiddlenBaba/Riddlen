@@ -1,0 +1,134 @@
+{
+  "contract": "0x529e3076cB9A48D6FAd086abE5d23ea76159e9E3",
+  "player": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+  "nonce": "0xabababababababababababababababababababababababababababababababab",
+  "salt": "0xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+  "vectors": [
+    {
+      "input": "echo",
+      "normalized": "echo",
+      "sessionId": 1,
+      "playerCommitment": "0x6b22ee847277aedeb2d3bd9a138c38378392f4e20c67d59d3f604053a18174a9",
+      "solutionCommitment": "0x853fddb356449443a49398628129ccba437799cee642d5a9084df02581f3bac4"
+    },
+    {
+      "input": "  Echo  ",
+      "normalized": "echo",
+      "sessionId": 2,
+      "playerCommitment": "0xe524350524f3c2186889a56225e83a6f0bc54f844e56e55a6fcac0d1db0bc2dd",
+      "solutionCommitment": "0x41261fc5ba215d7d3dd6a7b01ef66caabd0dc76a732437e0a3395f955516775e"
+    },
+    {
+      "input": "The Statue of LIBERTY!",
+      "normalized": "statue of liberty",
+      "sessionId": 3,
+      "playerCommitment": "0x7a0dccc1363bf106cd465202b9a29d378c8acbde912c93e5b640d6ba5196ac80",
+      "solutionCommitment": "0xf5b7a84d31c6d2b1802f4f507c4cef15efe5dd5cf6f4ddce09fa1d3689ff39f6"
+    },
+    {
+      "input": "the   statue\tof\nliberty",
+      "normalized": "statue of liberty",
+      "sessionId": 4,
+      "playerCommitment": "0x0285190f8db44b39aceca2aea99aa39dcf1d948766958371aad39d09ebf8886b",
+      "solutionCommitment": "0x943c80283e1dd6ddf2baf6ba1f0ea20cc0765a5c42c316a942f6a52ec5c47d73"
+    },
+    {
+      "input": "\"echo\"",
+      "normalized": "echo",
+      "sessionId": 5,
+      "playerCommitment": "0xec3b2fbbbb447db8c0e04121e3a82efa61aa12d20a2aeaf684a33ae1ffc8c8a5",
+      "solutionCommitment": "0x44b391fe14e5225cc85929fa64e2ad3be4e95b90838e2449cef7c6734068b04c"
+    },
+    {
+      "input": "“echo.”",
+      "normalized": "echo",
+      "sessionId": 6,
+      "playerCommitment": "0xf26612d44ad034482cf2ee26735a7b375f53ba8f736ce3a69984e8718fc556d9",
+      "solutionCommitment": "0xcbe0e1fedfc36304af79c9eae9e75824ac602c47d64437c085e692da8903e3ae"
+    },
+    {
+      "input": "echo?!",
+      "normalized": "echo",
+      "sessionId": 7,
+      "playerCommitment": "0x32362c345391f61946a38934d2d51c93efd450e7fa9de04aba39fba0a8866528",
+      "solutionCommitment": "0x93ff0d02016cf213397b768bc54eea1377196cb5bdf3173164d894a814ef64f5"
+    },
+    {
+      "input": "Ｅｃｈｏ",
+      "normalized": "echo",
+      "sessionId": 8,
+      "playerCommitment": "0xab1fd193aab8a4444772d6ae106058f525bfb94b89f7b6ff7a0e551dbe07a2f2",
+      "solutionCommitment": "0x4c5a673fd164c5a907918d2941491cfd2c8cf3cdbf1bd406edf05b3bb565afaa"
+    },
+    {
+      "input": "café",
+      "normalized": "café",
+      "sessionId": 9,
+      "playerCommitment": "0x09a444849ff315960fdb9c804cc86e39a71723289dca25a3a4abfbef3c9d7f87",
+      "solutionCommitment": "0x5e2df0c1abafea4374806b5be51f0dae6fd52b9569d48af1b71318ca6263cb72"
+    },
+    {
+      "input": "rock 'n' roll",
+      "normalized": "rock 'n' roll",
+      "sessionId": 10,
+      "playerCommitment": "0x1e8c598a4daa5409f1871d2dced7233a567bcb2c0e2f4fcdc984be6afa223983",
+      "solutionCommitment": "0x7f9dc1a2d90875cf83adfefa90a2801da017a300c4900764348ae56b7ef086c8"
+    },
+    {
+      "input": "3.14",
+      "normalized": "3.14",
+      "sessionId": 11,
+      "playerCommitment": "0x591ad1fb5132617a497bca0ea03162bc3555e8084f4fac7505ed010fae193d8a",
+      "solutionCommitment": "0x6e7db6c2dcc8edaceec03039541d7bdb2ba8ee838885f3bfe6074efe3fea1840"
+    },
+    {
+      "input": "",
+      "normalized": "",
+      "sessionId": 12,
+      "playerCommitment": "0x5d4a73c181206ef93846f426bddf2ff8edb57ef80a7b9ce30ce2042f6a5c0829",
+      "solutionCommitment": "0x3cfdf24e7372d60123631a87a11015c79bde7cb6b8fd13a3f270d6f084ea2241"
+    },
+    {
+      "input": "An Echo.",
+      "normalized": "echo",
+      "sessionId": 13,
+      "playerCommitment": "0xb4a774d9775824f2bae6de8017c488279f9b53c69f6af183045f4976e2a56a13",
+      "solutionCommitment": "0x0cd545b119456e88193407773f3bacef6f625fe49bbb5f4ceb8a901538d3d645"
+    },
+    {
+      "input": "a map",
+      "normalized": "map",
+      "sessionId": 14,
+      "playerCommitment": "0xe4447926f5b3a36ae4cb290d32e7652f20058a4d9b4eb181c6ee370e81a4b1c3",
+      "solutionCommitment": "0x2afdab6e50bfcb23ec19d0b99e7de73553a41552cdbcf24af5433b163d349c37"
+    },
+    {
+      "input": "the",
+      "normalized": "the",
+      "sessionId": 15,
+      "playerCommitment": "0x6033537c6c7482c85b27b84b326118979b22793f0be589bfb63f937461689731",
+      "solutionCommitment": "0xba77959d9a6b3aeff24b0ec7bee159297d1421bca975fbba488fce58b6fae0ba"
+    },
+    {
+      "input": "theatre",
+      "normalized": "theatre",
+      "sessionId": 16,
+      "playerCommitment": "0x4566c84e5d0f3fd4be303d9232fb5982025f59f71da589c0f9928cbf9cd2da8d",
+      "solutionCommitment": "0x7a300822270e3cac02eb49faf01355f1617f43d212ddec5e1888d867bf4c3d03"
+    },
+    {
+      "input": "another day",
+      "normalized": "another day",
+      "sessionId": 17,
+      "playerCommitment": "0x6ebde6bca5a8020a7bb640961d7daf1e55bde6bb42a62fd284d8aed83c449e0c",
+      "solutionCommitment": "0x7a00136e669e99b3d08e2ed16f6f39ca9fcf138fab01368aca1861fd6252308c"
+    },
+    {
+      "input": "The the",
+      "normalized": "the",
+      "sessionId": 18,
+      "playerCommitment": "0x8c1c601c905a68dd2557a821d4c28a08d9a324a8e15da82bdda6df9d5c33c0d3",
+      "solutionCommitment": "0x19eba32192ed874bdd14fad8e686af1e9e5b2cf5ec53fb3864c29e3dcd10bd0e"
+    }
+  ]
+}

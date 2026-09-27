@@ -8,7 +8,7 @@ redirect_from:
   - /guides/index.html
 ---
 
-# Riddlen
+<h1 class="wordmark">Riddlen</h1>
 
 **A scavenger hunt for the whole world.** The house releases a riddle. The contract rolls how
 many NFTs exist for it and puts them on sale. An NFT is one person's right to attempt that

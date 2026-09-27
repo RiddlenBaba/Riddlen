@@ -290,6 +290,8 @@ strong {
   color: #e5e5e5;
   font-weight: 600;
 }
+.nav-brand a strong, .nav-brand a { color: #e4664d; font-weight: 500; }
+.wordmark { color: #e4664d; font-family: "Fraunces", "Iowan Old Style", Georgia, serif; font-style: italic; font-weight: 500; }
 
 code {
   background: #18181b;

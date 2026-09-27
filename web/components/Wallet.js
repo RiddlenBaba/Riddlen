@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useAccount, useBalance, useChainId, useConnect, useDisconnect, useReadContract, useSwitchChain } from 'wagmi';
 import { formatEther } from 'viem';
 import { CHAIN, CONTRACTS, EXPLORER } from '../lib/wagmi';
-import { ERC20_ABI, STUMP_ABI } from '../lib/abi';
+import { ERC20_ABI, HUNT_ABI } from '../lib/abi';
 
 export const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '');
 const fmt = (v, d = 0) => Number(formatEther(v ?? 0n)).toLocaleString(undefined, { maximumFractionDigits: d });
@@ -71,7 +71,7 @@ export function WalletButton() {
   const enabled = isConnected && !!address;
 
   const { data: rdln } = useReadContract({ address: CONTRACTS.RDLN, abi: ERC20_ABI, functionName: 'balanceOf', args: [address], query: { enabled, refetchInterval: 15000 } });
-  const { data: owed } = useReadContract({ address: CONTRACTS.STUMP, abi: STUMP_ABI, functionName: 'owed', args: [address], query: { enabled, refetchInterval: 15000 } });
+  const { data: owed } = useReadContract({ address: CONTRACTS.HUNT, abi: HUNT_ABI, functionName: 'owed', args: [address], query: { enabled, refetchInterval: 15000 } });
   const { data: gas } = useBalance({ address, query: { enabled, refetchInterval: 15000 } });
 
   useEffect(() => { setMenu(false); }, [address]);

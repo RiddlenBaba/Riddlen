@@ -1,0 +1,27 @@
+# Unattended pass for the hunt on Amoy: opens released riddles (rolls their NFT count) and settles
+# riddles whose finisher window has passed. Nothing here needs a secret beyond the signing key,
+# and every action it takes is one anyone may take.
+#
+# Repository secrets needed: HUNT_CRON_PRIVATE_KEY (any funded Amoy key; GAME_MASTER not required).
+# Optional: AMOY_RPC_URL. Enable by removing the `if: false` line once the secret is set.
+name: Riddlen Hunt cron
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+concurrency: hunt-cron
+jobs:
+  pass:
+    if: false
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: contracts } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install --package-lock=false
+      - run: npx hardhat compile
+      - run: CONFIRM=yes npx hardhat run scripts/hunt/cron.js --network amoy
+        env:
+          PRIVATE_KEY: ${{ secrets.HUNT_CRON_PRIVATE_KEY }}
+          AMOY_RPC_URL: ${{ secrets.AMOY_RPC_URL || 'https://polygon-amoy-bor-rpc.publicnode.com' }}

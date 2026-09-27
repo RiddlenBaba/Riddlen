@@ -1,90 +1,59 @@
 import Link from 'next/link';
 import Layout from '../components/Layout';
-import Board, { Pill } from '../components/Board';
-import { DIFFICULTY, OUTCOME, useChallenges, useNow } from '../hooks/useStump';
-import { countdown, deadline, rdln } from '../components/format';
-
-function Featured({ c, revealWindow, now }) {
-  const dl = deadline(c, revealWindow);
-  return (
-    <Link href={`/r/${c.id}`} legacyBehavior>
-      <a className="feat">
-        <div className="head">
-          <span className="eyebrow">{c.phase === 'open' ? 'Open now' : 'Latest'} · #{c.id.toString()} · {DIFFICULTY[c.difficulty]}</span>
-          <Pill c={c} />
-        </div>
-        <p className="riddle-text q">{c.riddle}</p>
-        <div className="foot">
-          <span className="mono muted">{c.pool > 0n ? `${rdln(c.pool)} RDLN pot` : 'pot opens with the riddle'}{dl ? ` · ${dl.label} ${countdown(dl.at - now)}` : ''}</span>
-          <span className="cta">{c.phase === 'open' ? 'Solve it →' : 'Open →'}</span>
-        </div>
-        <style jsx>{`
-          .feat { display: flex; flex-direction: column; gap: 18px; padding: 28px; border: 1px solid var(--line-strong); border-radius: 18px; text-decoration: none; background: var(--paper); transition: transform 160ms, box-shadow 160ms; }
-          .feat:hover { transform: translateY(-2px); box-shadow: 0 12px 40px -20px rgba(0,0,0,0.5); }
-          .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-          .q { font-size: clamp(24px, 3.6vw, 34px); margin: 0; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
-          .foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; }
-          .cta { font-weight: 600; color: var(--accent); }
-        `}</style>
-      </a>
-    </Link>
-  );
-}
-
-function Stats({ challenges }) {
-  if (!challenges.length) return null;
-  const settled = challenges.filter((c) => c.phase === 'complete');
-  const stumped = settled.filter((c) => OUTCOME[c.outcome] === 'stumped').length;
-  const machine = settled.filter((c) => OUTCOME[c.outcome] === 'machine-solved').length;
-  return (
-    <div className="stats mono">
-      <span><b>{challenges.length}</b> riddles</span>
-      <span className="h"><b>{stumped}</b> stumped the machines</span>
-      <span className="m"><b>{machine}</b> machine wins</span>
-      <style jsx>{`
-        .stats { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--ink-3); }
-        b { color: var(--ink); font-weight: 500; }
-        .h b { color: var(--human); }
-        .m b { color: var(--machine); }
-      `}</style>
-    </div>
-  );
-}
+import { HuntPill } from '../components/HuntRiddle';
+import { DIFFICULTY, mintPriceOf, useCommitments, usePriceFloor, useRiddles } from '../hooks/useHunt';
+import { useNow } from '../hooks/useFaucet';
+import { rdln } from '../components/format';
+import { formatEther } from 'viem';
 
 const STEPS = [
-  ['Someone writes a riddle', 'and seals the answer on chain with a small burned stake.'],
-  ['The machines go first', 'Claude, GPT and Gemini try it cold. Every guess is sealed before anyone can play.'],
-  ['People play', 'Pay a small entry, seal a guess. Nothing is visible until the riddle closes.'],
-  ['Everyone reveals', 'Author, machines, then players, each checked against what was sealed.'],
-  ['The machines lose, people get paid', 'Author takes 40% of the pot, solvers split 60%. If a machine had it, the author gets nothing, and asking an AI would only have given you the guess it already got wrong.'],
+  ['A riddle goes live', 'The house releases it. A few blocks later the contract rolls how many NFTs exist for it, and they go on sale.'],
+  ['Buy one', 'The NFT is the riddle. It never expires, and it keeps its own count of tries. Sell it and everything goes with it.'],
+  ['Solve it', 'Each try on your NFT costs 1 RDLN, then 2, then 3. A quarter is burned, a quarter feeds the grand prize. The right answer unlocks a place.'],
+  ['Go there', 'Find what was hidden. Scan it, leave it. Every finder gets a share, biggest for the first, released when the next person finds it. Every solved riddle holds a piece of one map.'],
 ];
 
-export default function Home() {
+export default function HuntBoard() {
   const now = useNow();
-  const { challenges, revealWindow, isLoading } = useChallenges(now);
-  const featured = challenges.find((c) => c.phase === 'open') || challenges[0];
+  const { riddles, isLoading } = useRiddles(now);
+  const floor = usePriceFloor();
+  const c = useCommitments();
+  const open = riddles.filter((r) => r.phase === 'open').length;
 
   return (
-    <Layout>
+    <Layout description="A scavenger hunt for the whole world. Buy a riddle, solve it, go find what was hidden, get paid in RDLN.">
       <section className="hero">
-        <h1 className="display">Riddles the machines couldn&apos;t solve.</h1>
-        <p className="lede">Every riddle here was tried by Claude, GPT and Gemini before any person saw it. Their guesses are sealed. Beat them and get paid in RDLN. Write one they can&apos;t crack and get paid more.</p>
-        <div className="ctas">
-          <Link href="/write" legacyBehavior><a className="btn primary">Write a riddle</a></Link>
-          <a href="#board" className="btn">See the board</a>
-          <Link href="/free" legacyBehavior><a className="btn">Free Riddlen</a></Link>
+        <p className="eyebrow">Riddlen · testnet</p>
+        <h1 className="display">A scavenger hunt for the whole world.</h1>
+        <p className="lede">Riddles you buy, solve, and then go out and find. {c.totalRiddles ? `${c.totalRiddles.toLocaleString()} of them` : 'A thousand of them'} over twenty years, every attempt burned, and a grand prize hidden somewhere real. Every solved riddle is a piece of the map.</p>
+        <div className="stats mono">
+          <span><b>{riddles.length}</b> released</span>
+          <span className="h"><b>{open}</b> on sale</span>
+          <span><b>{riddles.reduce((n, r) => n + r.claimCount, 0)}</b> finds</span>
+          <span>price floor <b>{Number(formatEther(floor)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</b> RDLN</span>
         </div>
-        <Stats challenges={challenges} />
       </section>
 
-      {featured && <Featured c={featured} revealWindow={revealWindow} now={now} />}
-
-      <section id="board" className="sec">
-        <div className="sechead">
-          <h2 className="display">The board</h2>
-          <span className="muted">{challenges.length ? `${challenges.filter((c) => c.phase === 'open').length} open` : ''}</span>
+      <section className="sec">
+        <div className="sechead"><h2 className="display">The riddles</h2><Link href="/map" legacyBehavior><a className="muted">Your map →</a></Link></div>
+        <div className="board">
+          {isLoading && <p className="muted">Loading…</p>}
+          {!isLoading && riddles.length === 0 && <p className="muted">Nothing released yet. The first riddles are being written and hidden.</p>}
+          {riddles.map((r) => (
+            <Link key={r.id.toString()} href={`/r/${r.id}`} legacyBehavior>
+              <a className="row">
+                <span className="num mono">#{r.id.toString()}</span>
+                <span className="text riddle-text">{r.text}</span>
+                <span className="meta">
+                  <HuntPill phase={r.phase} />
+                  <span className="mono muted">{DIFFICULTY[r.difficulty]} · {rdln(r.pot)} RDLN</span>
+                  {r.opened && <span className="mono muted">{r.nftCount - r.minted} of {r.nftCount} left · {Number(formatEther(mintPriceOf(r, floor))).toLocaleString(undefined, { maximumFractionDigits: 2 })} RDLN each</span>}
+                  {r.claimCount > 0 && <span className="mono ok">{r.claimCount} found it</span>}
+                </span>
+              </a>
+            </Link>
+          ))}
         </div>
-        <Board challenges={challenges} revealWindow={revealWindow} now={now} isLoading={isLoading} />
       </section>
 
       <section className="sec">
@@ -94,21 +63,32 @@ export default function Home() {
             <li key={t}><span className="n mono">{String(i + 1).padStart(2, '0')}</span><div><strong>{t}</strong><p>{b}</p></div></li>
           ))}
         </ol>
+        <p className="muted small">The whole design, including what never changes: <a href="https://riddlen.org/next/" target="_blank" rel="noreferrer">riddlen.org/next</a>. Map root {c.mapRoot ? `${c.mapRoot.slice(0, 10)}…` : '…'} committed at launch.</p>
       </section>
 
       <style jsx>{`
         .hero { display: flex; flex-direction: column; gap: 18px; margin-bottom: 40px; max-width: 760px; }
         h1 { font-size: clamp(38px, 6.5vw, 68px); margin: 0; }
         .lede { font-size: 18px; color: var(--ink-2); margin: 0; max-width: 60ch; }
-        .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
-        .sec { margin-top: 64px; display: flex; flex-direction: column; gap: 18px; }
+        .stats { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--ink-3); }
+        .stats b { color: var(--ink); font-weight: 500; } .h b { color: var(--human); }
+        .sec { margin-top: 56px; display: flex; flex-direction: column; gap: 18px; }
         .sechead { display: flex; justify-content: space-between; align-items: baseline; }
+        .sechead a { text-decoration: none; font-size: 14px; }
         h2 { font-size: 30px; margin: 0; }
+        .board { display: flex; flex-direction: column; }
+        .row { display: grid; grid-template-columns: 48px 1fr; gap: 4px 12px; padding: 16px 0; border-top: 1px solid var(--line); text-decoration: none; }
+        .row:hover .text { color: var(--accent); }
+        .num { color: var(--ink-3); padding-top: 2px; }
+        .text { font-size: 18px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .meta { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; }
+        .ok { color: var(--human); }
         .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 720px) { .steps { grid-template-columns: repeat(2, 1fr); gap: 28px 40px; } }
         .steps li { display: flex; gap: 14px; }
         .n { color: var(--accent); padding-top: 3px; }
         .steps p { margin: 4px 0 0; color: var(--ink-2); font-size: 15px; }
+        .small { font-size: 13px; margin: 0; }
       `}</style>
     </Layout>
   );

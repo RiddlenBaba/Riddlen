@@ -27,11 +27,21 @@ Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com).
 Roles on the game: `ADMIN_ROLE`, `UPGRADER_ROLE` and `GAME_MASTER_ROLE` are held by the deployer
 `0x73a7f88ccdF7E172EcAb321500cb7C77C81fD040`.
 
+## The hunt (v2, testnet)
+
+| Contract | Address | Notes |
+|---|---|---|
+| RiddlenHunt (proxy) | [`0x6A2387CA21d43b1747731Cc506130de3CB73988C`](https://amoy.polygonscan.com/address/0x6A2387CA21d43b1747731Cc506130de3CB73988C) | The hunt. UUPS upgradeable. Holds the pots. Implementation `0x2Ac2E64530287B4F6C9fD461A30aF675ABc373f9`. |
+| HuntNFT (proxy) | [`0x7eDa9C826497cD6a2193A405061327a7f884E16f`](https://amoy.polygonscan.com/address/0x7eDa9C826497cD6a2193A405061327a7f884E16f) | ERC-721 "HUNT". The hunt is its minter. |
+| HuntCommitments | [`0x5d78AC1Db893F783AE2431EAb0A837b67BD02FF6`](https://amoy.polygonscan.com/address/0x5d78AC1Db893F783AE2431EAb0A837b67BD02FF6) | Immutable: map root, prize commitment, launch, price, halving, total. Placeholder map on testnet. |
+
+Deployed 2026-09-27 (redeployed twice the same day, for rank-based shares and then pot-based pricing; the earlier deployments at `0x18aD…1902` and `0xDc51…544f` are abandoned and swept). Roles held by the deployer as above. See [Playing the hunt](/hunt/).
+
 ## Tokens
 
 | Contract | Address | Notes |
 |---|---|---|
-| RDLN (proxy) | [`0x133029184EC460F661d05b0dC57BFC916b4AB0eB`](https://amoy.polygonscan.com/address/0x133029184EC460F661d05b0dC57BFC916b4AB0eB) | ERC-20 with game burns. The game holds `GAME_ROLE`. |
+| RDLN (proxy) | [`0x133029184EC460F661d05b0dC57BFC916b4AB0eB`](https://amoy.polygonscan.com/address/0x133029184EC460F661d05b0dC57BFC916b4AB0eB) | ERC-20 with the game split (25% burn / 25% grand prize / 25% treasury / 25% liquidity since 2026-09-27; implementation `0xe5A4e3EbaE1878b860cC440744442D5718Beb014`). Both games hold `GAME_ROLE`. |
 | RON (proxy) | [`0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635`](https://amoy.polygonscan.com/address/0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635) | Non-transferable reputation. The game holds `GAME_ROLE`. |
 
 ## Earlier contracts
@@ -60,9 +70,10 @@ To check the game's state without the site:
 
 ```bash
 cd contracts && npx hardhat run scripts/stump/status.js --network amoy
+cd contracts && npx hardhat run scripts/hunt/status.js --network amoy
 ```
 
 Source for everything is in the [repository](https://github.com/RiddlenBaba/Riddlen) under
-`contracts/contracts/nft/StumpTheMachine.sol` and `contracts/contracts/mocks/RDLNFaucet.sol`.
+`contracts/contracts/nft/StumpTheMachine.sol`, `contracts/contracts/hunt/` and `contracts/contracts/mocks/RDLNFaucet.sol`.
 The deployed RDLN and RON sources are kept verbatim under `contracts/contracts/mocks/deployed/`
 and the test suite plays a full round against them.

@@ -15,5 +15,7 @@ content_sections:
   - { title: "Contracts and addresses", path: "/contracts/", description: "Amoy addresses and verification" }
   - { title: "For developers", path: "/developers/", description: "Contract surface, seals, normalization" }
   - { title: "Running the game master", path: "/game-master/", description: "Scripts, unattended mode, cost" }
+  - { title: "Whitepaper", path: "/whitepaper/", description: "The design of Riddlen: the rules that do not move, the loop, NFTs, money and shares, answers and codes, the map, authorship, the world" }
+  - { title: "Playing the hunt (testnet)", path: "/hunt/", description: "The hunt as deployed on Amoy: loop, fees, addresses, cryptography, house tooling" }
   - { title: "Mainnet, airdrop, gasless", path: "/roadmap/", description: "Distribution, airdrop, gasless play" }
   - { title: "2025 archive", path: "/archive/2025/", description: "The first design, never played" }

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { useAccount, useConnect } from 'wagmi';
+import { useAccount } from 'wagmi';
+import { ConnectInline } from '../components/Wallet';
 import Layout from '../components/Layout';
 import { useActions, useMe } from '../hooks/useStump';
 import { rdln } from '../components/format';
@@ -7,11 +8,9 @@ import { rdln } from '../components/format';
 // The sticker page. Scan the code, connect, get your Riddlen.
 export default function Free() {
   const { address, isConnected } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
   const me = useMe(undefined, address);
   const actions = useActions(address);
   const busy = !!actions.pending;
-  const injected = connectors.find((c) => c.type === 'injected') || connectors[0];
 
   return (
     <Layout title="Free Riddlen" description="Get your Riddlen. Free. Then go solve riddles the machines couldn't.">
@@ -23,7 +22,7 @@ export default function Free() {
           {!isConnected && (
             <>
               <p>Connect a wallet on Polygon Amoy. No wallet? <a href="https://metamask.io" target="_blank" rel="noreferrer">MetaMask</a> takes two minutes.</p>
-              <button className="btn accent" disabled={isPending || !injected} onClick={() => connect({ connector: injected })}>{isPending ? 'Connecting…' : 'Connect wallet'}</button>
+              <ConnectInline />
             </>
           )}
           {isConnected && me.faucet.available && (

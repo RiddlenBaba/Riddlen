@@ -1,37 +1,15 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
-import { CHAIN, CONTRACTS, EXPLORER } from '../lib/wagmi';
+import { CONTRACTS, EXPLORER } from '../lib/wagmi';
+import { WalletButton, short } from './Wallet';
 
-export const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '');
-
-function Wallet() {
-  const { address, isConnected } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
-  const { disconnect } = useDisconnect();
-  const chainId = useChainId();
-  const { switchChain } = useSwitchChain();
-  if (!isConnected) {
-    const injected = connectors.find((c) => c.id === 'injected' || c.type === 'injected') || connectors[0];
-    return (
-      <button className="btn primary small" disabled={isPending || !injected} onClick={() => connect({ connector: injected })}>
-        {isPending ? 'Connecting…' : 'Connect wallet'}
-      </button>
-    );
-  }
-  if (chainId !== CHAIN.id) {
-    return <button className="btn accent small" onClick={() => switchChain({ chainId: CHAIN.id })}>Switch to Amoy</button>;
-  }
-  return (
-    <button className="btn small mono" title="Disconnect" onClick={() => disconnect()}>{short(address)}</button>
-  );
-}
+export { short };
 
 export default function Layout({ title, description, children }) {
   const { pathname } = useRouter();
-  const nav = [['/', 'Board'], ['/write', 'Write'], ['/how', 'How it works'], ['/winnings', 'Winnings'], ['/free', 'Free Riddlen']];
-  const tabs = [['/', 'Board'], ['/write', 'Write'], ['/how', 'How'], ['/winnings', 'Winnings'], ['/free', 'Free']];
+  const nav = [['/', 'Board'], ['/write', 'Write'], ['/me', 'Dashboard'], ['/how', 'How it works'], ['/free', 'Free Riddlen']];
+  const tabs = [['/', 'Board'], ['/write', 'Write'], ['/me', 'Me'], ['/how', 'How'], ['/free', 'Free']];
   const fullTitle = title ? `${title} · Riddlen` : 'Riddlen';
   return (
     <>
@@ -50,7 +28,7 @@ export default function Layout({ title, description, children }) {
               <Link key={href} href={href} legacyBehavior><a className={pathname === href ? 'on' : ''}>{label}</a></Link>
             ))}
           </nav>
-          <div className="wallet"><Wallet /></div>
+          <div className="wallet"><WalletButton /></div>
         </div>
       </header>
       <main className="container main">{children}</main>

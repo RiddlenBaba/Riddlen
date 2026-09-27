@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useChainId, useConfig, useReadContract, useReadContracts, useSignMessage, useWriteContract } from 'wagmi';
+import { useChainId, useConfig, useReadContract, useReadContracts, useSignMessage, useSwitchChain, useWriteContract } from 'wagmi';
 import { waitForTransactionReceipt } from 'wagmi/actions';
+import { CHAIN } from '../lib/wagmi';
 import { BaseError, ContractFunctionRevertedError } from 'viem';
 import { STUMP_ABI, FAUCET_ABI, ERC20_ABI } from '../lib/abi';
 import { CONTRACTS } from '../lib/wagmi';
@@ -103,6 +104,24 @@ export function useChallenge(id, now) {
   return { challenge, revealWindow, isLoading, refetch };
 }
 
+/** Everything the connected wallet has touched: riddles written, riddles entered */
+export function useMyActivity(player, challenges) {
+  const ids = useMemo(() => challenges.map((c) => c.id), [challenges]);
+  const { data } = useReadContracts({
+    contracts: ids.map((id) => ({ ...game, functionName: 'getEntry', args: [id, player] })),
+    query: { enabled: !!player && ids.length > 0, refetchInterval: REFRESH_MS },
+  });
+  return useMemo(() => {
+    if (!player) return { written: [], entered: [] };
+    const written = challenges.filter((c) => c.author.toLowerCase() === player.toLowerCase());
+    const entered = challenges.map((c, i) => {
+      const e = data?.[i]?.result;
+      return e && e.enteredAt !== 0n ? { ...c, entry: e, sealed: e.commitment !== '0x' + '0'.repeat(64) } : null;
+    }).filter(Boolean);
+    return { written, entered };
+  }, [player, challenges, data]);
+}
+
 export function useEconomics() {
   const { data } = useReadContracts({
     contracts: [0, 1, 2, 3].flatMap((d) => [
@@ -182,16 +201,25 @@ export function friendlyError(err) {
 export function useActions(player) {
   const config = useConfig();
   const chainId = useChainId();
-  const { writeContractAsync } = useWriteContract();
+  const { writeContractAsync: writeRaw } = useWriteContract();
   const { signMessageAsync } = useSignMessage();
+  const { switchChainAsync } = useSwitchChain();
   const [pending, setPending] = useState(null);
   const [error, setError] = useState(null);
   const contract = CONTRACTS.STUMP;
+
+  // Every write is pinned to Amoy. If the wallet is on another network it is asked to switch
+  // first, and if that fails nothing is sent: a call to these addresses on another chain would
+  // burn real gas for nothing.
+  const writeContractAsync = (args) => writeRaw({ ...args, chainId: CHAIN.id });
 
   async function run(label, fn) {
     setError(null);
     setPending(label);
     try {
+      if (chainId !== CHAIN.id) {
+        await switchChainAsync({ chainId: CHAIN.id });
+      }
       const hash = await fn();
       if (hash) {
         const receipt = await waitForTransactionReceipt(config, { hash });
@@ -206,9 +234,9 @@ export function useActions(player) {
     }
   }
 
-  const authorSalt = async (riddle) => nonceFromSignature(await signMessageAsync({ message: authorSaltMessage({ chainId, contract, riddle }) }));
-  const guessNonce = async (id) => nonceFromSignature(await signMessageAsync({ message: guessNonceMessage({ chainId, contract, id }) }));
-  const ids = (id) => ({ chainId, contract, id: String(id), who: player });
+  const authorSalt = async (riddle) => nonceFromSignature(await signMessageAsync({ message: authorSaltMessage({ chainId: CHAIN.id, contract, riddle }) }));
+  const guessNonce = async (id) => nonceFromSignature(await signMessageAsync({ message: guessNonceMessage({ chainId: CHAIN.id, contract, id }) }));
+  const ids = (id) => ({ chainId: CHAIN.id, contract, id: String(id), who: player });
 
   return {
     pending, error, clearError: () => setError(null),

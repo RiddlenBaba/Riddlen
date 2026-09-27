@@ -110,14 +110,14 @@ export default function Riddle({ c, revealWindow, now, onChange }) {
         {c.phase === 'pending' && <p>The machines are on it. Their sealed guesses go on chain first, then this riddle opens to people. Usually a few minutes.</p>}
         {c.phase === 'rejected' && <p>This submission was declined as not a riddle. The stake stays burned.</p>}
 
-        {!isConnected && !['pending', 'complete', 'rejected'].includes(c.phase) && <p>Connect a wallet to play. New here? The <Link href="/winnings">faucet</Link> gives every wallet free testnet RDLN.</p>}
+        {!isConnected && !['pending', 'complete', 'rejected'].includes(c.phase) && <p>Connect a wallet to play. New here? The <Link href="/free">faucet</Link> gives every wallet free testnet RDLN.</p>}
 
         {isConnected && c.phase === 'open' && isAuthor && <p>Your riddle is open. Come back after it closes to reveal your answer; you have two days.</p>}
 
         {isConnected && c.phase === 'open' && !isAuthor && !me.entry && (
           <>
             <p>Beat the machines. Enter, then seal your guess. Nothing is revealed until the riddle closes.</p>
-            {!canAfford && <p className="notice warn">You need {rdln(c.entryCost)} RDLN and have {rdln(me.rdln)}. {me.faucet.available && <Link href="/winnings">Get free testnet RDLN.</Link>}</p>}
+            {!canAfford && <p className="notice warn">You need {rdln(c.entryCost)} RDLN and have {rdln(me.rdln)}. {me.faucet.available && <Link href="/free">Get free testnet RDLN.</Link>}</p>}
             <button className="btn accent" disabled={busy || !canAfford} onClick={() => actions.enter(c.id).then(after)}>Enter for {rdln(c.entryCost)} RDLN</button>
           </>
         )}
@@ -189,7 +189,7 @@ export default function Riddle({ c, revealWindow, now, onChange }) {
             {isConnected && outcome === 'voided' && me.entry && !me.entry.refunded && (
               <button className="btn primary" disabled={busy} onClick={() => actions.claimRefund(c.id).then(after)}>Claim refund</button>
             )}
-            {isConnected && me.owed > 0n && <p className="notice human">You have {rdln(me.owed)} RDLN waiting. <Link href="/winnings">Withdraw</Link></p>}
+            {isConnected && me.owed > 0n && <p className="notice human">You have {rdln(me.owed)} RDLN waiting. <Link href="/me">Withdraw</Link></p>}
           </div>
         )}
 

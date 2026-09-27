@@ -349,6 +349,70 @@ describe("StumpTheMachine", function () {
         });
     });
 
+    describe("alternative answers", function () {
+        it("accepts any listed author answer from solvers and from the panel", async function () {
+            const f = await loadFixture(deployFixture);
+            const [a, b] = f.solvers;
+            const salt = ethers.hexlify(ethers.randomBytes(32));
+            const answers = canonicalAnswers(["keyboard", "Computer Keyboard"]);
+            await f.game.connect(f.author).submit("beige, keys, no locks", HARD,
+                authorCommitment({ contract: f.contract, author: f.author.address, answers, salt }));
+            const id = await f.game.challengeCount();
+            f.secrets[id] = { answers, salt };
+            await f.openWithPanel(id, ["piano", "typewriter"]);
+            await f.play(id, a, "computer keyboard");
+            await f.play(id, b, "keyboard");
+            await f.close();
+            await f.revealAuthor(id);
+            await f.revealPanel(id);
+            await f.revealGuess(id, a);
+            await f.revealGuess(id, b);
+            expect(await f.game.isAccepted(id, "computer keyboard")).to.equal(true);
+            expect(await f.game.isAccepted(id, "piano")).to.equal(false);
+            await expect(f.settle(id)).to.emit(f.game, "ChallengeFinalized").withArgs(id, 1, 2, E("24000"), E("18000"));
+        });
+
+        it("counts a panel hit on an alternative as machine-solved", async function () {
+            const f = await loadFixture(deployFixture);
+            const [a] = f.solvers;
+            const salt = ethers.hexlify(ethers.randomBytes(32));
+            const answers = canonicalAnswers(["keyboard", "computer keyboard"]);
+            await f.game.connect(f.author).submit("r", HARD,
+                authorCommitment({ contract: f.contract, author: f.author.address, answers, salt }));
+            const id = await f.game.challengeCount();
+            f.secrets[id] = { answers, salt };
+            await f.openWithPanel(id, ["a computer keyboard"]);
+            await f.play(id, a, "keyboard");
+            await f.close();
+            await f.revealAuthor(id);
+            await f.revealPanel(id);
+            await f.revealGuess(id, a);
+            await expect(f.settle(id)).to.emit(f.game, "ChallengeFinalized").withArgs(id, 2, 1, 0n, E("15000"));
+        });
+
+        it("rejects a solver reveal with several answers, and too many author answers", async function () {
+            const f = await loadFixture(deployFixture);
+            const [a] = f.solvers;
+            const id = await f.submit("r", "x");
+            await f.openWithPanel(id, ["y"]);
+            await f.game.connect(a).enter(id);
+            await time.increase(31);
+            const nonce = ethers.id("n");
+            await f.game.connect(a).sealGuess(id, guessCommitment({ contract: f.contract, solver: a.address, id, answers: ["x", "y"], nonce }));
+            await f.close();
+            await f.revealAuthor(id);
+            await f.game.connect(a).revealGuess(id, ["x", "y"], nonce);
+            expect((await f.game.getEntry(id, a.address)).correct).to.equal(false);
+            const many = Array.from({ length: 9 }, (_, i) => `a${i}`);
+            const salt = ethers.id("s");
+            await f.game.connect(f.author).submit("r2", HARD, authorCommitment({ contract: f.contract, author: f.author.address, answers: many, salt }));
+            const id2 = await f.game.challengeCount();
+            await f.openWithPanel(id2, ["y"]);
+            await f.close();
+            await expect(f.game.connect(f.author).revealAnswer(id2, many, salt)).to.be.revertedWithCustomError(f.game, "BadRiddle");
+        });
+    });
+
     describe("money", function () {
         it("pays out through withdraw and never spends reserved funds", async function () {
             const f = await loadFixture(deployFixture);

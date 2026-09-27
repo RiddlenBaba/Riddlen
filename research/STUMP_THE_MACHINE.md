@@ -70,10 +70,8 @@ falls back to the Anthropic SDK with Claude-only models. `PANEL_MODELS`, `PANEL_
 `SCREEN_MODEL` override; `PANEL_STUB="a|b"` replaces the API for rehearsals. Transcripts are
 saved with the salt in `contracts/game-master/` (gitignored) and can be published after reveal.
 
-Matching is exact on the canonical form, so a panel guess of "computer keyboard" does not match
-an author answer of "keyboard". The panel prompt asks for short answers to keep this fair; the
-contract already accepts several author answers (`string[]`), and the frontend should let
-authors list alternatives ("keyboard / computer keyboard") when it is rebuilt.
+Matching is exact on the canonical form. Authors list up to 8 accepted alternatives
+("keyboard / computer keyboard"); a solver or a panel guess counts if it equals any of them.
 
 Trust: the game master sees the panel result before humans play and could leak or lie. Same
 trust as the existing commit-reveal game master. Mitigations available later: a multi-party or
@@ -84,7 +82,7 @@ TEE-run panel, or validators who can dispute using the published transcripts.
 | | Address |
 |---|---|
 | StumpTheMachine proxy | `0x660cEF782AEc87b0667De610B2077A9A4B81dB14` |
-| Implementation | `0x9C5F55194FFBB0c86600B99F29A4DEEf376bE185` |
+| Implementation | `0x963707Fc16F0c3E3f660654dD906cfA41bf567d3` (upgraded 2026-09-27: authors may list up to 8 accepted answers; solvers reveal one) |
 | Game master / admin / upgrader | `0x73a7f88ccdF7E172EcAb321500cb7C77C81fD040` |
 | RDLNFaucet (testnet only, 500 RDLN once per wallet, funded 250k) | `0xb6860Af03bb0FbD9b63322a7EbDaC29fd9aB7f7E` |
 

@@ -8,7 +8,7 @@ const artifact = JSON.parse(readFileSync(
 const FUNCTIONS = new Set([
   'challengeCount', 'getChallenge', 'getReveals', 'getEntry', 'owed', 'reserved', 'available',
   'poolByDifficulty', 'entryCostByDifficulty', 'REVEAL_WINDOW', 'MIN_SOLVE_TIME',
-  'submit', 'revealAnswer', 'enter', 'sealGuess', 'revealGuess', 'finalize', 'claimRefund', 'withdraw',
+  'submit', 'revealAnswer', 'isAccepted', 'MAX_ANSWERS', 'enter', 'sealGuess', 'revealGuess', 'finalize', 'claimRefund', 'withdraw',
 ]);
 const EVENTS = new Set(['ChallengeSubmitted', 'ChallengeOpened', 'ChallengeFinalized', 'GuessRevealed', 'PanelRevealed', 'AuthorRevealed']);
 

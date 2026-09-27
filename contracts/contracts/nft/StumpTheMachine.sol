@@ -30,7 +30,8 @@ import "../interfaces/IRON.sol";
  *   finalize    anyone; scores everything, books payouts, refunds on void
  *   withdraw    pull payments, so a paused or blacklisting token can't jam settlement
  *
- * Every hash uses the canonical answer form in scripts/game/riddleAnswers.js.
+ * Every hash uses the canonical answer form in scripts/game/riddleAnswers.js. Authors may list
+ * up to MAX_ANSWERS accepted alternatives; a solver reveals exactly one answer.
  */
 contract StumpTheMachine is
     Initializable,
@@ -207,11 +208,15 @@ contract StumpTheMachine is
         if (keccak256(abi.encode(address(this), msg.sender, answers, salt)) != c.answerCommitment) {
             revert CommitmentMismatch();
         }
-        if (answers.length == 0) revert BadRiddle();
+        if (answers.length == 0 || answers.length > MAX_ANSWERS) revert BadRiddle();
 
         c.answerHash = keccak256(abi.encode(answers));
         c.authorRevealedAt = uint64(block.timestamp);
         c.answers = answers;
+        for (uint256 i = 0; i < answers.length; i++) {
+            if (bytes(answers[i]).length == 0) revert BadRiddle();
+            accepted[id][keccak256(bytes(answers[i]))] = true;
+        }
         emit AuthorRevealed(id, answers);
     }
 
@@ -318,7 +323,7 @@ contract StumpTheMachine is
         }
 
         e.revealed = true;
-        e.correct = keccak256(abi.encode(answers)) == c.answerHash;
+        e.correct = answers.length == 1 && accepted[id][keccak256(bytes(answers[0]))];
         if (e.correct) {
             c.correct++;
             c.solvers.push(msg.sender);
@@ -357,7 +362,7 @@ contract StumpTheMachine is
             if (block.timestamp <= c.authorRevealedAt + REVEAL_WINDOW) revert RevealWindowOpen();
             if (!c.panelRevealed) revert PanelRevealMissing();
 
-            c.panelSolved = _panelMatches(c);
+            c.panelSolved = _panelMatches(id, c);
             uint256 solverPool;
             if (c.panelSolved) {
                 c.outcome = Outcome.MACHINE_SOLVED;
@@ -411,17 +416,16 @@ contract StumpTheMachine is
         emit Withdrawn(msg.sender, amount);
     }
 
-    function _panelMatches(Challenge storage c) private view returns (bool) {
+    function _panelMatches(uint256 id, Challenge storage c) private view returns (bool) {
         string[] storage panel = c.panelAnswers;
-        string[] storage answers = c.answers;
-        // A panel answer counts as a solve if it equals any of the author's accepted answers
         for (uint256 i = 0; i < panel.length; i++) {
-            bytes32 h = keccak256(bytes(panel[i]));
-            for (uint256 j = 0; j < answers.length; j++) {
-                if (keccak256(bytes(answers[j])) == h) return true;
-            }
+            if (accepted[id][keccak256(bytes(panel[i]))]) return true;
         }
         return false;
+    }
+
+    function isAccepted(uint256 id, string calldata answer) external view returns (bool) {
+        return accepted[id][keccak256(bytes(answer))];
     }
 
     function _awardRON(uint256 id, address player, Difficulty difficulty, bool isAuthor) private {
@@ -480,5 +484,10 @@ contract StumpTheMachine is
         return rdln.balanceOf(address(this)) - reserved;
     }
 
-    uint256[40] private __gap;
+    /// @notice Accepted answer hashes per challenge (keccak256 of each canonical answer), set at reveal
+    mapping(uint256 => mapping(bytes32 => bool)) internal accepted;
+    /// @notice Maximum alternative answers an author may list
+    uint256 public constant MAX_ANSWERS = 8;
+
+    uint256[39] private __gap;
 }

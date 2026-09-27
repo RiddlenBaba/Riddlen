@@ -369,6 +369,19 @@ export const STUMP_ABI = [
   },
   {
     "inputs": [],
+    "name": "MAX_ANSWERS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "MIN_SOLVE_TIME",
     "outputs": [
       {
@@ -636,6 +649,30 @@ export const STUMP_ABI = [
         "internalType": "address[]",
         "name": "solvers",
         "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "answer",
+        "type": "string"
+      }
+    ],
+    "name": "isAccepted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",

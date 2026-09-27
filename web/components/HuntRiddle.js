@@ -148,7 +148,7 @@ function Claim({ riddle, token, actions, onChange }) {
     const p = H.parseCachePayload(text);
     setScanning(false);
     if (!p) { actions.setError('That is not a Riddlen cache code.'); return; }
-    if (p.riddleId !== riddle.id) { actions.setError(`That code belongs to riddle #${p.riddleId}, not this one.`); return; }
+    if (p.riddleId !== Number(riddle.id)) { actions.setError(`That code belongs to riddle #${p.riddleId}, not this one.`); return; }
     setPayload(p);
   }, [riddle.id, actions]);
 

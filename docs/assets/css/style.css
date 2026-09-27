@@ -608,3 +608,23 @@ hr {
 /* ===== FOOTER (matches riddlen.com) ===== */
 .footer-brand { color: #e4664d; font-family: "Fraunces", "Iowan Old Style", Georgia, serif; font-style: italic; font-size: 1.4rem; font-weight: 500; margin: 0 0 0.35rem; }
 .footer-section p { max-width: 42ch; }
+
+/* ===== FOOTER v2 (overrides above) ===== */
+.site-footer { background: #0a0a0a; border-top: 1px solid #27272a; padding: 3.5rem 0 1.5rem; margin-top: 5rem; margin-left: 280px; }
+.footer-wrapper { max-width: 1100px; margin: 0 auto; padding: 0 3rem; display: grid; grid-template-columns: 1.3fr 2fr; gap: 3rem; }
+.footer-brandcol p { color: #9ca3af; font-size: 0.9rem; line-height: 1.55; max-width: 40ch; margin: 0.5rem 0 0; }
+.footer-brandcol .footer-net { color: #6b7280; font-size: 0.8rem; }
+.footer-brand { display: inline-block; color: #e4664d; text-decoration: none; font-family: "Fraunces", "Iowan Old Style", Georgia, serif; font-style: italic; font-size: 1.6rem; font-weight: 500; letter-spacing: -0.01em; }
+.footer-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.footer-section h4 { margin: 0 0 0.9rem; color: #e5e7eb; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; font-family: monospace; }
+.footer-section li { margin: 0.45rem 0; }
+.footer-section a { color: #9ca3af; font-size: 0.9rem; }
+.footer-section a:hover { color: #e4664d; }
+.footer-bottom { max-width: 1100px; margin: 2.5rem auto 0; padding: 1.25rem 3rem 0; border-top: 1px solid #27272a; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; color: #6b7280; font-size: 0.8rem; }
+.footer-bottom p { margin: 0; }
+@media (max-width: 968px) {
+  .site-footer { margin-left: 0; }
+  .footer-wrapper { grid-template-columns: 1fr; padding: 0 1.5rem; gap: 2rem; }
+  .footer-bottom { padding: 1.25rem 1.5rem 0; }
+}
+@media (max-width: 560px) { .footer-cols { grid-template-columns: 1fr 1fr; } }

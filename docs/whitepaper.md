@@ -5,6 +5,9 @@ description: "The design of Riddlen: a twenty-year scavenger hunt across the rea
 permalink: /whitepaper/
 redirect_from:
   - /next/
+  - /rules/
+  - /write/
+  - /machines/
   - /whitepaper.html
   - /tokenomics.html
   - /tokenomics-deep.html
@@ -295,8 +298,8 @@ not weaken.
 
 ## 13. What is deployed, and what changes before mainnet
 
-Deployed on Polygon Amoy since 2026-09-27; addresses and the play guide are on
-[Playing the hunt](/hunt/). The testnet map and prize are placeholders.
+Deployed on Polygon Amoy since 2026-09-27 and played at riddlen.com; addresses and the play
+guide are on [Playing the hunt](/hunt/). The testnet map and prize are placeholders.
 
 Before mainnet: the real map and prize commitment, made once offline and sealed with a
 successor; a keyless grand prize wallet; the release spacing set to the real cadence; a sealed

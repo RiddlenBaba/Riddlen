@@ -1,9 +1,13 @@
 ---
 layout: default
-title: "Writing riddles"
+title: "Archive · Writing riddles"
 description: "How to submit a riddle, what the machines are good and bad at, and how authors get paid."
-permalink: /write/
+permalink: /archive/stump/writing/
 ---
+
+> **Archived.** This page describes Stump the Machine, the game Riddlen ran on Amoy in September
+> 2026 and retired the same month. The current game is the hunt: read the
+> [whitepaper](/whitepaper/) and [Playing the hunt](/hunt/).
 
 # Writing riddles
 

@@ -1,12 +1,13 @@
 ---
 layout: default
-title: "Playing Riddlen"
+title: "Archive · Playing Riddlen"
 description: "How to enter a riddle, seal a guess, reveal it, and collect winnings."
-permalink: /play/
-redirect_from:
-  - /quick-start.html
-  - /archive/2025/faq.html
+permalink: /archive/stump/playing/
 ---
+
+> **Archived.** This page describes Stump the Machine, the game Riddlen ran on Amoy in September
+> 2026 and retired the same month. The current game is the hunt: read the
+> [whitepaper](/whitepaper/) and [Playing the hunt](/hunt/).
 
 # Playing
 

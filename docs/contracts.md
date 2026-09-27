@@ -16,18 +16,18 @@ redirect_from:
 Network: **Polygon Amoy** (chain id 80002). RPC: `https://polygon-amoy-bor-rpc.publicnode.com`.
 Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com).
 
-## The game
+## The first game (retired from the site)
 
 | Contract | Address | Notes |
 |---|---|---|
-| StumpTheMachine (proxy) | [`0x660cEF782AEc87b0667De610B2077A9A4B81dB14`](https://amoy.polygonscan.com/address/0x660cEF782AEc87b0667De610B2077A9A4B81dB14) | The game. UUPS upgradeable. Holds the pots. |
+| StumpTheMachine (proxy) | [`0x660cEF782AEc87b0667De610B2077A9A4B81dB14`](https://amoy.polygonscan.com/address/0x660cEF782AEc87b0667De610B2077A9A4B81dB14) | Stump the Machine, retired September 2026. Still holds its pots; anything owed can be withdrawn from the dashboard. |
 | Implementation | `0x963707Fc16F0c3E3f660654dD906cfA41bf567d3` | Upgraded 2026-09-27 to accept alternative answers |
 | RDLNFaucet | [`0xb6860Af03bb0FbD9b63322a7EbDaC29fd9aB7f7E`](https://amoy.polygonscan.com/address/0xb6860Af03bb0FbD9b63322a7EbDaC29fd9aB7f7E) | Testnet only. 500 RDLN once per wallet. |
 
 Roles on the game: `ADMIN_ROLE`, `UPGRADER_ROLE` and `GAME_MASTER_ROLE` are held by the deployer
 `0x73a7f88ccdF7E172EcAb321500cb7C77C81fD040`.
 
-## The hunt (v2, testnet)
+## The hunt
 
 | Contract | Address | Notes |
 |---|---|---|

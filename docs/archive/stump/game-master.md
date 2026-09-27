@@ -1,9 +1,13 @@
 ---
 layout: default
-title: "Running the game master"
+title: "Archive · Running the game master"
 description: "What the Riddlen game master does, how to run it by hand or unattended, and what it costs."
-permalink: /game-master/
+permalink: /archive/stump/game-master/
 ---
+
+> **Archived.** This page describes Stump the Machine, the game Riddlen ran on Amoy in September
+> 2026 and retired the same month. The current game is the hunt: read the
+> [whitepaper](/whitepaper/) and [Playing the hunt](/hunt/).
 
 # Running the game master
 

@@ -3,16 +3,21 @@ layout: default
 title: "Playing the hunt (testnet)"
 description: "How the hunt works as deployed on Polygon Amoy: buy a riddle NFT, solve it, go to the place, scan the code, claim, collect. Fees, shares, addresses and the cryptography."
 permalink: /hunt/
+redirect_from:
+  - /play/
+  - /game-master/
+  - /quick-start.html
+  - /faq.html
+  - /how-it-works.html
 ---
 
 # Playing the hunt
 
-The hunt is Riddlen v2, running on the Polygon Amoy testnet since 2026-09-27 alongside the
-first game. The design is the [whitepaper](/whitepaper/); this page is what the contract does today and
-how to play it. Everything here is enforced by `RiddlenHunt`, not by the site.
+The hunt runs on the Polygon Amoy testnet since 2026-09-27. The design is the
+[whitepaper](/whitepaper/); this page is what the contract does today and how to play it.
+Everything here is enforced by `RiddlenHunt`, not by the site.
 
-Play at [riddlen-staging.vercel.app/hunt](https://riddlen-staging.vercel.app/hunt) while it is
-in testing. Testnet tokens: no value.
+Play at [riddlen.com](https://riddlen.com). Testnet tokens: no value.
 
 ## The loop
 

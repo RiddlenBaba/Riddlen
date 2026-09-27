@@ -1,13 +1,13 @@
 ---
 layout: default
-title: "Rules and payouts"
+title: "Archive · Rules and payouts"
 description: "The exact lifecycle, timing, outcomes and payouts enforced by the Riddlen game contract."
-permalink: /rules/
-redirect_from:
-  - /faq.html
-  - /how-it-works.html
-  - /archive/2025/guides/nft-mechanics.html
+permalink: /archive/stump/rules/
 ---
+
+> **Archived.** This page describes Stump the Machine, the game Riddlen ran on Amoy in September
+> 2026 and retired the same month. The current game is the hunt: read the
+> [whitepaper](/whitepaper/) and [Playing the hunt](/hunt/).
 
 # Rules and payouts
 

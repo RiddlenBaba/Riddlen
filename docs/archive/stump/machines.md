@@ -1,9 +1,13 @@
 ---
 layout: default
-title: "The machines"
+title: "Archive · The machines"
 description: "Which AI models make up the Riddlen panel, how they are asked, and how they are judged."
-permalink: /machines/
+permalink: /archive/stump/machines/
 ---
+
+> **Archived.** This page describes Stump the Machine, the game Riddlen ran on Amoy in September
+> 2026 and retired the same month. The current game is the hunt: read the
+> [whitepaper](/whitepaper/) and [Playing the hunt](/hunt/).
 
 # The machines
 

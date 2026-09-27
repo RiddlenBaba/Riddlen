@@ -29,7 +29,7 @@ already built into the game contracts (a signed pass from a service that checks 
 similar proof), with a plain per-wallet fallback where verification isn't available. The dose is
 small enough that farming it isn't worth the verification.
 
-**2. Earn it.** Solve riddles, or write ones the machines can't. Pots come from the 700M prize
+**2. Earn it.** Find riddles, or, later, write them. Pots come from the 700M prize
 pool allocation, released to the game contract on a schedule so the pool lasts years rather than
 months. This is the main faucet and the only one that scales with the thing we want more of.
 
@@ -44,12 +44,11 @@ the behaviour the game needs:
 | Use | Share | Mechanism |
 |---|---|---|
 | Starter doses | ~40M | One dose per verified human, on the Free Riddlen page |
-| Merit drops | ~40M | Periodic distributions to RON holders, proportional to RON. RON can't be bought or transferred; it is earned by stumping machines and solving riddles, so this drop can only reach people who played well |
-| Early writers | ~20M | Bonuses on the first riddles that stump the panel on mainnet, when pots are still small and the board is empty |
+| Merit drops | ~40M | Periodic distributions to RON holders, proportional to RON. RON can't be bought or transferred; it is earned by finding, so this drop can only reach people who played |
+| Early finders | ~20M | Bonuses on the first riddles found on mainnet, when the board is new |
 
 The 2025 airdrop contract had a social-proof phase (follow, join, post). It is gone. Social proof
-is the easiest thing in the world for a bot, and Riddlen's whole point is that the machines
-don't get paid.
+is the easiest thing in the world for a bot.
 
 ## Gasless play
 
@@ -64,7 +63,7 @@ entry cost in RDLN is still paid by the player, so spam still costs the spammer.
 sponsored transaction costs a fraction of a cent, and the contract can charge a few RDLN per
 action to make the relayer self-funding. The repository already contains a forwarder and gasless
 manager from 2025; the game contract needs `ERC2771Context` and the game master service, which
-already runs the panel, becomes the relayer.
+runs the release cron, becomes the relayer.
 
 **Wallets people don't have to install.** For the sticker crowd, a passkey-backed smart account
 (ERC-4337) created in the browser with Face ID or a fingerprint, plus a paymaster that sponsors
@@ -77,20 +76,15 @@ Beyond that, if volume ever justifies it, an app-chain (a Polygon CDK rollup wit
 gas token, or no gas at all for game calls) makes every transaction free at the protocol level.
 Not before the game has players.
 
-## Shrinking the game master
+## Shrinking the house
 
-The game master sees the panel result before people play. Steps to make that matter less, in
-order:
-
-1. Publish every panel transcript after reveal (the data exists today).
-2. Run the panel inside an attested environment so the transcript provably came from the models.
-3. Let RON holders above a tier dispute a settled riddle and re-run the panel.
-4. Replace the single game master key with a threshold of independent operators.
+The house releases riddles and hides caches; nothing else depends on it. The steps that make it
+matter less are in the whitepaper, section 10: proposals from RON holders, review without the
+founder, then the DAO holding the prize wallet and the successor process.
 
 ## What is already built for this
 
 - The humanity gate (`IHumanityGate`, an attester contract, and a World ID verifier service)
   is in the repository, tested, and switched off.
-- The failed-attempt penalty and the progressive author stake are live and are the first line
-  against spam.
-- RON is live and already accrues from the game.
+- Per-NFT escalating guesses are live and are the first line against spam.
+- RON is live and accrues from every find.

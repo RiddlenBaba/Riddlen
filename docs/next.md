@@ -138,6 +138,13 @@ big pots is bounded by the minimum-solvers rule and the copy rule.
 
 ## Open questions
 
+- **Should an unsolved riddle pay its author?** A riddle nobody, machine or person, could crack
+  is valuable, but "nobody solved it" is exactly what a nonsense riddle with an arbitrary answer
+  would farm, and time stamps can't tell hard from meaningless. Two candidates: authors earn a
+  cut of every seat sold on their riddle whether or not it is solved (people keep buying seats
+  on riddles they believe are fair), and a fairness verdict at expiry, where the author reveals
+  the answer and reputation holders vote whether it was a real riddle, paying a hard-riddle
+  bonus on a "fair" verdict.
 - Should seats be resellable inside the site, or only on open NFT markets?
 - Should an author be allowed to raise their own pot?
 - Should the riddle NFT pay the author a royalty on seat resales?

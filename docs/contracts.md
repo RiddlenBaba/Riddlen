@@ -27,6 +27,16 @@ Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com).
 Roles on the game: `ADMIN_ROLE`, `UPGRADER_ROLE` and `GAME_MASTER_ROLE` are held by the deployer
 `0x73a7f88ccdF7E172EcAb321500cb7C77C81fD040`.
 
+## The hunt (v2, testnet)
+
+| Contract | Address | Notes |
+|---|---|---|
+| RiddlenHunt (proxy) | [`0x18aDc55283A50CdE6BEbC4C76Eb6517010151902`](https://amoy.polygonscan.com/address/0x18aDc55283A50CdE6BEbC4C76Eb6517010151902) | The hunt. UUPS upgradeable. Holds the pots. Implementation `0xB35CD8F3fd78302fA2664354C3C3752b813a1F4d`. |
+| HuntNFT (proxy) | [`0xC80347a45e674Ea318a384C510a4d22279D818Be`](https://amoy.polygonscan.com/address/0xC80347a45e674Ea318a384C510a4d22279D818Be) | ERC-721 "HUNT". The hunt is its minter. |
+| HuntCommitments | [`0x9094f32D38C5a6a5993C2b7308ee398EBf8fcC19`](https://amoy.polygonscan.com/address/0x9094f32D38C5a6a5993C2b7308ee398EBf8fcC19) | Immutable: map root, prize commitment, launch, price, halving, total. Placeholder map on testnet. |
+
+Deployed 2026-09-27. Roles held by the deployer as above. See [Playing the hunt](/hunt/).
+
 ## Tokens
 
 | Contract | Address | Notes |
@@ -60,9 +70,10 @@ To check the game's state without the site:
 
 ```bash
 cd contracts && npx hardhat run scripts/stump/status.js --network amoy
+cd contracts && npx hardhat run scripts/hunt/status.js --network amoy
 ```
 
 Source for everything is in the [repository](https://github.com/RiddlenBaba/Riddlen) under
-`contracts/contracts/nft/StumpTheMachine.sol` and `contracts/contracts/mocks/RDLNFaucet.sol`.
+`contracts/contracts/nft/StumpTheMachine.sol`, `contracts/contracts/hunt/` and `contracts/contracts/mocks/RDLNFaucet.sol`.
 The deployed RDLN and RON sources are kept verbatim under `contracts/contracts/mocks/deployed/`
 and the test suite plays a full round against them.

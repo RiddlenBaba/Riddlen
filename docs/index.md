@@ -36,6 +36,7 @@ the tokens have no value yet. Every wallet can take a free starter amount at
 | Build on it | [For developers](/developers/) |
 | Run a game master | [Running the game master](/game-master/) |
 | Read where the game is going next (a world scavenger hunt, NFTs that burn, a map to one grand prize) | [The hunt](/next/) |
+| Play the hunt on testnet, and see exactly what its contract does | [Playing the hunt](/hunt/) |
 | See the plan for mainnet, the airdrop and gasless play | [Mainnet, airdrop, gasless](/roadmap/) |
 
 ## In one paragraph

@@ -7,7 +7,8 @@ permalink: /next/
 
 # The hunt
 
-This is the game as designed on 2026-09-27 and **not yet built**. The live game follows
+This is the game as designed on 2026-09-27. Its first phase is **deployed on the Amoy testnet**
+and documented in [Playing the hunt](/hunt/); the first game still runs beside it under
 [Rules and payouts](/rules/). Read this to know where it is going, and argue with it.
 
 ## What it is

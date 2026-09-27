@@ -61,7 +61,7 @@ async function main() {
 
     const games = [
         ["StumpTheMachine", "0x660cEF782AEc87b0667De610B2077A9A4B81dB14"],
-        ["RiddlenHunt", process.env.HUNT_ADDRESS || "0x18aDc55283A50CdE6BEbC4C76Eb6517010151902"],
+        ["RiddlenHunt", process.env.HUNT_ADDRESS || "0xDc5164e6e9eD4c0eaFBF9D08256037365c81544f"],
     ];
     for (const [n, a] of games) console.log(`${n} holds GAME_ROLE: ${await live.hasRole(await live.GAME_ROLE(), a)}`);
     const canUpgrade = await live.hasRole(await live.UPGRADER_ROLE(), upgrader);

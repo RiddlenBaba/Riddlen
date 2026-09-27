@@ -71,9 +71,9 @@ successor.
 
 | Contract | Address |
 |---|---|
-| RiddlenHunt (UUPS proxy) | [`0x18aDc55283A50CdE6BEbC4C76Eb6517010151902`](https://amoy.polygonscan.com/address/0x18aDc55283A50CdE6BEbC4C76Eb6517010151902) |
-| HuntNFT (UUPS proxy, ERC-721 "HUNT") | [`0xC80347a45e674Ea318a384C510a4d22279D818Be`](https://amoy.polygonscan.com/address/0xC80347a45e674Ea318a384C510a4d22279D818Be) |
-| HuntCommitments (immutable) | [`0x9094f32D38C5a6a5993C2b7308ee398EBf8fcC19`](https://amoy.polygonscan.com/address/0x9094f32D38C5a6a5993C2b7308ee398EBf8fcC19) |
+| RiddlenHunt (UUPS proxy) | [`0xDc5164e6e9eD4c0eaFBF9D08256037365c81544f`](https://amoy.polygonscan.com/address/0xDc5164e6e9eD4c0eaFBF9D08256037365c81544f) |
+| HuntNFT (UUPS proxy, ERC-721 "HUNT") | [`0xe0D807b72C51332e9c5fF85a32fE206c574d7a60`](https://amoy.polygonscan.com/address/0xe0D807b72C51332e9c5fF85a32fE206c574d7a60) |
+| HuntCommitments (immutable) | [`0x85aA5713C8d299ADf3b3773d39164021a4C52774`](https://amoy.polygonscan.com/address/0x85aA5713C8d299ADf3b3773d39164021a4C52774) |
 
 RDLN and RON are the same tokens as the first game; the hunt holds `GAME_ROLE` on both.
 

@@ -2,16 +2,16 @@
 # This site will be served at riddlen.org
 
 # Site settings
-title: "Riddlen Protocol Documentation"
-description: "Complete developer documentation for the revolutionary Riddlen ecosystem - the first blockchain protocol that rewards human intelligence over computational power through Proof-of-Solve consensus. Build on Riddlen with smart contracts, NFT gaming, and merit-based governance."
+title: "Riddlen Docs"
+description: "How Riddlen works: people write riddles, frontier AI models try them first, and humans get paid in RDLN when the machines lose. Rules, tokens, contracts, and the road to mainnet."
 baseurl: ""
 url: "https://riddlen.org"
 lang: "en"
 author: "Riddlen Protocol Team"
 
 # SEO & Meta tags
-tagline: "Where Intelligence Matters More Than Capital"
-keywords: "blockchain, smart contracts, NFT gaming, proof of solve, merit based governance, human intelligence, riddles, cryptocurrency, polygon, solidity, defi, web3, ethereum, developer documentation, API, SDK"
+tagline: "Riddles the machines couldn't solve"
+keywords: "riddlen, riddles, AI, human-only game, RDLN, polygon, stump the machine, web3 game"
 image: "/assets/images/riddlen-og-image.png"
 logo: "/assets/images/riddlen-logo.png"
 

@@ -18,72 +18,58 @@ export function HuntPill({ phase }) {
   return <span className={`pill ${p.tone} ${p.live ? 'live' : ''}`}>{p.live && <span className="dot" />}{p.label}</span>;
 }
 
-/** The slow hash for a guess, then the local check against the riddle's roots. No transaction. */
-async function checkGuess({ riddle, token, answer }) {
+/** Build the on-chain guess for a token: slow hash, own subtree, positional proof. The site never
+ *  tells you whether a guess is right before you pay; the chain does, after. */
+async function buildGuess({ riddle, token, answer }) {
   const Hh = await H.answerHash({ chainId: CHAIN.id, hunt: CONTRACTS.HUNT, riddleId: riddle.id, answer });
   const tree = H.buildAnswerTree(riddle.id, Hh);
   const root = H.hex(tree.root);
-  const alt = riddle.altRoots.findIndex((r) => r.toLowerCase() === root);
-  const leaf = H.hex(H.leafFor(riddle.id, token.index, Hh));
-  const proof = H.answerProof(tree, token.index).map(H.hex);
-  const location = alt >= 0 ? await H.decryptLocation({ riddleId: riddle.id, H: Hh, cipher: H.unhex(riddle.locationCipher) }) : null;
-  return { H: Hh, alt: Math.max(alt, 0), matches: alt >= 0, leaf, proof, location };
+  const alt = Math.max(riddle.altRoots.findIndex((r) => r.toLowerCase() === root), 0);
+  return { H: Hh, alt, leaf: H.hex(H.leafFor(riddle.id, token.index, Hh)), proof: H.answerProof(tree, token.index).map(H.hex) };
 }
 
 function Attempt({ riddle, token, actions, onChange }) {
   const [answer, setAnswer] = useState('');
-  const [checking, setChecking] = useState(false);
-  const [check, setCheck] = useState(null);
+  const [preparing, setPreparing] = useState(false);
+  const [last, setLast] = useState(null); // { answer, cost } of the most recent wrong guess
   const nextCost = BigInt(token.attempts + 1) * riddle.attemptStep;
-  const busy = !!actions.pending;
+  const busy = !!actions.pending || preparing;
 
-  const doCheck = async () => {
-    if (!answer.trim()) return;
-    setChecking(true); setCheck(null);
-    try { setCheck(await checkGuess({ riddle, token, answer })); }
-    catch (e) { actions.setError(e.message); }
-    finally { setChecking(false); }
-  };
   const submit = async () => {
-    if (!check) return;
-    const ok = await actions.attempt(token.id, check.alt, check.leaf, check.proof);
-    if (ok) {
-      if (check.location) saveUnlocked('location', token.id, check.location);
-      setCheck(null); setAnswer('');
-      onChange?.();
-    }
+    const text = answer.trim();
+    if (!text) return;
+    setPreparing(true);
+    let g;
+    try { g = await buildGuess({ riddle, token, answer: text }); }
+    catch (e) { actions.setError(e.message); setPreparing(false); return; }
+    setPreparing(false);
+    const cost = nextCost;
+    const ok = await actions.attempt(token.id, g.alt, g.leaf, g.proof);
+    if (!ok) return;
+    // Only now, with the chain's verdict, may the browser look at the location
+    const loc = await H.decryptLocation({ riddleId: riddle.id, H: g.H, cipher: H.unhex(riddle.locationCipher) });
+    if (loc) { saveUnlocked('location', token.id, loc); setLast(null); }
+    else setLast({ answer: text, cost });
+    setAnswer('');
+    onChange?.();
   };
 
   return (
     <div className="att">
       <label className="field">
-        <span>Your answer</span>
+        <span>Your guess</span>
         <div className="row">
-          <input className="input" value={answer} onChange={(e) => { setAnswer(e.target.value); setCheck(null); }} placeholder="one word or a few" onKeyDown={(e) => e.key === 'Enter' && doCheck()} />
-          <button className="btn" disabled={checking || busy || !answer.trim()} onClick={doCheck}>{checking ? 'Thinking…' : 'Check'}</button>
+          <input className="input" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="one word or a few" disabled={busy} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+          <button className="btn accent" disabled={busy || !answer.trim()} onClick={submit}>{preparing ? 'Sealing…' : actions.pending === 'Submitting your answer' ? 'Guessing…' : `Guess for ${fmt(nextCost)} RDLN`}</button>
         </div>
-        <span className="help">Checking is free and happens on your device. It takes a second on purpose. Submitting costs <b>{fmt(nextCost)} RDLN</b> on this NFT, right or wrong.</span>
+        <span className="help">Every guess costs. This one is <b>{fmt(nextCost)} RDLN</b> on this NFT; the next is {fmt(nextCost + riddle.attemptStep)}. Spelling and capitals don&apos;t matter; the words do. The right one unlocks the place.</span>
       </label>
-      {check && check.matches && (
-        <div className="verdict ok">
-          <p><strong>That&apos;s it.</strong> Submitting records the solve on this NFT and unlocks the location on chain. Cost {fmt(nextCost)} RDLN.</p>
-          <button className="btn accent" disabled={busy} onClick={submit}>{actions.pending === 'Submitting your answer' ? 'Submitting…' : `Submit for ${fmt(nextCost)} RDLN`}</button>
-        </div>
-      )}
-      {check && !check.matches && (
-        <div className="verdict no">
-          <p><strong>Not it.</strong> You can still submit it, but it will cost {fmt(nextCost)} RDLN and unlock nothing. Most people don&apos;t.</p>
-          <button className="btn small" disabled={busy} onClick={submit}>Submit anyway</button>
-        </div>
-      )}
+      {last && <p className="verdict no"><strong>Not it.</strong> &ldquo;{last.answer}&rdquo; cost {fmt(last.cost)} RDLN. Think before the next one.</p>}
       <style jsx>{`
         .att { display: flex; flex-direction: column; gap: 12px; }
         .row { display: flex; gap: 8px; }
         .row .input { flex: 1; }
-        .verdict { padding: 14px 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
-        .verdict.ok { background: var(--human-bg); }
-        .verdict.no { background: var(--paper-2); }
-        .verdict p { margin: 0; font-size: 14px; }
+        .verdict { margin: 0; padding: 12px 16px; border-radius: 12px; font-size: 14px; background: var(--paper-2); }
         .help b { color: var(--ink); }
       `}</style>
     </div>

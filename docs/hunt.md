@@ -21,8 +21,7 @@ in testing. Testnet tokens: no value.
 | Release | The house | Posts the riddle text, sealed answer roots, the address of a key hidden at a place, the location clue encrypted with the answer, and this riddle's map fragment encrypted with a secret that exists only at the place. Reserves the pot. | — |
 | Open | Anyone, 10 blocks later | Rolls how many NFTs exist for it from a future block hash. Half of riddles get 10 to 50, a quarter 50 to 200, a fifth 200 to 600, one in twenty 600 to 1,000. | gas |
 | Buy | You | Mint an NFT. It is the right to attempt this riddle. | the mint price, through the token's split |
-| Check | You | Type an answer. Your browser hashes it slowly and checks it against the sealed roots. Nothing is sent. | free |
-| Submit | You | Record the answer on chain for that NFT. Right or wrong, it is charged. The right one unlocks the location for that NFT. | 1 RDLN, then 2, then 3… per NFT |
+| Guess | You | Submit an answer on chain for that NFT. Right or wrong, it is charged; the chain tells you which. The right one unlocks the location for that NFT. The site never checks a guess for free. | 1 RDLN, then 2, then 3… per NFT |
 | Go | You | Read the location clue (decrypted in your browser with the answer) and go there. | shoes |
 | Claim | You, at the place | Scan the code. It holds a key that signs your claim in the browser and is never sent anywhere. The signature is bound to your NFT and your wallet. | 5 RDLN |
 | Settle | Anyone, 14 days after the first claim | Fixes the shares. No loops, so it cannot get too big to run. | gas |
@@ -84,8 +83,9 @@ RDLN and RON are the same tokens as the first game; the hunt holds `GAME_ROLE` o
 
 **The answer never goes on chain.** For each accepted answer the house computes
 `H = PBKDF2-SHA256(canonical answer, salt = chainId‖hunt‖riddleId, 600,000 rounds)`. The slow
-hash is deliberate: checking a guess offline is always possible on a public chain, so each
-guess is made to cost real compute. From `H` the house builds a 1,024-leaf Merkle tree whose
+hash is deliberate. On a public chain a determined person can always test guesses offline
+with their own code; the site does not offer that, every guess it sends costs RDLN, and the
+slow hash makes the offline route expensive in compute instead. From `H` the house builds a 1,024-leaf Merkle tree whose
 leaf at position `i` is `keccak256(abi.encode(riddleId, i, H))`, and stores the root. Up to
 eight accepted answers give up to eight roots; unused slots hold random roots so the count
 does not show.

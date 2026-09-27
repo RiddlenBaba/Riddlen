@@ -72,7 +72,9 @@ export default function MapPage() {
         .txt { margin: 0; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
         .piece p { margin: 0; font-size: 13px; }
         h2 { font-size: 22px; margin: 0 0 10px; }
-        dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 12px; margin: 0; word-break: break-all; }
+        dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 12px; margin: 0; overflow-wrap: anywhere; word-break: break-all; min-width: 0; }
+        @media (max-width: 560px) { dl { grid-template-columns: 1fr; gap: 2px; } dt { margin-top: 8px; } }
+        .commit { min-width: 0; max-width: 100%; }
         dt { color: var(--ink-3); } dd { margin: 0; }
         .small { font-size: 13px; margin: 10px 0 0; }
       `}</style>

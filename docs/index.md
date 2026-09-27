@@ -31,7 +31,7 @@ the tokens have no value yet. Every wallet can take a free starter amount at
 |---|---|
 | Play: buy, guess, go, scan, get paid | [Playing the hunt](/hunt/) |
 | Know the design and the rules that do not move | [Whitepaper](/whitepaper/) |
-| Understand RDLN and RON | [RDLN and RON](/tokens/) |
+| Follow every RDLN: supply, the split, prices, shares, the burn | [Tokenomics](/tokens/) |
 | Verify the contracts | [Contracts and addresses](/contracts/) |
 | Build on it | [For developers](/developers/) |
 | See the plan for mainnet, the airdrop and gasless play | [Mainnet, airdrop, gasless](/roadmap/) |

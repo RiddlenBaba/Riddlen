@@ -3,15 +3,15 @@
 
 # Site settings
 title: "Riddlen Docs"
-description: "How Riddlen works: people write riddles, frontier AI models try them first, and humans get paid in RDLN when the machines lose. Rules, tokens, contracts, and the road to mainnet."
+description: "How Riddlen works: a scavenger hunt for the whole world. Buy a riddle as an NFT, solve it, go to the place, scan what you find, share the pot with everyone who finds it after you. Whitepaper, tokenomics, contracts, and the road to mainnet."
 baseurl: ""
 url: "https://riddlen.org"
 lang: "en"
-author: "Riddlen Protocol Team"
+author: "Riddlen"
 
 # SEO & Meta tags
-tagline: "Riddles the machines couldn't solve"
-keywords: "riddlen, riddles, AI, human-only game, RDLN, polygon, stump the machine, web3 game"
+tagline: "A scavenger hunt for the whole world"
+keywords: "riddlen, riddles, scavenger hunt, treasure hunt, RDLN, polygon, NFT, web3 game, geocaching"
 image: "/assets/images/riddlen-og-image.png"
 logo: "/assets/images/riddlen-logo.png"
 
@@ -44,8 +44,6 @@ paginate_path: "/page:num/"
 # Navigation
 header_pages:
   - index.md
-  - testnet/TESTNET_DEPLOYMENT.md
-  - FRONTEND_INTEGRATION.md
 
 # Collections
 collections:
@@ -97,7 +95,7 @@ defaults:
       path: ""
     values:
       layout: "default"
-      author: "Riddlen Team"
+      author: "Riddlen"
 
 # Custom variables
 riddlen:
@@ -107,7 +105,6 @@ riddlen:
   contracts:
     rdln: "0x133029184EC460F661d05b0dC57BFC916b4AB0eB"
     ron: "0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635"
-    riddle_nft: "0x529e3076cB9A48D6FAd086abE5d23ea76159e9E3"
-    airdrop: "0x4f3f2202f3F865074f534aA324a259DF962C6FBA"
-    oracle_network: "0xBd005201294984eFf3c353c32c9E5a96Fd640493"
-    group_manager: "0xEBcEf4745A2514FE61f5847a1e66a9Ced0331899"
+    hunt: "0x6A2387CA21d43b1747731Cc506130de3CB73988C"
+    hunt_nft: "0x7eDa9C826497cD6a2193A405061327a7f884E16f"
+    hunt_commitments: "0x5d78AC1Db893F783AE2431EAb0A837b67BD02FF6"

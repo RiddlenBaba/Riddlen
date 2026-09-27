@@ -9,7 +9,7 @@ content_sections:
   - { title: "Home", path: "/", description: "What Riddlen is in one page" }
   - { title: "Playing the hunt", path: "/hunt/", description: "Buy, guess, go, scan, get paid; fees, addresses, cryptography, house tooling" }
   - { title: "Whitepaper", path: "/whitepaper/", description: "The design: the rules that do not move, the loop, NFTs, money and shares, answers and codes, the map, authorship, the world" }
-  - { title: "RDLN and RON", path: "/tokens/", description: "Token allocations, the four-way split, reputation" }
+  - { title: "Tokenomics", path: "/tokens/", description: "Supply and allocations, the four-way split, what the hunt charges, pots and shares, the burn over twenty years, RON" }
   - { title: "Contracts and addresses", path: "/contracts/", description: "Amoy addresses and verification" }
   - { title: "For developers", path: "/developers/", description: "Contract surface, answer trees, claim signature, ciphers" }
   - { title: "Mainnet, airdrop, gasless", path: "/roadmap/", description: "Distribution, airdrop, gasless play" }

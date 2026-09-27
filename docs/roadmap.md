@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Mainnet, airdrop, gasless"
-description: "How people get RDLN when Riddlen reaches mainnet, how the airdrop works, and how play becomes gasless."
+description: "What changes between the testnet hunt and mainnet: the commitments made real, how people get RDLN, how the airdrop is spent, how play becomes gasless, and how the house shrinks."
 permalink: /roadmap/
 redirect_from:
   - /airdrop.html
@@ -13,78 +13,91 @@ redirect_from:
 
 # Mainnet, airdrop, gasless
 
-Riddlen runs on a testnet today. This page is the plan for the three questions that decide
-whether it works on mainnet: how people get RDLN, how the airdrop is spent, and how someone who
-scans a sticker can be playing in a minute without knowing what gas is.
+The hunt runs on the Polygon Amoy testnet today, and the testnet is where the game gets played
+and argued with before anything is worth money. This page is what has to happen between here
+and mainnet, and the plan for the three questions that decide whether mainnet works: how people
+get RDLN, how the airdrop is spent, and how someone who scans a sticker is playing within a
+minute without knowing what gas is.
+
+## Before mainnet
+
+In the order they must happen:
+
+1. **The map and the prize.** The real map is split into a thousand fragments once, offline; only
+   its root goes on chain. The grand prize is chosen, its location sealed as a hash on chain and
+   in full with a successor who can open it if the founder cannot. Nothing about the hunt can be
+   trusted in year fifteen unless this is checkable in year one.
+2. **A keyless grand prize wallet.** A contract, not an address, receives the quarter of every
+   payment that funds the prize.
+3. **The schedule.** The minimum time between releases set to the real cadence, about a week,
+   and a sealed reserve of riddles so the schedule survives a bad month.
+4. **Verifiable randomness** for the NFT count roll, Chainlink VRF or equivalent, so nobody can
+   influence how many NFTs a riddle gets.
+5. **A successor house.** A person or a multisig who can release riddle 500 if the founder
+   cannot, before any DAO exists.
+6. **Legal review** of the placement rules in each jurisdiction where caches go, and of
+   pay-to-attempt with a prize for skill.
+7. **A slimmer token.** The RDLN contract is 30.9 KiB, over the mainnet limit.
+8. **The open decisions** in the whitepaper: the guess step, the ticker, more finders before the
+   first release on large pots, several caches per riddle.
 
 ## How people get RDLN on mainnet
 
-Three ways, in the order most people will meet them.
+**A starter dose.** The sticker promise stays true: a new player gets enough RDLN for a first
+ticket and a few guesses, from the airdrop allocation, once. On the testnet the faucet is one
+claim per wallet; on mainnet wallets are free to create, so the dose needs a cost that bots feel
+and people don't. The plan is one dose per verified human, using the humanity gate already in
+the repository (a signed pass from a service that checks World ID or a similar proof), with a
+plain per-wallet fallback where verification isn't available. The dose is small enough that
+farming it isn't worth the verification.
 
-**1. Free Riddlen: a starter dose.** The sticker promise stays true on mainnet. A new player
-gets enough RDLN for a handful of entries, from the airdrop allocation, once. The testnet faucet
-is one claim per wallet; on mainnet wallets are free to create, so the dose needs a cost that
-bots feel and people don't. The plan is one dose per verified human, using the humanity gate
-already built into the game contracts (a signed pass from a service that checks World ID or a
-similar proof), with a plain per-wallet fallback where verification isn't available. The dose is
-small enough that farming it isn't worth the verification.
+**Earn it.** Find riddles. Pots come from the 700M prize-pool allocation, released to the hunt
+contract as riddles are released, so the pool lasts the twenty years. Later, write riddles and be
+paid from the riddles' own sales.
 
-**2. Earn it.** Find riddles, or, later, write them. Pots come from the 700M prize
-pool allocation, released to the game contract on a schedule so the pool lasts years rather than
-months. This is the main faucet and the only one that scales with the thing we want more of.
-
-**3. Buy it.** The 100M liquidity allocation seeds a market once there is something to price.
-No presale.
+**Buy it.** The 100M liquidity allocation seeds a market, and the liquidity quarter of every
+payment deepens it from then on. No presale.
 
 ## The airdrop
 
-The 100M airdrop allocation is not a snapshot drop. It is spent in three ways that each reward
-the behaviour the game needs:
+The 100M airdrop allocation is not a snapshot drop. It is spent three ways, each rewarding the
+behaviour the game needs:
 
 | Use | Share | Mechanism |
 |---|---|---|
-| Starter doses | ~40M | One dose per verified human, on the Free Riddlen page |
-| Merit drops | ~40M | Periodic distributions to RON holders, proportional to RON. RON can't be bought or transferred; it is earned by finding, so this drop can only reach people who played |
-| Early finders | ~20M | Bonuses on the first riddles found on mainnet, when the board is new |
+| Starter doses | about 40M | One dose per verified human, on the Free Riddlen page |
+| Merit drops | about 40M | Periodic distributions to RON holders in proportion to RON. RON cannot be bought or transferred and is earned only by finding, so this reaches only people who played |
+| Early finders | about 20M | Bonuses on the first riddles found on mainnet, while the board is new |
 
-The 2025 airdrop contract had a social-proof phase (follow, join, post). It is gone. Social proof
-is the easiest thing in the world for a bot.
+The 2025 design had a social-proof phase (follow, join, post). It is gone. Social proof is the
+easiest thing in the world for a bot.
 
 ## Gasless play
 
-A person who scans a sticker should be solving a riddle within a minute, without installing a
-wallet extension or buying gas. Two pieces, one we already have half of:
+Someone always pays gas: validators are paid in POL. "Gasless" means the player never has to
+think about it. Three shapes, from simplest to largest:
 
-**Sponsored transactions.** Riddlen's own relayer pays gas for game actions. Players already
-sign a message to seal an answer; with EIP-2771 meta-transactions they sign the whole action
-and the relayer submits it. The game contract verifies the signer, so nothing about trust
-changes. The relayer only forwards calls to the game contract and rate-limits per address; the
-entry cost in RDLN is still paid by the player, so spam still costs the spammer. On Polygon a
-sponsored transaction costs a fraction of a cent, and the contract can charge a few RDLN per
-action to make the relayer self-funding. The repository already contains a forwarder and gasless
-manager from 2025; the game contract needs `ERC2771Context` and the game master service, which
-runs the release cron, becomes the relayer.
+**The player pays in RDLN.** A paymaster accepts RDLN from the player and pays the POL itself.
+The player holds one token, never buys gas, and the house is not out of pocket. On Polygon a
+transaction costs a fraction of a cent, so the RDLN charged can be tiny and can take the four-way
+split like every other payment. This is the preferred shape.
+
+**The house sponsors.** A relayer pays gas for calls to the hunt contract, rate-limited per
+address, funded from the treasury quarter. Cheap at testnet scale, and the repository already
+holds a forwarder and gasless manager from 2025; the hunt contract would need `ERC2771Context`.
 
 **Wallets people don't have to install.** For the sticker crowd, a passkey-backed smart account
-(ERC-4337) created in the browser with Face ID or a fingerprint, plus a paymaster that sponsors
-its gas under a policy ("only calls to the game contract, at most N per hour"). The account is
-theirs, exportable, and works on every device with the same passkey. Riddlen runs the paymaster
-policy; a bundler service submits the operations. This is the "own engine": Riddlen decides who
-gets sponsored, for what, and how much, and pays for it from operations.
+created in the browser with Face ID or a fingerprint, plus a paymaster policy ("only calls to
+the hunt, at most N per hour"). The account is theirs and works on any device with the same
+passkey.
 
-Beyond that, if volume ever justifies it, an app-chain (a Polygon CDK rollup with RDLN as the
-gas token, or no gas at all for game calls) makes every transaction free at the protocol level.
-Not before the game has players.
+An app chain with RDLN as the gas token is possible if volume ever justifies it. Not before the
+game has players.
 
 ## Shrinking the house
 
-The house releases riddles and hides caches; nothing else depends on it. The steps that make it
-matter less are in the whitepaper, section 10: proposals from RON holders, review without the
-founder, then the DAO holding the prize wallet and the successor process.
-
-## What is already built for this
-
-- The humanity gate (`IHumanityGate`, an attester contract, and a World ID verifier service)
-  is in the repository, tested, and switched off.
-- Per-NFT escalating guesses are live and are the first line against spam.
-- RON is live and accrues from every find.
+The house releases riddles and hides caches. Everything else on chain runs without it, and the
+steps that make even that matter less are in the whitepaper, section 10: proposals from RON
+holders, review without the founder, then a DAO holding the prize wallet, the sealed reserve and
+the successor process. RON accrues from every find on the testnet today, so the first candidates
+for authorship are already being counted.

@@ -164,21 +164,20 @@ twelve is not for today's numbers to decide.
 
 ### 6.5 What the burn actually does
 
-Simulated over the full thousand riddles at the first testnet parameters (a flat 100 RDLN mint
-halving every two years, average 166 NFTs per riddle, average pot 29,000 RDLN), before the
-pot-based price in section 7 was adopted:
+Simulated over the full thousand riddles with the deployed pricing (section 7), the random NFT
+counts, the testnet pots and the 10 RDLN floor halving every two years:
 
-| Scenario | Through the protocol | Burned (25%) | Share of 1B supply | Pots paid |
-|---|---|---|---|---|
-| Quiet: 30% of NFTs sell, 1.2 guesses each | 1.1M | 0.28M | 0.03% | 17M |
-| Busy: 80% sell, 2 guesses, 4 finders | 3.2M | 0.8M | 0.08% | 26M |
-| Busy at a 1,000 RDLN mint | 28M | 7M | 0.7% | 26M |
+| Scenario | Through the protocol | Burned (25%) | Share of 1B supply | Grand prize | Liquidity |
+|---|---|---|---|---|---|
+| Quiet: 30% of NFTs sell, 1.2 guesses each | 1.8M | 0.46M | 0.05% | 0.46M | 0.46M |
+| Busy: 80% sell, 2 guesses, 4 finders | 5.1M | 1.27M | 0.13% | 1.27M | 1.27M |
 
-The burn is real and permanent, but at a flat price it is small against the supply. What shrinks
-the float is the slow payout of the prize pool. What gives a share value is a market, which is
-why a quarter of every payment builds one. The pot-based price in section 7 ties mint volume to
-the pots: a fully sold riddle pushes a fifth of its pot through the split, so the burn scales
-with the game instead of with a fixed number.
+Against pots of about 29M paid out, 4% of the prize-pool allocation. The burn is real and
+permanent, but at these pot sizes it is small against the supply. What shrinks the float is the
+slow payout of the prize pool. What gives a share value is a market, which is why a quarter of
+every payment builds one. The pot is the lever: because the ticket price is a fifth of the pot
+per NFT, mint volume scales with the pots, so raising the pots raises every quarter of the split
+with them. The full numbers are on [Tokenomics](/tokens/).
 
 ### 6.6 Collusion
 
@@ -285,6 +284,9 @@ Nobody should ever be hurt looking for a riddle. This section is the first thing
 not weaken.
 
 ## 12. Tokens
+
+The full numbers, allocations, worked examples and the simulation are on
+[Tokenomics](/tokens/). In short:
 
 - **RDLN** is the game's currency: one billion minted at genesis, 700 million of it the prize
   pool released to riddles over the hunt. Every game payment goes through the four-way split.

@@ -3,9 +3,10 @@ import { useAccount } from 'wagmi';
 import Layout from '../components/Layout';
 import { Pill } from '../components/Board';
 import { ConnectInline, useWalletTotals, short } from '../components/Wallet';
+import { AddTokenButton, GasButton } from '../components/Onboard';
 import { countdown, deadline, rdln } from '../components/format';
 import { DIFFICULTY, useActions, useChallenges, useMe, useMyActivity, useNow } from '../hooks/useStump';
-import { EXPLORER, GAS_FAUCET } from '../lib/wagmi';
+import { EXPLORER } from '../lib/wagmi';
 
 const NEEDS = {
   'awaiting-author': 'Reveal your answer',
@@ -85,7 +86,7 @@ export default function Me() {
                 <strong className="display">{rdln(totals.rdln)}</strong>
                 {me.faucet.available
                   ? <button className="btn accent small" disabled={busy} onClick={() => actions.claimFaucet().then((ok) => ok && me.refetch())}>{actions.pending === 'Claiming testnet RDLN' ? 'Claiming…' : `Get ${rdln(me.faucet.amount)} free`}</button>
-                  : <span className="muted small">Entries cost 10 to 100 by difficulty.</span>}
+                  : <AddTokenButton className="btn small" />}
               </div>
               <div className="tile">
                 <span className="eyebrow">RON reputation</span>
@@ -96,8 +97,8 @@ export default function Me() {
                 <span className="eyebrow">Gas (test POL)</span>
                 <strong className="display">{Number(totals.gas) / 1e18 < 0.001 ? '0' : (Number(totals.gas) / 1e18).toFixed(3)}</strong>
                 {lowGas
-                  ? <a className="btn accent small" href={GAS_FAUCET} target="_blank" rel="noreferrer">Get test POL</a>
-                  : <span className="muted small">Every transaction needs a little. Free from Polygon.</span>}
+                  ? <GasButton address={address} className="btn accent small" />
+                  : <span className="muted small">Every transaction needs a little.</span>}
               </div>
             </div>
             {actions.error && <p className="notice warn">{actions.error}</p>}

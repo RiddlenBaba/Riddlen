@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAccount, useBalance, useChainId, useConnect, useDisconnect, useReadContract, useSwitchChain } from 'wagmi';
 import { formatEther } from 'viem';
-import { CHAIN, CONTRACTS, EXPLORER, GAS_FAUCET } from '../lib/wagmi';
+import { CHAIN, CONTRACTS, EXPLORER } from '../lib/wagmi';
 import { ERC20_ABI, STUMP_ABI } from '../lib/abi';
 
 export const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '');
@@ -97,7 +97,7 @@ export function WalletButton() {
           <div className="row"><span className="k">RDLN</span><span className="v mono">{fmt(rdln)}</span></div>
           <div className="row"><span className="k">Owed to you</span><span className="v mono">{fmt(owed)}</span></div>
           <div className="row"><span className="k">Gas (POL)</span><span className="v mono">{gas ? fmt(gas.value, 3) : '…'}</span></div>
-          {gas && gas.value < 10n ** 16n && <a className="hint" href={GAS_FAUCET} target="_blank" rel="noreferrer">Low on test POL. Get some →</a>}
+          {gas && gas.value < 10n ** 16n && <Link href="/free" legacyBehavior><a className="hint" onClick={() => setMenu(false)}>Low on test POL. Get some →</a></Link>}
           <hr className="rule" />
           <Link href="/me" legacyBehavior><a onClick={() => setMenu(false)}>Dashboard</a></Link>
           <a href={`${EXPLORER}/address/${address}`} target="_blank" rel="noreferrer">View on explorer</a>

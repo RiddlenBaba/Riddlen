@@ -21,12 +21,13 @@ deployer, `0x73a7f88ccdF7E172EcAb321500cb7C77C81fD040`, until there is a multisi
 
 | Contract | Address | Notes |
 |---|---|---|
-| RiddlenHunt (UUPS proxy) | [`0x6A2387CA21d43b1747731Cc506130de3CB73988C`](https://amoy.polygonscan.com/address/0x6A2387CA21d43b1747731Cc506130de3CB73988C) | The game. Holds the pots. Implementation `0x2Ac2E64530287B4F6C9fD461A30aF675ABc373f9`. |
-| HuntNFT (UUPS proxy) | [`0x7eDa9C826497cD6a2193A405061327a7f884E16f`](https://amoy.polygonscan.com/address/0x7eDa9C826497cD6a2193A405061327a7f884E16f) | ERC-721 "HUNT". The hunt is its only minter. Metadata served by riddlen.com. |
-| HuntCommitments | [`0x5d78AC1Db893F783AE2431EAb0A837b67BD02FF6`](https://amoy.polygonscan.com/address/0x5d78AC1Db893F783AE2431EAb0A837b67BD02FF6) | Immutable, no owner: map root, prize commitment, launch, price floor, halving, total riddles. Placeholder map and prize on testnet. |
+| RiddlenHunt (UUPS proxy) | [`0xa5a36d589B122d0306FEEa7422e3c7f7d8edf009`](https://amoy.polygonscan.com/address/0xa5a36d589B122d0306FEEa7422e3c7f7d8edf009) | The game. Holds the pots. Implementation `0x106804CC7a2370e734E48d8A93a9A6ECd647Ba66`. |
+| HuntNFT (UUPS proxy) | [`0x992eDCea80fb82dEa0B05bD749938f6c3A0fA782`](https://amoy.polygonscan.com/address/0x992eDCea80fb82dEa0B05bD749938f6c3A0fA782) | ERC-721 "HUNT". The hunt is its only minter. Metadata served by riddlen.com. |
+| HuntCommitments | [`0x3af3f98189c8622Db6E03105932652C78bAeD1D1`](https://amoy.polygonscan.com/address/0x3af3f98189c8622Db6E03105932652C78bAeD1D1) | Immutable, no owner: map root, prize commitment, launch, price floor, halving, total riddles. Placeholder map and prize on testnet. |
 
-Deployed 2026-09-27. Two earlier deployments the same day (`0x18aD…1902` and `0xDc51…544f`) are
-abandoned and swept; they predate the rank-based shares and the pot-based price.
+Deployed 2026-09-27. Three earlier deployments the same day (`0x18aD…1902`, `0xDc51…544f` and
+`0x6A23…988C`) are abandoned and swept; they predate the rank-based shares, the pot-based price
+and the floating guess step.
 
 ## Tokens
 

@@ -168,6 +168,16 @@
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
 
+  const menuBtn = document.getElementById('nav-menu-btn');
+  if (menuBtn && sidebar && overlay) {
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('active', open);
+      menuBtn.setAttribute('aria-expanded', String(open));
+    });
+    overlay.addEventListener('click', () => menuBtn.setAttribute('aria-expanded', 'false'));
+  }
   if (sidebarToggle && sidebar && overlay) {
     // Toggle sidebar
     sidebarToggle.addEventListener('click', (e) => {

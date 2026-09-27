@@ -82,6 +82,7 @@ export default function Header({ currentPage = "home" }) {
           <li><a href="/">Home</a></li>
           <li><a href="/dashboard">Dashboard</a></li>
           <li><a href="/game">Game</a></li>
+          <li><a href="/stump">Stump the Machine</a></li>
           <li><a href="/airdrop">Airdrop</a></li>
           <li><a href="/docs">Docs</a></li>
         </ul>
@@ -114,6 +115,7 @@ export default function Header({ currentPage = "home" }) {
             <li><a href="/" onClick={() => setMobileMenuOpen(false)}>Home</a></li>
             <li><a href="/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</a></li>
             <li><a href="/game" onClick={() => setMobileMenuOpen(false)}>Game</a></li>
+            <li><a href="/stump" onClick={() => setMobileMenuOpen(false)}>Stump the Machine</a></li>
             <li><a href="/airdrop" onClick={() => setMobileMenuOpen(false)}>Airdrop</a></li>
             <li><a href="/docs" onClick={() => setMobileMenuOpen(false)}>Docs</a></li>
           </ul>

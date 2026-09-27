@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "test:answers": "node scripts/check-answers.mjs",
-    "generate:abi": "node scripts/generate-game-abi.mjs"
+    "generate:abi": "node scripts/generate-game-abi.mjs",
+    "generate:stump-abi": "node scripts/generate-stump-abi.mjs"
   },
   "keywords": [],
   "author": "",

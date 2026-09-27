@@ -43,4 +43,30 @@ function solutionCommitment({ contract, sessionId, answers, salt }) {
     ));
 }
 
-module.exports = { normalizeAnswer, canonicalAnswers, playerCommitment, solutionCommitment };
+// Stump the Machine ---------------------------------------------------------------
+
+/** keccak256(abi.encode(address(this), author, answers, salt)) — author's sealed answer */
+function authorCommitment({ contract, author, answers, salt }) {
+    return keccak256(coder.encode(
+        ["address", "address", "string[]", "bytes32"],
+        [contract, author, canonicalAnswers(answers), salt],
+    ));
+}
+
+/** keccak256(abi.encode(address(this), id, panelAnswers, salt)) — game master's sealed panel */
+function panelCommitment({ contract, id, answers, salt }) {
+    return keccak256(coder.encode(
+        ["address", "uint256", "string[]", "bytes32"],
+        [contract, BigInt(id), canonicalAnswers(answers), salt],
+    ));
+}
+
+/** keccak256(abi.encode(address(this), solver, id, answers, nonce)) — same layout as playerCommitment */
+function guessCommitment({ contract, solver, id, answers, nonce }) {
+    return playerCommitment({ contract, player: solver, sessionId: id, answers, nonce });
+}
+
+module.exports = {
+    normalizeAnswer, canonicalAnswers, playerCommitment, solutionCommitment,
+    authorCommitment, panelCommitment, guessCommitment,
+};

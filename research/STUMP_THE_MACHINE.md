@@ -128,11 +128,15 @@ Amoy gas is free; GitHub Actions is free for a public repository.
 
 ## Frontend
 
-`frontend-staging/pages/stump.js` (component `StumpTheMachine`, hooks in `hooks/useStump.js`).
-Contract address from `NEXT_PUBLIC_STUMP_ADDRESS`, defaulting to the Amoy proxy. Author salts
-and solver nonces are derived from wallet signatures over the riddle hash / riddle id, so a
-reveal works from any device with the same wallet. A redesign of the site is the next piece of
-work; the page proves the flow, not the look.
+`web/` is the new Riddlen site (Next.js 14, wagmi v2, no CSS framework). Board with a featured
+open riddle, riddle pages (`/r/<id>`) with a stage timeline and the machines' sealed-then-
+revealed guesses, `/write` with accepted-answer alternatives, `/winnings`, and `/free`, the
+sticker landing for the faucet ("Free Riddlen": scan, connect, take your Riddlen). Old
+riddlen.com URLs redirect permanently. Deploy on Vercel with root directory `web`; the
+contract addresses are public defaults in `lib/wagmi.js` and `.env.example`. Author salts and
+solver nonces are wallet signatures over the riddle hash / riddle id, so reveals work from
+any device with the same wallet. `frontend-staging/pages/stump.js` remains as the earlier
+proof of flow and can be deleted with the old apps in the repo reorg.
 
 ## Tests
 
@@ -151,4 +155,4 @@ work; the page proves the flow, not the look.
 4. **Author collusion.** An author can tell a friend the answer. It costs the friend an entry and
    earns the pair at most the pot; larger pots need the human-solver minimum raised above 1 or
    solver-count-scaled payouts.
-5. **Site redesign.**
+5. ~~Site redesign~~: `web/`. Next: point riddlen.com at the Vercel project, rewrite riddlen.org docs.

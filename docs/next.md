@@ -1,151 +1,173 @@
 ---
 layout: default
-title: "The next rules (v2)"
-description: "Riddlen v2, as designed and not yet built: riddles that stand until solved, seats you buy and trade, attempts that cost more each time, random pots with jackpots."
+title: "The hunt (v2)"
+description: "Riddlen v2, as designed and not yet built: a twenty-year scavenger hunt across the real world, riddles nobody wholly knows, NFTs that burn as you try, and a map to one grand prize scattered across every solved riddle."
 permalink: /next/
 ---
 
-# The next rules
+# The hunt
 
 This is the game as designed on 2026-09-27 and **not yet built**. The live game follows
 [Rules and payouts](/rules/). Read this to know where it is going, and argue with it.
 
-## Why change
+## What it is
 
-The live game gives every riddle a deadline, usually a day. With few players, a riddle closes
-unsolved, the author's stake is gone, and nobody is paid. That punishes the people we most want:
-writers. v2 lets a riddle stand, brings back the original Riddlen idea that the riddle and the
-right to attempt it are things you own, and keeps everything v1 got right: riddles written by
-people, the machines going first and gating the payout, sealed answers, reputation, burns.
+A scavenger hunt for the whole world. People write riddles and hide things. People buy the
+right to attempt a riddle, solve it, and go out and find what was hidden. Every attempt burns
+Riddlen. Somewhere in the world there is a grand prize. Every solved riddle holds a piece of
+the map to it. The game releases one thousand riddles over about twenty years, and when the
+last one is out, the map is complete and the final hunt begins.
 
-## The riddle is a thing you own
+The founder starts it. The players earn the right to write it. A DAO finishes it.
 
-You write a riddle, list up to eight accepted answers (sealed), pick a difficulty, and pick how
-long it stands: **7 days, 30 days, 90 days, or until solved** (180 days at most). Submitting
-mints the **riddle NFT** to you. It carries the riddle text and, later, the machines' guesses and
-the names of the people who beat them. It is transferable: whoever holds it when the riddle
-settles is paid the author's share.
+## What never changes
 
-The stake is unchanged: 1 RDLN for your first riddle, 2 for the next, 3 for the next, burned
-through the token's game protocol, never returned.
+These are committed before the first riddle ships and cannot be altered by anyone, including
+the founder or the DAO. They are the reason a player in year fifteen can trust the game
+without trusting the people running it.
 
-## The machines go first
-
-Unchanged. Claude, GPT and Gemini each try the riddle twice; every distinct guess is sealed on
-chain before the riddle opens. If any of them had it, the author earns nothing.
-
-## Seats: the right to attempt
-
-When the riddle opens, the contract **rolls how many seats exist**, from 10 to 1,000, weighted
-so most riddles are scarce:
-
-| Seats | Share of riddles |
+| Commitment | Value |
 |---|---|
-| 10 to 50 | 50% |
-| 50 to 200 | 25% |
-| 200 to 600 | 20% |
-| 600 to 1,000 | 5% |
+| Riddles | 1,000, released on a published schedule, roughly one a week |
+| The end | When riddle 1,000 is distributed. Not when it is solved. |
+| Burn split | Every payment: 50% burned, 25% grand prize, 25% treasury |
+| Mint price | Halves every two years from launch |
+| The map | The whole map and the prize location are hashed on chain on day one and sealed off chain with a successor. Every fragment ever revealed checks against that hash. |
+| The handoff | The founder's authorship rights expire on the schedule, not at the founder's discretion |
 
-A seat is an NFT. You buy it for the difficulty's seat price (10, 25, 50 or 100 RDLN). Half of
-every seat sale goes into that riddle's pot; the other half goes through the game burn. Seats
-are transferable: if a riddle stands unsolved for months, a seat on it is worth what someone
-will pay for one of forty remaining chances at something the machines provably failed.
+Everything else on this page is a parameter the DAO can tune.
 
-Your first attempt comes with the seat. Each further attempt on the same seat costs 1 RDLN,
-then 2, then 3, and so on, burned. A bot spraying guesses pays a rising price on a capped
-number of seats. A person who thinks hard rarely needs a third try.
+## The loop
 
-## Pots: random, with jackpots
+| Step | Who | What |
+|---|---|---|
+| Release | The house | A riddle goes live. The contract rolls how many NFTs exist for it. |
+| Mint | Player | Buy an NFT. The NFT is the riddle: a poem, a clue, a puzzle. Mint price follows the burn split. |
+| Attempt | Holder | Guess the riddle's answer. The first attempt on that NFT costs 1 RDLN, the next 2, then 3. |
+| Reveal | Contract | A correct answer unlocks the location, readable only by that NFT's holder. |
+| Find | Holder | Go there with the clue. Find what was hidden. Read the code on it. |
+| Claim | Holder | Enter the code into the NFT. Checked against a seal. This is the solve. |
+| Pay | Contract | First finder takes the largest share of the riddle's pot. Finishers inside the window split the rest. RON to every solver. |
+| Fragment | Contract | The solved NFT now carries its piece of the map, readable only by its holder. |
 
-The difficulty sets the base pot: 10,000 / 25,000 / 60,000 / 150,000 RDLN. When the riddle
-opens, a multiplier is rolled:
+## The NFT
 
-| Multiplier | Share of riddles |
-|---|---|
-| ×1 | 70% |
-| ×2 | 20% |
-| ×5 | 8% |
-| ×20 (jackpot) | 2% |
-
-A Legendary jackpot is 3,000,000 RDLN. If the treasury can't cover the roll, it steps down
-until it can, so a pot is never promised that isn't held. The pot then grows with every seat
-sold. The roll is seeded from the sealed panel and the block it opened in, so the author can't
-steer it; on mainnet it moves to Chainlink VRF so nobody can.
-
-## How a riddle stands without revealing its answer
-
-Each attempt is sealed, then revealed by the solver within two days. Revealed attempts are
-public: the riddle page shows every guess anyone has tried. The author then judges each one,
-without giving the answer away:
-
-- **Dismiss:** "not my answer". No proof needed.
-- **Hold:** "correct, but the pot needs more independent solvers before I can confirm".
-- **Confirm:** reveals the answer. The contract checks it against the author's seal and marks
-  every revealed attempt that matches.
-
-Three rules keep this honest:
-
-1. **Lying is caught and slashed.** If any attempt the author dismissed turns out to match the
-   revealed answer, the author lied. Their 40% goes to the solvers they wronged, and they earn
-   no reputation. Because confirming always reveals the truth about every earlier dismissal,
-   there is no profitable lie.
-2. **Silence pauses the riddle.** If a revealed attempt gets no response for two days, seat
-   sales and new attempts stop until the author responds. An author can't sit on a correct
-   guess while seats keep selling. Paused for 14 days, the riddle retires.
-3. **Copying doesn't count.** A correct guess is public between its reveal and the author's
-   confirmation. Only attempts **sealed before the first reveal of any matching guess** count as
-   solves. Someone who saw the reveal and then sealed the same words gets nothing; someone who
-   sealed it earlier and revealed later still counts.
-
-**Minimum solvers.** Small pots need one correct solver. Pots over twice the base need two;
-over five times, three. The author holds correct attempts until the count is met. This is what
-stops one friend who was told the answer from taking a jackpot.
-
-## Settlement
-
-| Case | Author (riddle NFT holder) | Solvers who counted | Rest of pot |
-|---|---|---|---|
-| Machines missed, humans solved | 40% | split 60%, plus RON | — |
-| A machine had it | nothing | split 25% | back to treasury |
-| Timer ran out, or paused 14 days | nothing | — | back to treasury |
-| Author lied | nothing; their 40% goes to the wronged solvers | as above | — |
-
-Winning seats become **achievement seats**. Every other seat on that riddle becomes a dead
-collectible: proof you held a chance. Winnings collect on the Winnings page and are withdrawn
-in one transaction.
+- **It never expires.** A riddle stands until it is solved, however long that takes. An NFT
+  bought in year three is a live right to attempt in year nineteen.
+- **Its counter is its own.** A riddle with a hundred NFTs has a hundred independent counters.
+  Yours at 20, someone else's at 10, a fresh one at 0. Other people's attempts never change
+  what your next guess costs.
+- **Everything travels with it.** Sell an NFT after 20 attempts and the buyer's next costs 21.
+  Sell one whose riddle you cracked and the buyer gets the location. Sell a solved one and the
+  buyer gets the map fragment. The token carries its cost and its progress, not the wallet.
+- **Two markets, one token.** Unsolved NFTs trade on potential. Solved NFTs trade on the
+  fragment, which only their holder can read. The counter is public, so a sprayed token cannot
+  be passed off as fresh.
+- **Enough of them that it is a race.** One holder alone is a private puzzle, not a game. The
+  count per riddle is random, with a floor high enough that people compete for the same find.
 
 ## What is burned, and when
 
-| Event | RDLN |
+Every payment in the game goes through the same protocol: 50% burned and gone from supply,
+25% to the grand prize wallet, 25% to the treasury.
+
+| Event | Cost |
 |---|---|
-| Author submits | Stake 1, 2, 3… per wallet: 50% burned, 25% grand prize wallet, 25% operations. Never returned, even if declined or never solved. |
-| Someone buys a seat | 50% into the riddle's pot. 50% through the game burn: 25% of the price burned, 12.5% grand prize, 12.5% operations. Never refunded. |
-| Extra attempt on a seat | 1, 2, 3… RDLN, all through the game burn. |
-| Riddle stands | The pot grows with seat sales. Nothing is burned by time. |
-| Solved | Payouts as above. Withdrawals may carry the token's 1% transfer burn. |
-| Retired unsolved | Nothing refunded. Pot back to the treasury. Seats and the riddle NFT remain. |
+| Mint an NFT | The riddle's mint price. Starts at the launch price and halves every two years. |
+| Attempt | 1, 2, 3… RDLN per NFT, rising by one each time until that NFT solves |
+| Enter a found code | A fixed fee, so the last step cannot be brute-forced |
+| Submit a piece (later phases) | 1, 2, 3… RDLN per wallet |
 
-Burning is always tied to something someone did: writing, buying a seat, guessing again. Never
-to waiting.
+Nothing is refunded, ever. Nothing is burned by time. A riddle that stands unsolved keeps its
+pot; it does not roll anywhere. Supply only goes down. The grand prize wallet only goes up.
 
-## Riddles no stranger could solve
+## How riddles are made
 
-"What's my dog's favourite hike" is not a riddle, it's a secret. Submissions are screened
-before opening and declined when the text shows private knowledge; the stake stays burned. If
-one slips through, it stands, sells few seats because the guess ledger is public, and retires
-with its pot back to the treasury. The author paid a stake and earned nothing. Collusion on
-big pots is bounded by the minimum-solvers rule and the copy rule.
+**No one person knows a whole riddle.** A riddle is assembled by the contract from pieces:
+
+- **Writers** submit small riddles, each with a sealed answer, into a pool. They never learn
+  whether or when a piece is used.
+- **Hiders** are given a code by the contract, hide it in the world, and submit a sealed clue
+  to the place. They never see the riddle it belongs to.
+- **The contract** draws pieces at random, say two written and one hidden, and defines the
+  riddle's answer as the combination of theirs. On mainnet the draw uses verifiable randomness.
+
+A writer who tells a friend gives away one piece of three. A hider who tells a friend gives
+away a code with no riddle attached. Two writers on the same riddle do not know it. No
+insider knows enough for a leak to pay.
+
+**The right to contribute is earned.** RON is soulbound reputation, paid only for solving and
+only on riddles with more than one unrelated solver. The tiers already exist:
+
+| Phase | Who writes | Who decides |
+|---|---|---|
+| Genesis | The founder writes and hides every riddle | The founder |
+| Proposals | Players above a RON threshold submit pieces | The founder picks |
+| Review | Higher tiers review pieces, staking RON | The reviewers, without the founder |
+| Handoff | The pool | The DAO holds the prize wallet, the sealed reserve and the successor process. The founder's wallet has no special role. |
+
+Thresholds start high and are lowered by the DAO as the network proves itself. A piece that
+fails, a wrong seal, a cache that washes away, a riddle with two answers, expires and is
+replaced from the pool, and its writer's stake is lost.
+
+## The map
+
+Every solved NFT carries one fragment of the map to the grand prize. A fragment alone tells
+you almost nothing. Hundreds together tell you where to go. The fragments belong to the
+tokens, not the people who solved them, so a solved NFT is worth buying for twenty years.
+
+When riddle 1,000 is distributed, the grand prize hunt begins. It is not a payout and not a
+lottery. It is one more hunt, played by whoever holds the most of the map. Nobody, including
+the founder, ever held the whole thing: it was scattered across a thousand riddles before the
+first one shipped, and the hash on chain proves it.
+
+A fragment is private on a public chain the same way a location is: encrypted with the code
+found at the spot, which is checked on chain by its hash and never posted in the clear. When
+a solved NFT is sold, the key changes hands through the site's escrow, which releases payment
+only when the buyer confirms the fragment decrypts.
+
+## In the world
+
+The physical layer follows thirty years of geocaching practice, adopted whole:
+
+- **Placement.** Nothing buried. Nothing on private land without permission. Nothing near
+  infrastructure, nothing that looks like a device, nothing that needs a climb or a swim.
+  Every clue leads somewhere public, reachable and legal.
+- **Ratings.** Every hide carries a difficulty and a terrain rating, set by the hider,
+  adjusted by finders.
+- **Proof.** The hider posts photo proof at placement. A hide pays out only after a second,
+  unrelated finder confirms it exists.
+- **Maintenance.** The hider keeps the cache in place. Anyone can flag it as needing
+  maintenance. A hider who does not respond loses staked RON.
+- **First to find.** The code stays at the spot for everyone. First finder takes the largest
+  share and the honour. A physical log book stays in the cache.
+- **Trackables.** Objects that move between caches, each its own NFT.
+
+Nobody should ever be hurt looking for a riddle. The rules above are the first thing the
+constitution says and the last thing the DAO may weaken.
+
+## What is gone from v1
+
+- **The machine panel.** A machine cannot play a game whose answer is on a rock. The
+  difficulty comes from the world now. The panel survives at most as a cheap off-chain check
+  that a written piece is not trivially searchable.
+- **Riddles from strangers.** Authorship is earned through RON and split by blind assembly.
+- **Deadlines.** Riddles stand until solved.
+- **Treasury-seeded pots for anything but the house's own riddles.**
 
 ## Open questions
 
-- **Should an unsolved riddle pay its author?** A riddle nobody, machine or person, could crack
-  is valuable, but "nobody solved it" is exactly what a nonsense riddle with an arbitrary answer
-  would farm, and time stamps can't tell hard from meaningless. Two candidates: authors earn a
-  cut of every seat sold on their riddle whether or not it is solved (people keep buying seats
-  on riddles they believe are fair), and a fairness verdict at expiry, where the author reveals
-  the answer and reputation holders vote whether it was a real riddle, paying a hard-riddle
-  bonus on a "fair" verdict.
-- Should seats be resellable inside the site, or only on open NFT markets?
-- Should an author be allowed to raise their own pot?
-- Should the riddle NFT pay the author a royalty on seat resales?
-- Should very long timers cost a larger stake?
+- Should the grand prize wallet also fund periodic events along the way, as the original
+  protocol proposed, or only the final hunt?
+- Does the live v1 game on Amoy keep running as the genesis phase while this is built?
+- What is the floor on NFTs per riddle, and how is the count weighted?
+- How large is the finishers' window after first find, and how many finishers can pay out?
+- Gambling law: pay to attempt with a prize for skill is a skill contest in most places. The
+  design avoids random pot multipliers for that reason. Where else does it need care?
+
+## A note on the token
+
+The live RDLN contract does not implement the burn split above. Its payments go to a rewards
+split with no burn. The protocol as written in the original Riddlen documentation is the one
+this page describes, and restoring it means deploying the token again. That is the first
+piece of contract work.

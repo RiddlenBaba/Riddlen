@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useChainId, useConfig, useReadContract, useReadContracts, useSignMessage, useSwitchChain, useWriteContract } from 'wagmi';
-import { waitForTransactionReceipt } from 'wagmi/actions';
+import { getPublicClient, waitForTransactionReceipt } from 'wagmi/actions';
 import { CHAIN } from '../lib/wagmi';
-import { BaseError, ContractFunctionRevertedError } from 'viem';
+import { BaseError, ContractFunctionRevertedError, parseGwei } from 'viem';
 import { STUMP_ABI, FAUCET_ABI, ERC20_ABI } from '../lib/abi';
 import { CONTRACTS } from '../lib/wagmi';
 import {
@@ -211,7 +211,19 @@ export function useActions(player) {
   // Every write is pinned to Amoy. If the wallet is on another network it is asked to switch
   // first, and if that fails nothing is sent: a call to these addresses on another chain would
   // burn real gas for nothing.
-  const writeContractAsync = (args) => writeRaw({ ...args, chainId: CHAIN.id });
+  // Browser wallets estimate their own fees, and on Amoy public RPCs often estimate a priority fee
+  // just under the network's 25 gwei floor ("gas tip cap ... minimum needed 25000000000"), so every
+  // write carries an explicit tip and cap the wallet can accept as the site's suggestion.
+  const writeContractAsync = async (args) => {
+    let fees = {};
+    try {
+      const block = await getPublicClient(config, { chainId: CHAIN.id }).getBlock();
+      const tip = parseGwei('30');
+      const base = block.baseFeePerGas ?? 0n;
+      fees = { maxPriorityFeePerGas: tip, maxFeePerGas: base * 2n + tip };
+    } catch { /* fall back to the wallet's own estimate */ }
+    return writeRaw({ ...args, ...fees, chainId: CHAIN.id });
+  };
 
   async function run(label, fn) {
     setError(null);

@@ -88,6 +88,8 @@ export default function How() {
           </dl>
         </section>
 
+        <p className="muted">The full rules, the token, the contracts and where the game is going next are on the docs site: <a href="https://riddlen.org" target="_blank" rel="noreferrer">riddlen.org</a>.</p>
+
         <p className="ctas">
           <Link href="/free" legacyBehavior><a className="btn accent">Get free Riddlen</a></Link>
           <Link href="/" legacyBehavior><a className="btn">See the board</a></Link>

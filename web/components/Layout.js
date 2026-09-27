@@ -8,7 +8,7 @@ export { short };
 
 export default function Layout({ title, description, children }) {
   const { pathname } = useRouter();
-  const nav = [['/', 'Board'], ['/write', 'Write'], ['/me', 'Dashboard'], ['/how', 'How it works'], ['/free', 'Free Riddlen']];
+  const nav = [['/', 'Board'], ['/write', 'Write'], ['/me', 'Dashboard'], ['/how', 'How it works'], ['/free', 'Free Riddlen'], ['https://riddlen.org', 'Docs']];
   const tabs = [['/', 'Board'], ['/write', 'Write'], ['/me', 'Me'], ['/how', 'How'], ['/free', 'Free']];
   const fullTitle = title ? `${title} · Riddlen` : 'Riddlen';
   return (
@@ -24,9 +24,9 @@ export default function Layout({ title, description, children }) {
         <div className="container row">
           <Link href="/" legacyBehavior><a className="brand display">Riddlen</a></Link>
           <nav>
-            {nav.map(([href, label]) => (
-              <Link key={href} href={href} legacyBehavior><a className={pathname === href ? 'on' : ''}>{label}</a></Link>
-            ))}
+            {nav.map(([href, label]) => href.startsWith('http')
+              ? <a key={href} href={href} target="_blank" rel="noreferrer">{label} ↗</a>
+              : <Link key={href} href={href} legacyBehavior><a className={pathname === href ? 'on' : ''}>{label}</a></Link>)}
           </nav>
           <div className="wallet"><WalletButton /></div>
         </div>
@@ -45,6 +45,8 @@ export default function Layout({ title, description, children }) {
               <p className="muted">Riddles written by people, tried by machines first, paid in RDLN when the machines lose. Running on Polygon Amoy testnet: the tokens have no value yet.</p>
             </div>
             <div className="links">
+              <a href="https://riddlen.org" target="_blank" rel="noreferrer">Docs</a>
+              <a href="https://riddlen.org/next/" target="_blank" rel="noreferrer">The next rules</a>
               <a href={`${EXPLORER}/address/${CONTRACTS.STUMP}`} target="_blank" rel="noreferrer">Game contract</a>
               <a href={`${EXPLORER}/address/${CONTRACTS.RDLN}`} target="_blank" rel="noreferrer">RDLN token</a>
               <a href="https://github.com/RiddlenBaba/Riddlen" target="_blank" rel="noreferrer">Source</a>

@@ -30,7 +30,8 @@ function Wallet() {
 
 export default function Layout({ title, description, children }) {
   const { pathname } = useRouter();
-  const nav = [['/', 'Board'], ['/write', 'Write'], ['/winnings', 'Winnings'], ['/free', 'Free Riddlen']];
+  const nav = [['/', 'Board'], ['/write', 'Write'], ['/how', 'How it works'], ['/winnings', 'Winnings'], ['/free', 'Free Riddlen']];
+  const tabs = [['/', 'Board'], ['/write', 'Write'], ['/how', 'How'], ['/winnings', 'Winnings'], ['/free', 'Free']];
   const fullTitle = title ? `${title} · Riddlen` : 'Riddlen';
   return (
     <>
@@ -53,6 +54,11 @@ export default function Layout({ title, description, children }) {
         </div>
       </header>
       <main className="container main">{children}</main>
+      <nav className="tabs" aria-label="Primary">
+        {tabs.map(([href, label]) => (
+          <Link key={href} href={href} legacyBehavior><a className={pathname === href ? 'on' : ''}>{label}</a></Link>
+        ))}
+      </nav>
       <footer className="ftr">
         <div className="container">
           <div className="cols">
@@ -77,7 +83,15 @@ export default function Layout({ title, description, children }) {
         nav a { padding: 6px 10px; border-radius: 8px; text-decoration: none; font-size: 14px; color: var(--ink-2); }
         nav a.on { color: var(--ink); background: var(--paper-2); }
         .wallet { margin-left: auto; }
-        .main { padding: 40px 16px 80px; min-height: 70vh; }
+        .main { padding: 32px 16px 96px; min-height: 70vh; }
+        .tabs { display: none; }
+        @media (max-width: 719px) {
+          nav:not(.tabs) { display: none; }
+          .tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--paper) 92%, transparent); backdrop-filter: blur(10px); border-top: 1px solid var(--line); }
+          .tabs a { text-align: center; padding: 9px 4px; border-radius: 8px; font-size: 13px; font-weight: 500; text-decoration: none; color: var(--ink-2); }
+          .tabs a.on { color: var(--ink); background: var(--paper-2); }
+          .ftr { padding-bottom: 96px; }
+        }
         @media (min-width: 720px) { .main { padding: 56px 32px 96px; } }
         .ftr { border-top: 1px solid var(--line); padding: 40px 0 48px; font-size: 14px; }
         .cols { display: grid; grid-template-columns: 1fr; gap: 24px; }

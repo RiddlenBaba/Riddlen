@@ -31,11 +31,11 @@ Roles on the game: `ADMIN_ROLE`, `UPGRADER_ROLE` and `GAME_MASTER_ROLE` are held
 
 | Contract | Address | Notes |
 |---|---|---|
-| RiddlenHunt (proxy) | [`0xDc5164e6e9eD4c0eaFBF9D08256037365c81544f`](https://amoy.polygonscan.com/address/0xDc5164e6e9eD4c0eaFBF9D08256037365c81544f) | The hunt. UUPS upgradeable. Holds the pots. Implementation `0x607Ddd80A70E46585735d68D182a017D44eaeBFc`. |
-| HuntNFT (proxy) | [`0xe0D807b72C51332e9c5fF85a32fE206c574d7a60`](https://amoy.polygonscan.com/address/0xe0D807b72C51332e9c5fF85a32fE206c574d7a60) | ERC-721 "HUNT". The hunt is its minter. |
-| HuntCommitments | [`0x85aA5713C8d299ADf3b3773d39164021a4C52774`](https://amoy.polygonscan.com/address/0x85aA5713C8d299ADf3b3773d39164021a4C52774) | Immutable: map root, prize commitment, launch, price, halving, total. Placeholder map on testnet. |
+| RiddlenHunt (proxy) | [`0x6A2387CA21d43b1747731Cc506130de3CB73988C`](https://amoy.polygonscan.com/address/0x6A2387CA21d43b1747731Cc506130de3CB73988C) | The hunt. UUPS upgradeable. Holds the pots. Implementation `0x2Ac2E64530287B4F6C9fD461A30aF675ABc373f9`. |
+| HuntNFT (proxy) | [`0x7eDa9C826497cD6a2193A405061327a7f884E16f`](https://amoy.polygonscan.com/address/0x7eDa9C826497cD6a2193A405061327a7f884E16f) | ERC-721 "HUNT". The hunt is its minter. |
+| HuntCommitments | [`0x5d78AC1Db893F783AE2431EAb0A837b67BD02FF6`](https://amoy.polygonscan.com/address/0x5d78AC1Db893F783AE2431EAb0A837b67BD02FF6) | Immutable: map root, prize commitment, launch, price, halving, total. Placeholder map on testnet. |
 
-Deployed 2026-09-27 (redeployed the same day with rank-based shares; the first deployment at `0x18aD…1902` is abandoned). Roles held by the deployer as above. See [Playing the hunt](/hunt/).
+Deployed 2026-09-27 (redeployed twice the same day, for rank-based shares and then pot-based pricing; the earlier deployments at `0x18aD…1902` and `0xDc51…544f` are abandoned and swept). Roles held by the deployer as above. See [Playing the hunt](/hunt/).
 
 ## Tokens
 

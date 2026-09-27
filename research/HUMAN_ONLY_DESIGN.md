@@ -1,5 +1,9 @@
 # Human-Only Riddlen
 
+> **Update 2026-09-26 (later):** the game's plan of record is now *Stump the Machine*
+> (`research/STUMP_THE_MACHINE.md`), which is deployed on Amoy. The personhood gate below is
+> built and tested but optional; it is not required for the game to be human-only.
+
 Riddlen's reason to exist is a game that humans win and machines don't. If bots or AI agents can
 farm it, it loses its point. This document records how the game gets there, what's built, and
 what's still open. Written 2026-09-26.
@@ -38,7 +42,7 @@ Research summary (sources in the linked reports):
 |--------|--------|--------------|
 | **Exact riddle** | Live | Game master commits a salted solution; exact (normalized) answers win. AI-solvable: fine for onboarding, not for prizes that matter |
 | **Read the Room** (consensus) | Built (`enableConsensusMode`) | No hidden answer. Players seal what they think most humans will say; the most common revealed answers (shared by at least 2) win. Bots converge on one model answer and lose to human focal points. Risk: an off-chain group coordinating one answer, which is why large verified pools matter |
-| **Stump the Machine** | Planned (separate contract) | Players write riddles; a riddle pays only if a panel of frontier models fails it **and** verified humans solve it. Gets harder for AI as AI improves |
+| **Stump the Machine** | **Live on Amoy** (`StumpTheMachine`, see `STUMP_THE_MACHINE.md`) | Players write riddles; a riddle pays only if a panel of frontier models fails it **and** humans solve it. Makes AI help worthless by construction and needs no personhood proof. The plan of record for the game |
 | **Field Riddle** | Planned | Solve, then go there: a camera-signed photo with a code revealed at session start. Durable for years; needs validator review and C2PA verification |
 
 ## Proof of personhood

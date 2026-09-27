@@ -6,6 +6,7 @@ Where everything about Riddlen lives, and which sources to trust. Compiled 2026-
 
 | Priority | Source | Notes |
 |----------|--------|-------|
+| 0 | `research/STUMP_THE_MACHINE.md` | **The game as deployed (2026-09-26).** Rules, economics, addresses, runbook. |
 | 1 | `contracts/research/docs/white-paper-v5.2` | Newest whitepaper (Oct 1 2025). Stated product intent. |
 | 2 | `contracts/research/docs/Riddlen-White-Paper-v5.1.md` | Superseded by v5.2. Contains presale pricing and vesting: regulatory-sensitive, don't republish. |
 | 3 | `contracts/audits/game-core-audit-2026-09-26.md` | What the contracts actually do today, and what's broken. |

@@ -12,12 +12,12 @@ const MAX_SHOWN = 60;
 
 export const DIFFICULTY = ['Easy', 'Medium', 'Hard', 'Legendary'];
 
-/** released -> open -> sold-out | found -> settled. Nothing expires. */
-export function derivePhase(r, now) {
+/** released -> open | sold-out -> found -> complete. Nothing expires. */
+export function derivePhase(r) {
   if (!r) return 'loading';
   if (!r.opened) return 'released';
-  if (r.settled) return 'settled';
-  if (r.firstClaimAt) return Number(now) > Number(r.firstClaimAt) + Number(r.finisherWindow) ? 'settling' : 'found';
+  if (r.complete) return 'complete';
+  if (r.claimCount > 0) return r.minted >= r.nftCount ? 'found-sold-out' : 'found';
   if (r.minted >= r.nftCount) return 'sold-out';
   return 'open';
 }
@@ -25,10 +25,9 @@ export function derivePhase(r, now) {
 function toRiddle(id, r) {
   return {
     id, difficulty: Number(r.difficulty), releasedAt: Number(r.releasedAt), firstClaimAt: Number(r.firstClaimAt),
-    nftCount: Number(r.nftCount), minted: Number(r.minted), claimCount: Number(r.claimCount), finisherCount: Number(r.finisherCount),
-    firstFinderBps: Number(r.firstFinderBps), finisherWindow: Number(r.finisherWindow), opened: r.opened, settled: r.settled,
-    pot: r.pot, claimFee: r.claimFee, attemptStep: r.attemptStep, firstShare: r.firstShare, finisherShare: r.finisherShare,
-    firstTokenId: Number(r.firstTokenId), commitBlock: Number(r.commitBlock), cacheSigner: r.cacheSigner,
+    nftCount: Number(r.nftCount), minted: Number(r.minted), claimCount: Number(r.claimCount), opened: r.opened, complete: r.complete,
+    pot: r.pot, booked: r.booked, claimFee: r.claimFee, attemptStep: r.attemptStep, harmonic: r.harmonic,
+    firstTokenId: Number(r.firstTokenId), lastClaimTokenId: Number(r.lastClaimTokenId), commitBlock: Number(r.commitBlock), cacheSigner: r.cacheSigner,
     fragmentCipherHash: r.fragmentCipherHash, altRoots: r.altRoots, text: r.text, locationCipher: r.locationCipher,
   };
 }
@@ -36,7 +35,7 @@ function toRiddle(id, r) {
 function toToken(id, t) {
   return {
     id, riddleId: Number(t.riddleId), index: Number(t.index), attempts: Number(t.attempts),
-    unlockedAt: Number(t.unlockedAt), claimedAt: Number(t.claimedAt), collected: t.collected,
+    unlockedAt: Number(t.unlockedAt), claimedAt: Number(t.claimedAt), rank: Number(t.rank), released: t.released, share: t.share,
   };
 }
 
@@ -58,9 +57,9 @@ export function useRiddles(now) {
       const r = data[i]?.result;
       if (!r) return null;
       const x = toRiddle(id, r);
-      return { ...x, phase: derivePhase(x, now) };
+      return { ...x, phase: derivePhase(x) };
     }).filter(Boolean);
-  }, [data, ids, now]);
+  }, [data, ids]);
   return { riddles, isLoading: isLoading || count === undefined, refetch, count };
 }
 
@@ -70,8 +69,8 @@ export function useRiddle(id, now) {
   const riddle = useMemo(() => {
     if (!data || Number(data.releasedAt) === 0) return null;
     const x = toRiddle(id, data);
-    return { ...x, phase: derivePhase(x, now) };
-  }, [data, id, now]);
+    return { ...x, phase: derivePhase(x) };
+  }, [data, id]);
   return { riddle, isLoading, refetch };
 }
 
@@ -116,8 +115,6 @@ export function useHuntActions() {
     attempt: (tokenId, alt, leaf, proof) => tx.run('Submitting your answer', (w) => w({ ...hunt, functionName: 'attempt', args: [tokenId, alt, leaf, proof] })),
     claim: (tokenId, signature) => tx.run('Claiming', (w) => w({ ...hunt, functionName: 'claim', args: [tokenId, signature] })),
     open: (id) => tx.run('Opening', (w) => w({ ...hunt, functionName: 'open', args: [id] })),
-    settle: (id) => tx.run('Settling', (w) => w({ ...hunt, functionName: 'settle', args: [id] })),
-    collect: (tokenId) => tx.run('Collecting', (w) => w({ ...hunt, functionName: 'collect', args: [tokenId] })),
     withdraw: () => tx.run('Withdrawing', (w) => w({ ...hunt, functionName: 'withdraw', args: [] })),
   };
 }
@@ -129,4 +126,12 @@ export function loadUnlocked(what, tokenId) {
 }
 export function saveUnlocked(what, tokenId, value) {
   try { window.localStorage.setItem(key(what, tokenId), value); } catch { /* private mode */ }
+}
+
+const ONE = 10n ** 18n;
+/** What the finder of the given rank gets: pot * (1/k) / H(N). Matches RiddlenHunt._shareFor. */
+export function shareFor(riddle, rank) {
+  if (!riddle?.opened || rank < 1 || rank > riddle.nftCount || !riddle.harmonic) return 0n;
+  if (rank === riddle.nftCount) return riddle.pot - riddle.booked;
+  return (riddle.pot * ONE) / (BigInt(rank) * BigInt(riddle.harmonic));
 }

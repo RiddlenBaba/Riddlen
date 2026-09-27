@@ -8,7 +8,7 @@ const { house, loadSecret } = require("./lib");
  *   attempt  -> alice guesses wrong twice (1 + 2 RDLN), then right (3 RDLN); bob right first time;
  *               alice transfers her unlocked token to carol (signer 7); location decrypts
  *   claim    -> carol (first) and bob (finisher) sign with the cache key from the secret file
- *   settle   -> time jumps past the window; anyone settles; everyone collects; fragment decrypts
+ *   release  -> a third finder releases bob; carol was released by bob; fragment decrypts
  *   check    -> withdraws for everyone owed and asserts reserved == 0
  */
 async function main() {
@@ -63,16 +63,19 @@ async function main() {
             const r = await hunt.getRiddle(id);
             console.log(`${who === carol ? "carol" : "bob"} claimed token ${tok}: first ${Number(r.firstTokenId) === tok}, claims ${r.claimCount}`);
         }
-    } else if (step === "settle") {
-        await jump(Number((await hunt.getRiddle(id)).finisherWindow) + 1);
-        await (await hunt.connect(signers[5]).settle(id)).wait();
-        const r = await hunt.getRiddle(id);
-        console.log(`settled: first share ${ethers.formatEther(r.firstShare)}, finisher share ${ethers.formatEther(r.finisherShare)} × ${r.finisherCount}`);
-        for (const who of [carol, bob]) {
-            const [tok] = await tokensOf(who);
-            await (await hunt.collect(tok)).wait();
-            console.log(`${who === carol ? "carol" : "bob"} collected: owed ${ethers.formatEther(await hunt.owed(who.address))} RDLN`);
-        }
+    } else if (step === "release") {
+        // Shares are released by the next finder. Nobody else is around, so mint one more, solve it,
+        // and claim: that releases bob. carol (first) was released by bob's claim.
+        const r0 = await hunt.getRiddle(id);
+        console.log(`shares booked so far ${ethers.formatEther(r0.booked)} of pot ${ethers.formatEther(r0.pot)}; owed carol ${ethers.formatEther(await hunt.owed(carol.address))}, bob ${ethers.formatEther(await hunt.owed(bob.address))}`);
+        await (await hunt.connect(alice).mint(id)).wait();
+        const tok = (await tokensOf(alice)).at(-1);
+        const g = await guessFor(tok, secret.answers[0]);
+        await (await hunt.connect(alice).attempt(tok, g.alt, g.leaf, g.proof)).wait();
+        const cache = new ethers.Wallet(secret.cachePrivateKey);
+        const td = H.claimTypedData({ chainId, hunt: address, riddleId: id, tokenId: tok, owner: alice.address });
+        await (await hunt.connect(alice).claim(tok, await cache.signTypedData(td.domain, td.types, td.message))).wait();
+        console.log(`alice found it third: owed carol ${ethers.formatEther(await hunt.owed(carol.address))}, bob ${ethers.formatEther(await hunt.owed(bob.address))}, alice ${ethers.formatEther(await hunt.owed(alice.address))} (waits for the next finder)`);
         const qr = H.parseCachePayload(secret.qrPayload);
         const frag = await H.decryptFragment({ riddleId: id, fragmentSecret: qr.fragmentSecret, cipher: H.unhex(secret.fragmentCipher) });
         console.log(`fragment decrypts: ${frag ? `${frag.length} bytes` : "NO"}`);
@@ -83,9 +86,7 @@ async function main() {
             if (owed > 0n) { await (await hunt.connect(s).withdraw()).wait(); console.log(`${s.address} withdrew ${ethers.formatEther(owed)} RDLN`); }
         }
         const reserved = await hunt.reserved();
-        console.log(`reserved after withdrawals: ${ethers.formatEther(reserved)} (other unsolved riddles keep their pots)`);
-        const r = await hunt.getRiddle(id);
-        if (!r.settled) throw new Error("not settled");
-    } else throw new Error("Set STEP=mint|attempt|claim|settle|check");
+        console.log(`reserved after withdrawals: ${ethers.formatEther(reserved)} (unreleased shares and unsolved pots stay reserved)`);
+    } else throw new Error("Set STEP=mint|attempt|claim|release|check");
 }
 main().catch((e) => { console.error(e); process.exit(1); });

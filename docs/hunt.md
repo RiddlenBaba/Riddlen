@@ -8,7 +8,7 @@ permalink: /hunt/
 # Playing the hunt
 
 The hunt is Riddlen v2, running on the Polygon Amoy testnet since 2026-09-27 alongside the
-first game. The design is on [The hunt](/next/); this page is what the contract does today and
+first game. The design is the [whitepaper](/whitepaper/); this page is what the contract does today and
 how to play it. Everything here is enforced by `RiddlenHunt`, not by the site.
 
 Play at [riddlen-staging.vercel.app/hunt](https://riddlen-staging.vercel.app/hunt) while it is
@@ -23,14 +23,13 @@ in testing. Testnet tokens: no value.
 | Buy | You | Mint an NFT. It is the right to attempt this riddle. | the mint price, through the token's split |
 | Guess | You | Submit an answer on chain for that NFT. Right or wrong, it is charged; the chain tells you which. The right one unlocks the location for that NFT. The site never checks a guess for free. | 1 RDLN, then 2, then 3… per NFT |
 | Go | You | Read the location clue (decrypted in your browser with the answer) and go there. | shoes |
-| Claim | You, at the place | Scan the code. It holds a key that signs your claim in the browser and is never sent anywhere. The signature is bound to your NFT and your wallet. | 5 RDLN |
-| Settle | Anyone, 14 days after the first claim | Fixes the shares. No loops, so it cannot get too big to run. | gas |
-| Collect | Anyone, per claimed NFT | Books the share to whoever holds that NFT now, and awards RON once the riddle has two finders. | gas |
+| Find | You, at the place | Scan the code and leave it there. It holds a key that signs your claim in the browser and is never sent anywhere. Your share is booked by your finishing rank, RON is awarded, the map fragment is revealed, and the previous finder's share is released. | 5 RDLN |
 | Withdraw | You | Pulls everything you are owed, from every riddle, in one transaction. | gas |
 
-Nothing expires. A riddle nobody finds keeps its pot. Every counter is on the NFT, not the
-wallet: sell an NFT after 20 tries and the buyer's next try costs 21; sell one that is solved
-and the buyer can claim.
+Nothing expires. A riddle nobody finds keeps its pot. A finder whose riddle attracts nobody after
+them waits with their share booked. Every counter is on the NFT, not the wallet: sell an NFT
+after 20 tries and the buyer's next try costs 21; sell one that has found and its unreleased
+share goes to the new holder when it is released.
 
 ## The numbers as deployed
 
@@ -41,8 +40,7 @@ and the buyer can claim.
 | Pot by difficulty | 10,000 / 25,000 / 60,000 / 150,000 RDLN | tunable, snapshotted per riddle at release |
 | Attempt step | 1 RDLN per NFT per try | tunable, snapshotted |
 | Claim fee | 5 RDLN | tunable, snapshotted |
-| First finder | 50% of the pot | tunable, snapshotted |
-| Finisher window | 14 days after the first claim; finishers split the other 50% equally | tunable, snapshotted |
+| Shares | The k-th finder gets pot × (1/k) ÷ (1 + 1/2 + … + 1/N) for N NFTs; released by the next finder, the last by completion | fixed by the whitepaper |
 | Blocks before open | 10 | tunable |
 
 Every RDLN payment in the hunt goes through the token's game protocol: 25% burned, 25% to the
@@ -129,6 +127,6 @@ which is never committed. Losing a riddle's file means its cache cannot be repri
 
 ## Placement rules
 
-Every hide follows the rules on [The hunt](/next/#in-the-world): public, reachable and legal
+Every hide follows the rules in the [whitepaper](/whitepaper/#11-in-the-world): public, reachable and legal
 places, nothing buried, nothing near infrastructure, photo proof at placement, a maintenance
 duty on the hider. Nobody should ever be hurt looking for a riddle.

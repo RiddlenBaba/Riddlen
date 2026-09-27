@@ -13,13 +13,13 @@ async function main() {
     console.log(`RDLN GAME_ROLE ${await rdln.hasRole(await rdln.GAME_ROLE(), address)}   RON GAME_ROLE ${await ron.hasRole(await ron.GAME_ROLE(), address)}   NFT minter ${await nft.hasRole(await nft.MINTER_ROLE(), address)}`);
     console.log(`Commitments: mapRoot ${await commitments.mapRoot()}  prize ${await commitments.prizeCommitment()}  total ${await commitments.totalRiddles()}  launch ${new Date(Number(await commitments.launchAt()) * 1000).toISOString()}`);
     const pots = await Promise.all([0, 1, 2, 3].map((d) => hunt.potByDifficulty(d)));
-    console.log(`Pots ${pots.map((p, d) => `${DIFFICULTY[d]} ${ethers.formatEther(p)}`).join("  ")}   claim fee ${ethers.formatEther(await hunt.claimFee())}   step ${ethers.formatEther(await hunt.attemptStep())}   first ${await hunt.firstFinderBps()} bps   window ${Number(await hunt.finisherWindow()) / 86400}d`);
+    console.log(`Pots ${pots.map((p, d) => `${DIFFICULTY[d]} ${ethers.formatEther(p)}`).join("  ")}   claim fee ${ethers.formatEther(await hunt.claimFee())}   step ${ethers.formatEther(await hunt.attemptStep())}`);
     const count = Number(await hunt.riddleCount());
     console.log(`Riddles ${count}   tokens minted ${Number(await nft.nextId()) - 1}`);
     for (let id = 1; id <= count; id++) {
         const r = await hunt.getRiddle(id);
-        const state = !r.opened ? "released" : r.settled ? "settled" : r.firstClaimAt ? "found" : "open";
-        console.log(`  #${id} ${state} [${DIFFICULTY[Number(r.difficulty)]}] pot ${ethers.formatEther(r.pot)}  nfts ${r.minted}/${r.nftCount}  claims ${r.claimCount} (${r.finisherCount} in window)  cache ${r.cacheSigner}\n     ${r.text.slice(0, 100)}`);
+        const state = !r.opened ? "released" : r.complete ? "complete" : r.claimCount ? "found" : "open";
+        console.log(`  #${id} ${state} [${DIFFICULTY[Number(r.difficulty)]}] pot ${ethers.formatEther(r.pot)} booked ${ethers.formatEther(r.booked)}  nfts ${r.minted}/${r.nftCount}  finders ${r.claimCount}  cache ${r.cacheSigner}\n     ${r.text.slice(0, 100)}`);
     }
 }
 main().catch((e) => { console.error(e); process.exit(1); });

@@ -39,17 +39,7 @@ export const HUNT_ABI = [
   },
   {
     "inputs": [],
-    "name": "AlreadyCollected",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "AlreadyOpened",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "AlreadySettled",
     "type": "error"
   },
   {
@@ -69,11 +59,6 @@ export const HUNT_ABI = [
   },
   {
     "inputs": [],
-    "name": "BadProof",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "BadRoots",
     "type": "error"
   },
@@ -85,6 +70,11 @@ export const HUNT_ABI = [
   {
     "inputs": [],
     "name": "BadText",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Complete",
     "type": "error"
   },
   {
@@ -142,11 +132,6 @@ export const HUNT_ABI = [
   },
   {
     "inputs": [],
-    "name": "NotClaimed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotInitializing",
     "type": "error"
   },
@@ -167,22 +152,12 @@ export const HUNT_ABI = [
   },
   {
     "inputs": [],
-    "name": "NotSettled",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotUnlocked",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "NothingOwed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NothingToSettle",
     "type": "error"
   },
   {
@@ -235,11 +210,6 @@ export const HUNT_ABI = [
       }
     ],
     "name": "UUPSUnsupportedProxiableUUID",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "WindowOpen",
     "type": "error"
   },
   {
@@ -308,49 +278,18 @@ export const HUNT_ABI = [
       },
       {
         "indexed": false,
-        "internalType": "bool",
-        "name": "first",
-        "type": "bool"
+        "internalType": "uint16",
+        "name": "rank",
+        "type": "uint16"
       },
       {
         "indexed": false,
-        "internalType": "bool",
-        "name": "inWindow",
-        "type": "bool"
+        "internalType": "uint256",
+        "name": "share",
+        "type": "uint256"
       }
     ],
     "name": "Claimed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "Collected",
     "type": "event"
   },
   {
@@ -373,18 +312,6 @@ export const HUNT_ABI = [
         "internalType": "uint128",
         "name": "attemptStep",
         "type": "uint128"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint16",
-        "name": "firstFinderBps",
-        "type": "uint16"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint32",
-        "name": "finisherWindow",
-        "type": "uint32"
       },
       {
         "indexed": false,
@@ -501,6 +428,50 @@ export const HUNT_ABI = [
       }
     ],
     "name": "Rekeyed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Released",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "RiddleComplete",
     "type": "event"
   },
   {
@@ -657,37 +628,6 @@ export const HUNT_ABI = [
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "firstShare",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "finisherShare",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint16",
-        "name": "finisherCount",
-        "type": "uint16"
-      }
-    ],
-    "name": "Settled",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "address",
         "name": "implementation",
         "type": "address"
@@ -807,19 +747,6 @@ export const HUNT_ABI = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      }
-    ],
-    "name": "collect",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "commitments",
     "outputs": [
@@ -840,32 +767,6 @@ export const HUNT_ABI = [
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "finisherWindow",
-    "outputs": [
-      {
-        "internalType": "uint32",
-        "name": "",
-        "type": "uint32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "firstFinderBps",
-    "outputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
       }
     ],
     "stateMutability": "view",
@@ -914,33 +815,23 @@ export const HUNT_ABI = [
             "type": "uint16"
           },
           {
-            "internalType": "uint16",
-            "name": "finisherCount",
-            "type": "uint16"
-          },
-          {
-            "internalType": "uint16",
-            "name": "firstFinderBps",
-            "type": "uint16"
-          },
-          {
-            "internalType": "uint32",
-            "name": "finisherWindow",
-            "type": "uint32"
-          },
-          {
             "internalType": "bool",
             "name": "opened",
             "type": "bool"
           },
           {
             "internalType": "bool",
-            "name": "settled",
+            "name": "complete",
             "type": "bool"
           },
           {
             "internalType": "uint128",
             "name": "pot",
+            "type": "uint128"
+          },
+          {
+            "internalType": "uint128",
+            "name": "booked",
             "type": "uint128"
           },
           {
@@ -954,14 +845,14 @@ export const HUNT_ABI = [
             "type": "uint128"
           },
           {
-            "internalType": "uint128",
-            "name": "firstShare",
-            "type": "uint128"
+            "internalType": "uint64",
+            "name": "commitBlock",
+            "type": "uint64"
           },
           {
-            "internalType": "uint128",
-            "name": "finisherShare",
-            "type": "uint128"
+            "internalType": "uint64",
+            "name": "harmonic",
+            "type": "uint64"
           },
           {
             "internalType": "uint32",
@@ -969,9 +860,9 @@ export const HUNT_ABI = [
             "type": "uint32"
           },
           {
-            "internalType": "uint64",
-            "name": "commitBlock",
-            "type": "uint64"
+            "internalType": "uint32",
+            "name": "lastClaimTokenId",
+            "type": "uint32"
           },
           {
             "internalType": "address",
@@ -1045,9 +936,19 @@ export const HUNT_ABI = [
             "type": "uint64"
           },
           {
+            "internalType": "uint16",
+            "name": "rank",
+            "type": "uint16"
+          },
+          {
             "internalType": "bool",
-            "name": "collected",
+            "name": "released",
             "type": "bool"
+          },
+          {
+            "internalType": "uint128",
+            "name": "share",
+            "type": "uint128"
           }
         ],
         "internalType": "struct RiddlenHunt.TokenState",
@@ -1210,19 +1111,6 @@ export const HUNT_ABI = [
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "settle",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

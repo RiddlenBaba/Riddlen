@@ -19,22 +19,21 @@ describe("RiddlenHunt", function () {
             expect(R.pot).to.equal(E("25000"));
             expect(R.claimFee).to.equal(E("5"));
             expect(R.attemptStep).to.equal(E("1"));
-            expect(R.firstFinderBps).to.equal(5000);
             expect(R.cacheSigner).to.equal(r.cache.address);
             expect(R.fragmentCipherHash).to.equal(ethers.keccak256(H.hex(r.fragmentCipher)));
             expect(R.opened).to.equal(false);
             const logs = await f.hunt.queryFilter(f.hunt.filters.RiddleReleased(r.id));
             expect(logs[0].args.fragmentCipher).to.equal(H.hex(r.fragmentCipher));
             // later economics changes do not touch a released riddle
-            await f.hunt.connect(f.admin).setEconomics([E("1"), E("1"), E("1"), E("1")], E("9"), E("2"), 1000, 60, 5);
+            await f.hunt.connect(f.admin).setEconomics([E("1"), E("1"), E("1"), E("1")], E("9"), E("2"), 5);
             expect((await f.hunt.getRiddle(r.id)).claimFee).to.equal(E("5"));
         });
 
         it("reverts when underfunded, on a reused cache key, and past the riddle total", async function () {
             const f = await loadFixture(fixture);
-            await f.hunt.connect(f.admin).setEconomics([E("600000"), E("1"), E("1"), E("1")], E("5"), E("1"), 5000, 60, 5);
+            await f.hunt.connect(f.admin).setEconomics([E("600000"), E("1"), E("1"), E("1")], E("5"), E("1"), 5);
             await expect(release(f)).to.be.revertedWithCustomError(f.hunt, "PoolUnderfunded");
-            await f.hunt.connect(f.admin).setEconomics([E("10000"), E("1"), E("1"), E("1")], E("5"), E("1"), 5000, 60, 5);
+            await f.hunt.connect(f.admin).setEconomics([E("10000"), E("1"), E("1"), E("1")], E("5"), E("1"), 5);
             const r = await release(f);
             await expect(f.hunt.connect(f.gm).release("again", 0, r.roots, r.cache.address, "0x", "0x"))
                 .to.be.revertedWithCustomError(f.hunt, "BadSigner");
@@ -210,8 +209,9 @@ describe("RiddlenHunt", function () {
             await expect(f.hunt.connect(f.alice).claim(a, await signClaim(f, r.cache, a, f.alice.address, { domain: { chainId: 80002 } }))).to.be.revertedWithCustomError(f.hunt, "BadSigner");
 
             const before = await f.rdln.balanceOf(f.alice.address);
-            await expect(claim(f, f.alice, a, r.cache)).to.emit(f.hunt, "Claimed").withArgs(r.id, a, f.alice.address, true, true);
+            await expect(claim(f, f.alice, a, r.cache)).to.emit(f.hunt, "Claimed");
             expect(before - await f.rdln.balanceOf(f.alice.address)).to.equal(E("5"));
+            expect((await f.hunt.getToken(a)).rank).to.equal(1);
             await expect(claim(f, f.alice, a, r.cache)).to.be.revertedWithCustomError(f.hunt, "AlreadyClaimed");
             const R = await f.hunt.getRiddle(r.id);
             expect(R.firstTokenId).to.equal(a);
@@ -221,7 +221,8 @@ describe("RiddlenHunt", function () {
         it("unlocked state travels: the buyer of an unlocked token can claim", async function () {
             const { f, r, a } = await unlocked();
             await f.nft.connect(f.alice).transferFrom(f.alice.address, f.carol.address, a);
-            await expect(claim(f, f.carol, a, r.cache)).to.emit(f.hunt, "Claimed").withArgs(r.id, a, f.carol.address, true, true);
+            await expect(claim(f, f.carol, a, r.cache)).to.emit(f.hunt, "Claimed");
+            expect((await f.hunt.getRiddle(r.id)).firstTokenId).to.equal(a);
         });
 
         it("rekey replaces the signer and ciphers; old signatures stop working; the fragment still opens", async function () {
@@ -239,58 +240,91 @@ describe("RiddlenHunt", function () {
 
     // ------------------------------------------------------------ settle / collect
 
-    describe("settle and collect", function () {
-        it("first finder, a finisher in the window, a late finder; pull payouts; reserved returns to zero", async function () {
+    describe("shares and release", function () {
+        const ONE = 10n ** 18n;
+        const harmonic = (n) => { let h = 0n; for (let i = 1n; i <= n; i++) h += ONE / i; return h; };
+        const shareFor = (pot, n, k) => (k === n ? null : (pot * ONE) / (BigInt(k) * harmonic(BigInt(n))));
+
+        it("books the k-th finder pot/(k*H(N)), releases the previous finder, and pays RON at the claim", async function () {
             const f = await loadFixture(fixture);
-            const r = await releaseAndOpen(f); // pot 10,000
+            const r = await releaseAndOpen(f);
+            const R = await f.hunt.getRiddle(r.id);
+            const N = Number(R.nftCount);
+            expect(R.harmonic).to.equal(harmonic(BigInt(N)));
+            const s1 = shareFor(R.pot, N, 1), s2 = shareFor(R.pot, N, 2), s3 = shareFor(R.pot, N, 3);
+            expect(await f.hunt.shareFor(r.id, 1)).to.equal(s1);
+            expect(s1).to.be.gt(s2);
             const tokens = {};
             for (const [who, name] of [[f.alice, "alice"], [f.bob, "bob"], [f.carol, "carol"]]) {
                 tokens[name] = await mintTo(f, who, r.id);
                 await attempt(f, who, tokens[name], "keyboard");
             }
-            await expect(f.hunt.settle(r.id)).to.be.revertedWithCustomError(f.hunt, "NothingToSettle");
-            await claim(f, f.alice, tokens.alice, r.cache);
-            await time.increase(7 * 86400);
-            await expect(claim(f, f.bob, tokens.bob, r.cache)).to.emit(f.hunt, "Claimed").withArgs(r.id, tokens.bob, f.bob.address, false, true);
-            await expect(f.hunt.settle(r.id)).to.be.revertedWithCustomError(f.hunt, "WindowOpen");
-            await time.increase(8 * 86400);
-            await expect(claim(f, f.carol, tokens.carol, r.cache)).to.emit(f.hunt, "Claimed").withArgs(r.id, tokens.carol, f.carol.address, false, false);
-            await expect(f.hunt.collect(tokens.alice)).to.be.revertedWithCustomError(f.hunt, "NotSettled");
+            const reservedBefore = await f.hunt.reserved();
 
-            await expect(f.hunt.connect(f.carol).settle(r.id)).to.emit(f.hunt, "Settled").withArgs(r.id, E("5000"), E("5000"), 1);
-            await expect(f.hunt.settle(r.id)).to.be.revertedWithCustomError(f.hunt, "AlreadySettled");
-            expect(await f.hunt.reserved()).to.equal(E("10000"));
+            await expect(claim(f, f.alice, tokens.alice, r.cache)).to.emit(f.hunt, "Claimed").withArgs(r.id, tokens.alice, f.alice.address, 1, s1);
+            expect(await f.hunt.owed(f.alice.address)).to.equal(0); // booked, not released
+            expect(await f.ron.balanceOf(f.alice.address)).to.be.gt(0); // RON at the claim
+            expect(await f.hunt.shareFor(r.id, 1)).to.equal(s1); // claimed ranks report what was booked
 
-            await expect(f.hunt.collect(tokens.alice)).to.emit(f.hunt, "Collected").withArgs(r.id, tokens.alice, f.alice.address, E("5000"));
-            await expect(f.hunt.collect(tokens.bob)).to.emit(f.hunt, "Collected").withArgs(r.id, tokens.bob, f.bob.address, E("5000"));
-            await expect(f.hunt.collect(tokens.carol)).to.emit(f.hunt, "Collected").withArgs(r.id, tokens.carol, f.carol.address, 0);
-            await expect(f.hunt.collect(tokens.alice)).to.be.revertedWithCustomError(f.hunt, "AlreadyCollected");
-            for (const who of [f.alice, f.bob, f.carol]) expect(await f.ron.balanceOf(who.address)).to.be.gt(0); // three finders: RON for all
+            await time.increase(400 * 86400); // however long it takes
+            await expect(claim(f, f.bob, tokens.bob, r.cache))
+                .to.emit(f.hunt, "Claimed").withArgs(r.id, tokens.bob, f.bob.address, 2, s2)
+                .and.to.emit(f.hunt, "Released").withArgs(r.id, tokens.alice, f.alice.address, s1);
+            expect(await f.hunt.owed(f.alice.address)).to.equal(s1);
+            expect(await f.hunt.owed(f.bob.address)).to.equal(0);
 
-            for (const who of [f.alice, f.bob]) {
-                const before = await f.rdln.balanceOf(who.address);
-                await f.hunt.connect(who).withdraw();
-                expect(await f.rdln.balanceOf(who.address) - before).to.be.within(E("4950"), E("5000")); // transfer burn may be on
-            }
+            await expect(claim(f, f.carol, tokens.carol, r.cache)).to.emit(f.hunt, "Released").withArgs(r.id, tokens.bob, f.bob.address, s2);
+            expect((await f.hunt.getRiddle(r.id)).booked).to.equal(s1 + s2 + s3);
+            expect((await f.hunt.getToken(tokens.carol)).released).to.equal(false);
+
+            expect(await f.hunt.reserved()).to.equal(reservedBefore); // releases move pot into owed; reserved is unchanged
+            await f.hunt.connect(f.alice).withdraw();
+            await f.hunt.connect(f.bob).withdraw();
             await expect(f.hunt.connect(f.carol).withdraw()).to.be.revertedWithCustomError(f.hunt, "NothingOwed");
-            expect(await f.hunt.reserved()).to.equal(0);
+            expect(await f.hunt.reserved()).to.equal(reservedBefore - s1 - s2);
         });
 
-        it("a lone first finder takes the whole pot but earns no RON; the share goes to whoever holds the token", async function () {
+        it("a booked but unreleased share follows the token to its new holder", async function () {
             const f = await loadFixture(fixture);
             const r = await releaseAndOpen(f);
             const a = await mintTo(f, f.alice, r.id);
+            const b = await mintTo(f, f.bob, r.id);
             await attempt(f, f.alice, a, "keyboard");
+            await attempt(f, f.bob, b, "keyboard");
             await claim(f, f.alice, a, r.cache);
-            await time.increase(15 * 86400);
-            await expect(f.hunt.settle(r.id)).to.emit(f.hunt, "Settled").withArgs(r.id, E("10000"), 0, 0);
-            await f.nft.connect(f.alice).transferFrom(f.alice.address, f.bob.address, a);
-            await expect(f.hunt.collect(a)).to.emit(f.hunt, "Collected").withArgs(r.id, a, f.bob.address, E("10000"));
-            expect(await f.hunt.owed(f.bob.address)).to.equal(E("10000"));
-            expect(await f.ron.balanceOf(f.bob.address)).to.equal(0);
+            await f.nft.connect(f.alice).transferFrom(f.alice.address, f.carol.address, a);
+            const s1 = await f.hunt.shareFor(r.id, 1);
+            await expect(claim(f, f.bob, b, r.cache)).to.emit(f.hunt, "Released").withArgs(r.id, a, f.carol.address, s1);
+            expect(await f.hunt.owed(f.carol.address)).to.equal(s1);
+            expect(await f.hunt.owed(f.alice.address)).to.equal(0);
         });
 
-        it("an unsolved riddle keeps its pot; sweep cannot touch it; RON failure does not block collect", async function () {
+        it("completion releases the last finder and empties the pot exactly", async function () {
+            const f = await loadFixture(fixture);
+            let r, N;
+            for (let i = 0; i < 40; i++) { // find a scarce roll so the whole riddle can be played
+                r = await releaseAndOpen(f);
+                N = Number((await f.hunt.getRiddle(r.id)).nftCount);
+                if (N <= 16) break;
+            }
+            expect(N).to.be.at.most(16);
+            await f.rdln.mintPrizePool(f.alice.address, E("5000"));
+            const ids = [];
+            for (let i = 0; i < N; i++) { ids.push(await mintTo(f, f.alice, r.id)); await attempt(f, f.alice, ids[i], "keyboard"); }
+            for (let i = 0; i < N - 1; i++) await claim(f, f.alice, ids[i], r.cache);
+            const R1 = await f.hunt.getRiddle(r.id);
+            expect(R1.complete).to.equal(false);
+            expect((await f.hunt.getToken(ids[N - 2])).released).to.equal(false);
+            await expect(claim(f, f.alice, ids[N - 1], r.cache)).to.emit(f.hunt, "RiddleComplete").withArgs(r.id);
+            const R = await f.hunt.getRiddle(r.id);
+            expect(R.complete).to.equal(true);
+            expect(R.booked).to.equal(R.pot); // dust went to the last finder
+            expect((await f.hunt.getToken(ids[N - 1])).released).to.equal(true);
+            expect(await f.hunt.owed(f.alice.address)).to.equal(R.pot);
+            await expect(f.hunt.connect(f.gm).rekey(r.id, ethers.Wallet.createRandom().address, "0x", "0x")).to.be.revertedWithCustomError(f.hunt, "Complete");
+        });
+
+        it("an unsolved riddle keeps its pot; sweep cannot touch it; RON failure does not block a claim", async function () {
             const f = await loadFixture(fixture);
             const r = await releaseAndOpen(f);
             const free = await f.hunt.available();
@@ -299,16 +333,10 @@ describe("RiddlenHunt", function () {
             expect(await f.hunt.reserved()).to.equal(E("10000"));
 
             const a = await mintTo(f, f.alice, r.id);
-            const b = await mintTo(f, f.bob, r.id);
             await attempt(f, f.alice, a, "keyboard");
-            await attempt(f, f.bob, b, "keyboard");
-            await claim(f, f.alice, a, r.cache);
-            await claim(f, f.bob, b, r.cache);
-            await time.increase(15 * 86400);
-            await f.hunt.settle(r.id);
             await f.ron.revokeRole(await f.ron.GAME_ROLE(), f.huntAddress);
-            await expect(f.hunt.collect(a)).to.emit(f.hunt, "RONAwardFailed").withArgs(r.id, f.alice.address);
-            expect(await f.hunt.owed(f.alice.address)).to.equal(E("5000"));
+            await expect(claim(f, f.alice, a, r.cache)).to.emit(f.hunt, "RONAwardFailed").withArgs(r.id, f.alice.address);
+            expect((await f.hunt.getToken(a)).share).to.be.gt(0);
         });
     });
 
@@ -342,7 +370,7 @@ describe("RiddlenHunt", function () {
             const f = await loadFixture(fixture);
             await expect(f.hunt.connect(f.alice).release("x", 0, Array(8).fill(ethers.id("r")), f.alice.address, "0x", "0x"))
                 .to.be.revertedWithCustomError(f.hunt, "AccessControlUnauthorizedAccount");
-            await expect(f.hunt.connect(f.alice).setEconomics([0, 0, 0, 0], 0, 0, 0, 0, 1))
+            await expect(f.hunt.connect(f.alice).setEconomics([0, 0, 0, 0], 0, 0, 1))
                 .to.be.revertedWithCustomError(f.hunt, "AccessControlUnauthorizedAccount");
         });
     });

@@ -16,9 +16,9 @@ export function countdown(seconds) {
 export const HUNT_PHASE = {
   released: { label: 'Rolling the count', tone: 'machine', live: true },
   open: { label: 'On sale', tone: 'human', live: true },
-  'sold-out': { label: 'Sold out · unsolved', tone: '' },
-  found: { label: 'Found · window open', tone: 'accent', live: true },
-  settling: { label: 'Ready to settle', tone: 'accent' },
-  settled: { label: 'Settled', tone: '' },
+  'sold-out': { label: 'Sold out · unfound', tone: '' },
+  found: { label: 'Found · still on sale', tone: 'accent', live: true },
+  'found-sold-out': { label: 'Found · sold out', tone: 'accent', live: true },
+  complete: { label: 'Complete', tone: 'human' },
   loading: { label: '…', tone: '' },
 };

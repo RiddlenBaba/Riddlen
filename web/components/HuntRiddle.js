@@ -3,10 +3,10 @@ import Link from 'next/link';
 import { useAccount, useBlockNumber, usePublicClient } from 'wagmi';
 import { privateKeyToAccount } from 'viem/accounts';
 import { formatEther } from 'viem';
-import { DIFFICULTY, loadUnlocked, saveUnlocked, useHuntActions, useMintPrice, useMyTokens } from '../hooks/useHunt';
+import { DIFFICULTY, loadUnlocked, saveUnlocked, shareFor, useHuntActions, useMintPrice, useMyTokens } from '../hooks/useHunt';
 import { CHAIN, CONTRACTS, EXPLORER } from '../lib/wagmi';
 import { HUNT_ABI } from '../lib/abi';
-import { countdown, HUNT_PHASE, rdln } from './format';
+import { HUNT_PHASE, rdln } from './format';
 import { short } from './Wallet';
 import QrScanner from './QrScanner';
 import * as H from '../lib/hunt';
@@ -209,41 +209,43 @@ function Claim({ riddle, token, actions, onChange }) {
   );
 }
 
-function TokenCard({ riddle, token, actions, now, onChange }) {
-  const isFirst = token.claimedAt && riddle.firstTokenId === Number(token.id);
-  const inWindow = token.claimedAt && token.claimedAt <= riddle.firstClaimAt + riddle.finisherWindow;
-  const share = riddle.settled ? (isFirst ? riddle.firstShare : inWindow ? riddle.finisherShare : 0n) : null;
-  const state = token.collected ? 'collected' : token.claimedAt ? (isFirst ? 'first finder' : inWindow ? 'finisher' : 'late finder') : token.unlockedAt ? 'location unlocked' : 'unsolved';
+function TokenCard({ riddle, token, actions, onChange }) {
+  const state = token.claimedAt ? (token.released ? 'paid' : 'found · waiting for the next finder') : token.unlockedAt ? 'location unlocked' : 'unsolved';
+  const nextShare = shareFor(riddle, riddle.claimCount + 1);
   return (
     <article className="tok card">
       <header>
         <span className="mono">NFT #{token.id.toString()} · {token.index + 1} of {riddle.nftCount}</span>
         <span className={`pill ${token.claimedAt ? 'human' : token.unlockedAt ? 'accent' : ''}`}>{state}</span>
       </header>
-      <div className="stats mono muted">attempts on this NFT <b>{token.attempts}</b>{!token.unlockedAt && <> · next try <b>{fmt(BigInt(token.attempts + 1) * riddle.attemptStep)} RDLN</b></>}</div>
+      <div className="stats mono muted">
+        attempts on this NFT <b>{token.attempts}</b>
+        {!token.unlockedAt && <> · next try <b>{fmt(BigInt(token.attempts + 1) * riddle.attemptStep)} RDLN</b></>}
+        {!token.claimedAt && !riddle.complete && <> · finding it now pays <b>{rdln(nextShare)} RDLN</b> (finder #{riddle.claimCount + 1})</>}
+      </div>
       {!token.unlockedAt && <Attempt riddle={riddle} token={token} actions={actions} onChange={onChange} />}
       {token.unlockedAt > 0 && <Location riddle={riddle} token={token} />}
       {token.unlockedAt > 0 && !token.claimedAt && <Claim riddle={riddle} token={token} actions={actions} onChange={onChange} />}
+      {token.claimedAt > 0 && (
+        <p className="muted small">
+          Finder #{token.rank}. Share <b>{rdln(token.share)} RDLN</b>.{' '}
+          {token.released
+            ? <>Released. Withdraw from your <Link href="/me">dashboard</Link>.</>
+            : <>It is released when the next person finds it, so leave the code where it is. If you sell this NFT first, the share goes to the buyer.</>}
+        </p>
+      )}
       {token.claimedAt > 0 && <Fragment token={token} />}
-      {token.claimedAt > 0 && !riddle.settled && (
-        <p className="muted small">{isFirst ? 'You found it first.' : inWindow ? 'You finished inside the window.' : 'You finished after the window: the solve counts, the pot does not.'} Settles {countdown(riddle.firstClaimAt + riddle.finisherWindow - now)} after the first find; then collect your share here.</p>
-      )}
-      {riddle.settled && token.claimedAt > 0 && !token.collected && (
-        <button className="btn primary" disabled={!!actions.pending} onClick={() => actions.collect(token.id).then((ok) => ok && onChange?.())}>{actions.pending === 'Collecting' ? 'Collecting…' : `Collect ${rdln(share)} RDLN${riddle.claimCount >= 2 ? ' and RON' : ''}`}</button>
-      )}
-      {token.collected && <p className="muted small">Collected. Withdraw from your <Link href="/me">dashboard</Link>.</p>}
       <style jsx>{`
         .tok { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; }
         header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
         .stats { font-size: 13px; } .stats b { color: var(--ink); font-weight: 500; }
-        p { margin: 0; } .small { font-size: 13px; }
-        .btn { align-self: flex-start; }
+        p { margin: 0; } .small { font-size: 13px; } p b { color: var(--ink); font-weight: 500; }
       `}</style>
     </article>
   );
 }
 
-export default function HuntRiddle({ riddle, now, onChange }) {
+export default function HuntRiddle({ riddle, onChange }) {
   const { address, isConnected } = useAccount();
   const actions = useHuntActions();
   const price = useMintPrice();
@@ -267,8 +269,8 @@ export default function HuntRiddle({ riddle, now, onChange }) {
           <span><b>{rdln(riddle.pot)}</b> RDLN pot</span>
           {riddle.opened ? <span><b>{left}</b> of {riddle.nftCount} NFTs left</span> : <span>count not rolled yet</span>}
           <span>price now <b>{fmt(price)}</b> RDLN</span>
-          {riddle.firstClaimAt > 0 && <span>first found {new Date(riddle.firstClaimAt * 1000).toLocaleDateString()}</span>}
-          {riddle.claimCount > 0 && <span><b>{riddle.claimCount}</b> found it</span>}
+          {riddle.opened && !riddle.complete && <span>next finder gets <b>{rdln(shareFor(riddle, riddle.claimCount + 1))}</b> RDLN</span>}
+          {riddle.claimCount > 0 && <span><b>{riddle.claimCount}</b> found it{riddle.firstClaimAt > 0 ? `, first on ${new Date(riddle.firstClaimAt * 1000).toLocaleDateString()}` : ''}</span>}
         </div>
       </header>
 
@@ -279,18 +281,12 @@ export default function HuntRiddle({ riddle, now, onChange }) {
             <button className="btn" disabled={!canOpen || busy} onClick={() => actions.open(riddle.id).then((ok) => ok && change())}>{actions.pending === 'Opening' ? 'Opening…' : canOpen ? 'Open it' : 'Waiting for blocks…'}</button>
           </div>
         )}
-        {(riddle.phase === 'open' || riddle.phase === 'found') && left > 0 && (
+        {['open', 'found'].includes(riddle.phase) && left > 0 && (
           <div className="box">
             <p>An NFT is the right to attempt this riddle. It never expires, it keeps its own count of tries, and everything it earns travels with it if you sell it.</p>
             {isConnected
               ? <button className="btn accent" disabled={busy} onClick={() => actions.mint(riddle.id).then((ok) => ok && change())}>{actions.pending === 'Buying' ? 'Buying…' : `Buy one for ${fmt(price)} RDLN`}</button>
               : <p className="muted small">Connect a wallet to buy. New here? The <Link href="/free">faucet</Link> gives every wallet free testnet RDLN.</p>}
-          </div>
-        )}
-        {riddle.phase === 'settling' && (
-          <div className="box">
-            <p>The finisher window has passed. Anyone can settle; then finders collect.</p>
-            <button className="btn" disabled={busy} onClick={() => actions.settle(riddle.id).then((ok) => ok && change())}>{actions.pending === 'Settling' ? 'Settling…' : 'Settle'}</button>
           </div>
         )}
         {actions.error && <p className="notice warn">{actions.error} <button className="link" onClick={actions.clearError}>dismiss</button></p>}
@@ -299,7 +295,7 @@ export default function HuntRiddle({ riddle, now, onChange }) {
       {isConnected && tokens.length > 0 && (
         <section className="mine">
           <h2 className="display">Your NFTs on this riddle</h2>
-          {tokens.map((t) => <TokenCard key={t.id.toString()} riddle={riddle} token={t} actions={actions} now={now} onChange={change} />)}
+          {tokens.map((t) => <TokenCard key={t.id.toString()} riddle={riddle} token={t} actions={actions} onChange={change} />)}
         </section>
       )}
 
@@ -308,8 +304,9 @@ export default function HuntRiddle({ riddle, now, onChange }) {
         <ul>
           <li>Buy an NFT. Each try costs {fmt(riddle.attemptStep)} RDLN more than the last on that NFT. Every payment splits four ways: burned, grand prize, treasury, liquidity.</li>
           <li>The right answer unlocks a place. Go there and scan what you find. That is the claim; it costs {fmt(riddle.claimFee)} RDLN.</li>
-          <li>First to claim takes {riddle.firstFinderBps / 100}% of the pot. Anyone who claims within {Math.round(riddle.finisherWindow / 86400)} days splits the rest. Every finder gets a piece of the map.</li>
-          <li>Nothing here expires. If nobody finds it, the pot waits.</li>
+          <li>Every finder gets a share, largest for the first: finder #1 gets {rdln(shareFor(riddle, 1))} RDLN, #2 {rdln(shareFor(riddle, 2))}, #10 {rdln(shareFor(riddle, Math.min(10, riddle.nftCount || 10)))}, and so on down to the last NFT.</li>
+          <li>A share is released when the next person finds it. The first finder is paid by the second, the second by the third. The last is paid when every NFT has found it. So the code stays where it is.</li>
+          <li>Nothing here expires. If nobody finds it, the pot waits, and a finder who is last for now waits with it.</li>
         </ul>
         <p className="muted small">Contract <a href={`${EXPLORER}/address/${CONTRACTS.HUNT}`} target="_blank" rel="noreferrer">{short(CONTRACTS.HUNT)}</a> · cache key {short(riddle.cacheSigner)}</p>
       </section>

@@ -17,7 +17,7 @@ export default function HuntRiddlePage() {
       <p className="back"><Link href="/">← All riddles</Link></p>
       {isLoading && <p className="muted">Loading…</p>}
       {!isLoading && !riddle && id !== undefined && <p className="muted">No riddle #{String(query.id)}.</p>}
-      {riddle && <HuntRiddle riddle={riddle} now={now} onChange={refetch} />}
+      {riddle && <HuntRiddle riddle={riddle} onChange={refetch} />}
       <style jsx>{`
         .back { margin: 0 0 24px; font-size: 14px; }
         .back :global(a) { color: var(--ink-2); text-decoration: none; }

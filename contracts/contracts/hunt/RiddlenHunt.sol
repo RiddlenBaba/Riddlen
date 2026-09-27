@@ -18,22 +18,24 @@ interface IHuntNFT {
 
 /**
  * @title RiddlenHunt
- * @notice A scavenger hunt for the whole world, on a twenty-year schedule.
+ * @notice A scavenger hunt for the whole world, on a twenty-year schedule. The design is the
+ *         whitepaper (riddlen.org/whitepaper/); this contract implements sections 4 to 8.
  *
- *  release   the house posts a riddle: text, sealed answer roots, the address of a key hidden
- *            at a place in the world, the location clue encrypted with the answer, and a map
- *            fragment encrypted with a secret that only exists at that place. The pot is reserved.
- *  open      anyone, a few blocks later: a future block hash rolls how many NFTs exist.
- *  mint      buy an NFT. The price follows HuntCommitments' halving clock. Paid through RDLN's
- *            game protocol (50% burned, 25% grand prize, 25% treasury).
- *  attempt   guess the answer. Costs 1, 2, 3... RDLN per NFT, through the same protocol. The
- *            proof is positional and bound to the token, so one solve cannot be copied by another
- *            token. A correct guess lets the holder decrypt the location off chain.
- *  claim     stand at the place, scan the key, sign. The key never touches the chain.
- *  settle    after the finisher window: shares are fixed, nothing loops.
- *  collect   per token: the first finder's share or a finisher's share, plus RON. Pull payments.
+ *  release   the house posts a riddle: text, sealed answer roots, the address of a key hidden at
+ *            a place, the location clue encrypted with the answer, and a map fragment encrypted
+ *            with a secret that only exists at that place. The pot is reserved.
+ *  open      anyone, a few blocks later: a future block hash rolls how many NFTs exist, which
+ *            fixes the share schedule.
+ *  mint      buy an NFT: one right to attempt. Paid through RDLN's game protocol.
+ *  attempt   guess. Costs 1, 2, 3... RDLN per NFT, right or wrong. The proof is positional and
+ *            bound to the token. A correct guess lets the holder decrypt the location off chain.
+ *  claim     stand at the place, scan the key, sign. The k-th finder's share of the pot is
+ *            pot * (1/k) / H(N); it is booked now and RELEASED WHEN THE NEXT FINDER CLAIMS. The
+ *            last finder is released by completion. RON and the map fragment come at the claim.
+ *  withdraw  pull payments.
  *
- *  Nothing expires. A riddle nobody solves keeps its pot. All progress is keyed by token id.
+ *  Nothing expires, nothing settles, nothing is refunded. A riddle nobody completes keeps its
+ *  pot. All progress and all claims are keyed by token id and travel with the token.
  */
 contract RiddlenHunt is
     Initializable,
@@ -49,7 +51,7 @@ contract RiddlenHunt is
     uint256 public constant TREE_DEPTH = 10;
     uint256 public constant MAX_ALTERNATIVES = 8;
     uint256 public constant MAX_TEXT_LENGTH = 4000;
-    uint256 public constant BPS = 10000;
+    uint256 public constant ONE = 1e18;               // fixed point for the harmonic sum
     bytes32 public constant CLAIM_TYPEHASH =
         keccak256("Claim(uint256 riddleId,uint256 tokenId,address owner)");
 
@@ -59,19 +61,17 @@ contract RiddlenHunt is
         uint64 firstClaimAt;
         uint16 nftCount;
         uint16 minted;
-        uint16 claimCount;       // every claim, including late ones
-        uint16 finisherCount;    // claims inside the window after the first
-        uint16 firstFinderBps;
-        uint32 finisherWindow;
+        uint16 claimCount;       // finders so far; the next finder's rank is claimCount + 1
         bool opened;
-        bool settled;
+        bool complete;           // every NFT on it has found
         uint128 pot;
+        uint128 booked;          // sum of shares booked so far (released or not)
         uint128 claimFee;
         uint128 attemptStep;
-        uint128 firstShare;      // set at settle
-        uint128 finisherShare;   // set at settle
-        uint32 firstTokenId;
         uint64 commitBlock;
+        uint64 harmonic;         // H(nftCount) * ONE, fixed at open
+        uint32 firstTokenId;
+        uint32 lastClaimTokenId; // released by the next claim
         address cacheSigner;
         bytes32 fragmentCipherHash;
         bytes32[8] altRoots;
@@ -85,7 +85,9 @@ contract RiddlenHunt is
         uint32 attempts;
         uint64 unlockedAt;
         uint64 claimedAt;
-        bool collected;
+        uint16 rank;             // finishing order, 1-based; 0 until found
+        bool released;
+        uint128 share;           // booked at the claim; owed to the holder once released
     }
 
     IRDLN public rdln;
@@ -99,18 +101,18 @@ contract RiddlenHunt is
     mapping(uint256 => Riddle) internal riddles;
     mapping(uint256 => TokenState) internal tokens;
     mapping(address => bool) public usedSigner;
+    /// @notice riddle id => finishing rank => token id
+    mapping(uint256 => mapping(uint256 => uint256)) public tokenAtRank;
 
     /// @notice RDLN owed, claimed with withdraw()
     mapping(address => uint256) public owed;
-    /// @notice RDLN promised to riddles and unpaid winners; never spendable twice
+    /// @notice RDLN promised to riddles and to finders; never spendable twice
     uint256 public reserved;
 
     // Economics: admin-settable, snapshotted into each riddle at release
     uint256[4] public potByDifficulty;
     uint128 public claimFee;
     uint128 public attemptStep;
-    uint16 public firstFinderBps;
-    uint32 public finisherWindow;
     uint16 public revealDelay;   // blocks between release and open
 
     error BadText();
@@ -118,7 +120,6 @@ contract RiddlenHunt is
     error BadSigner();
     error BadRoots();
     error BadIndex();
-    error BadProof();
     error TooSoon();
     error TooManyRiddles();
     error NotReleased();
@@ -129,12 +130,7 @@ contract RiddlenHunt is
     error AlreadyUnlocked();
     error NotUnlocked();
     error AlreadyClaimed();
-    error NotClaimed();
-    error AlreadySettled();
-    error NotSettled();
-    error WindowOpen();
-    error NothingToSettle();
-    error AlreadyCollected();
+    error Complete();
     error PoolUnderfunded(uint256 needed, uint256 available);
     error NothingOwed();
 
@@ -142,14 +138,14 @@ contract RiddlenHunt is
     event RiddleOpened(uint256 indexed id, uint16 nftCount, bytes32 seed, bool fallbackSeed);
     event Minted(uint256 indexed id, uint256 indexed tokenId, address indexed to, uint16 index, uint256 price);
     event Attempted(uint256 indexed id, uint256 indexed tokenId, address indexed by, uint32 attempts, uint256 cost, bool unlocked);
-    event Claimed(uint256 indexed id, uint256 indexed tokenId, address indexed by, bool first, bool inWindow);
-    event Settled(uint256 indexed id, uint256 firstShare, uint256 finisherShare, uint16 finisherCount);
-    event Collected(uint256 indexed id, uint256 indexed tokenId, address indexed to, uint256 amount);
+    event Claimed(uint256 indexed id, uint256 indexed tokenId, address indexed by, uint16 rank, uint256 share);
+    event Released(uint256 indexed id, uint256 indexed tokenId, address indexed to, uint256 amount);
+    event RiddleComplete(uint256 indexed id);
     event Rekeyed(uint256 indexed id, address cacheSigner, bytes fragmentCipher);
     event GrandPrizeOpen(uint256 riddleCount);
     event Withdrawn(address indexed to, uint256 amount);
     event RONAwardFailed(uint256 indexed id, address indexed player);
-    event EconomicsUpdated(uint256[4] pots, uint128 claimFee, uint128 attemptStep, uint16 firstFinderBps, uint32 finisherWindow, uint16 revealDelay);
+    event EconomicsUpdated(uint256[4] pots, uint128 claimFee, uint128 attemptStep, uint16 revealDelay);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -178,8 +174,6 @@ contract RiddlenHunt is
         potByDifficulty = [uint256(10_000 ether), 25_000 ether, 60_000 ether, 150_000 ether];
         claimFee = 5 ether;
         attemptStep = 1 ether;
-        firstFinderBps = 5000;
-        finisherWindow = 14 days;
         revealDelay = 10;
     }
 
@@ -226,8 +220,6 @@ contract RiddlenHunt is
         r.pot = uint128(pot);
         r.claimFee = claimFee;
         r.attemptStep = attemptStep;
-        r.firstFinderBps = firstFinderBps;
-        r.finisherWindow = finisherWindow;
         r.cacheSigner = cacheSigner;
         r.altRoots = altRoots;
         r.text = text;
@@ -238,7 +230,7 @@ contract RiddlenHunt is
         if (id == commitments.totalRiddles()) emit GrandPrizeOpen(id);
     }
 
-    /// @notice Roll the NFT count from a block after release. Anyone may call.
+    /// @notice Roll the NFT count from a block after release, and fix the share schedule. Anyone.
     function open(uint256 id) external {
         Riddle storage r = riddles[id];
         if (r.releasedAt == 0) revert NotReleased();
@@ -252,6 +244,7 @@ contract RiddlenHunt is
         seed = keccak256(abi.encode(seed, id));
 
         r.nftCount = rollCount(seed);
+        r.harmonic = harmonic(r.nftCount);
         r.opened = true;
         emit RiddleOpened(id, r.nftCount, seed, fallbackSeed);
     }
@@ -271,6 +264,13 @@ contract RiddlenHunt is
         return uint16(lo + (span % (hi - lo + 1)));
     }
 
+    /// @notice H(n) = 1 + 1/2 + ... + 1/n, times ONE.
+    function harmonic(uint256 n) public pure returns (uint64 h) {
+        uint256 sum;
+        for (uint256 i = 1; i <= n; i++) sum += ONE / i;
+        return uint64(sum);
+    }
+
     /// @notice Replace the key and ciphers of a riddle whose cache was lost or destroyed.
     function rekey(uint256 id, address cacheSigner, bytes calldata locationCipher, bytes calldata fragmentCipher)
         external
@@ -278,7 +278,7 @@ contract RiddlenHunt is
     {
         Riddle storage r = riddles[id];
         if (r.releasedAt == 0) revert NotReleased();
-        if (r.settled) revert AlreadySettled();
+        if (r.complete) revert Complete();
         if (cacheSigner == address(0) || usedSigner[cacheSigner]) revert BadSigner();
         usedSigner[cacheSigner] = true;
         r.cacheSigner = cacheSigner;
@@ -301,7 +301,9 @@ contract RiddlenHunt is
         if (price > 0) rdln.burnNFTMint(msg.sender, price);
 
         tokenId = nft.mint(msg.sender);
-        tokens[tokenId] = TokenState({ riddleId: uint32(id), index: index, attempts: 0, unlockedAt: 0, claimedAt: 0, collected: false });
+        TokenState storage t = tokens[tokenId];
+        t.riddleId = uint32(id);
+        t.index = index;
         emit Minted(id, tokenId, msg.sender, index, price);
     }
 
@@ -334,7 +336,7 @@ contract RiddlenHunt is
 
     /**
      * @notice Prove you stood at the place: a signature by the hidden key over this token and
-     *         its owner. First claim starts the finisher window.
+     *         its owner. Books this finder's share, releases the previous finder's, awards RON.
      */
     function claim(uint256 tokenId, bytes calldata signature) external nonReentrant {
         TokenState storage t = tokens[tokenId];
@@ -349,58 +351,33 @@ contract RiddlenHunt is
         if (ECDSA.recover(digest, signature) != r.cacheSigner) revert BadSigner();
 
         if (r.claimFee > 0) rdln.burnNFTMint(msg.sender, r.claimFee);
-        t.claimedAt = uint64(block.timestamp);
-        r.claimCount++;
 
-        bool first = r.firstClaimAt == 0;
-        bool inWindow = first || block.timestamp <= uint256(r.firstClaimAt) + r.finisherWindow;
-        if (first) {
+        uint16 rank = r.claimCount + 1;
+        uint256 share = _shareFor(r, rank);
+        r.claimCount = rank;
+        r.booked += uint128(share);
+        t.claimedAt = uint64(block.timestamp);
+        t.rank = rank;
+        t.share = uint128(share);
+        tokenAtRank[t.riddleId][rank] = tokenId;
+        if (rank == 1) {
             r.firstClaimAt = uint64(block.timestamp);
             r.firstTokenId = uint32(tokenId);
-        } else if (inWindow) {
-            r.finisherCount++;
         }
-        emit Claimed(t.riddleId, tokenId, msg.sender, first, inWindow);
-    }
+        emit Claimed(t.riddleId, tokenId, msg.sender, rank, share);
 
-    /// @notice Fix the shares once the finisher window has passed. Anyone may call. No loops.
-    function settle(uint256 id) external {
-        Riddle storage r = riddles[id];
-        if (r.firstClaimAt == 0) revert NothingToSettle();
-        if (r.settled) revert AlreadySettled();
-        if (block.timestamp <= uint256(r.firstClaimAt) + r.finisherWindow) revert WindowOpen();
+        // The previous finder is paid because you found it too
+        if (r.lastClaimTokenId != 0) _release(t.riddleId, r.lastClaimTokenId);
+        r.lastClaimTokenId = uint32(tokenId);
 
-        uint256 pot = r.pot;
-        uint256 firstShare = (pot * r.firstFinderBps) / BPS;
-        uint256 finisherShare;
-        if (r.finisherCount > 0) finisherShare = (pot - firstShare) / r.finisherCount;
-        else firstShare = pot;
-        uint256 payable_ = firstShare + finisherShare * r.finisherCount;
+        // The last finder is paid by completion
+        if (rank == r.nftCount) {
+            r.complete = true;
+            _release(t.riddleId, tokenId);
+            emit RiddleComplete(t.riddleId);
+        }
 
-        r.firstShare = uint128(firstShare);
-        r.finisherShare = uint128(finisherShare);
-        r.settled = true;
-        reserved = reserved - pot + payable_; // paid stays reserved until withdrawn
-        emit Settled(id, firstShare, finisherShare, r.finisherCount);
-    }
-
-    /// @notice Book a claimed token's share to its current holder and award RON. Once per token.
-    function collect(uint256 tokenId) external nonReentrant {
-        TokenState storage t = tokens[tokenId];
-        if (t.claimedAt == 0) revert NotClaimed();
-        if (t.collected) revert AlreadyCollected();
-        Riddle storage r = riddles[t.riddleId];
-        if (!r.settled) revert NotSettled();
-        address holder = nft.ownerOf(tokenId);
-
-        uint256 amount;
-        if (tokenId == r.firstTokenId) amount = r.firstShare;
-        else if (t.claimedAt <= uint256(r.firstClaimAt) + r.finisherWindow) amount = r.finisherShare;
-
-        t.collected = true;
-        if (amount > 0) owed[holder] += amount;
-        if (r.claimCount >= 2) _awardRON(t.riddleId, holder, r.difficulty, tokenId == r.firstTokenId);
-        emit Collected(t.riddleId, tokenId, holder, amount);
+        _awardRON(t.riddleId, msg.sender, r.difficulty, rank == 1);
     }
 
     function withdraw() external nonReentrant {
@@ -413,6 +390,23 @@ contract RiddlenHunt is
     }
 
     // ============ INTERNALS ============
+
+    /// @dev share(k) = pot * (1/k) / H(N); the last rank takes whatever rounding left behind.
+    function _shareFor(Riddle storage r, uint256 rank) internal view returns (uint256) {
+        if (rank == r.nftCount) return uint256(r.pot) - uint256(r.booked);
+        return (uint256(r.pot) * ONE) / (rank * uint256(r.harmonic));
+    }
+
+    /// @dev Book a finder's share to whoever holds the token now. Reserved does not change:
+    ///      the amount moves from the riddle's pot to owed, and leaves on withdraw.
+    function _release(uint256 id, uint256 tokenId) private {
+        TokenState storage t = tokens[tokenId];
+        if (t.released) return;
+        t.released = true;
+        address holder = nft.ownerOf(tokenId);
+        owed[holder] += t.share;
+        emit Released(id, tokenId, holder, t.share);
+    }
 
     /// @dev Positional Merkle check over a 1024-leaf tree whose nodes are keccak256(leaf).
     function _verify(bytes32 leaf, uint16 index, bytes32[10] calldata proof, bytes32 root)
@@ -438,23 +432,16 @@ contract RiddlenHunt is
 
     // ============ ADMIN ============
 
-    function setEconomics(
-        uint256[4] calldata pots,
-        uint128 claimFee_,
-        uint128 attemptStep_,
-        uint16 firstFinderBps_,
-        uint32 finisherWindow_,
-        uint16 revealDelay_
-    ) external onlyRole(ADMIN_ROLE) {
-        require(firstFinderBps_ <= BPS, "bps");
+    function setEconomics(uint256[4] calldata pots, uint128 claimFee_, uint128 attemptStep_, uint16 revealDelay_)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
         require(revealDelay_ > 0 && revealDelay_ < 200, "delay");
         potByDifficulty = pots;
         claimFee = claimFee_;
         attemptStep = attemptStep_;
-        firstFinderBps = firstFinderBps_;
-        finisherWindow = finisherWindow_;
         revealDelay = revealDelay_;
-        emit EconomicsUpdated(pots, claimFee_, attemptStep_, firstFinderBps_, finisherWindow_, revealDelay_);
+        emit EconomicsUpdated(pots, claimFee_, attemptStep_, revealDelay_);
     }
 
     /// @notice Move unreserved RDLN out. Never touches pots or owed funds.
@@ -473,6 +460,14 @@ contract RiddlenHunt is
 
     function getToken(uint256 tokenId) external view returns (TokenState memory) {
         return tokens[tokenId];
+    }
+
+    /// @notice What the finder of the given rank on this riddle gets (rank 1 = first finder).
+    function shareFor(uint256 id, uint256 rank) external view returns (uint256) {
+        Riddle storage r = riddles[id];
+        if (!r.opened || rank == 0 || rank > r.nftCount) return 0;
+        if (rank <= r.claimCount) return tokens[tokenAtRank[id][rank]].share;
+        return _shareFor(r, rank);
     }
 
     function mintPrice() external view returns (uint256) {

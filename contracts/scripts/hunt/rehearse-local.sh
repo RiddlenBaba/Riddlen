@@ -32,6 +32,6 @@ npx hardhat run scripts/hunt/status.js --network localhost
 STEP=mint    npx hardhat run scripts/hunt/rehearse-play.js --network localhost
 STEP=attempt npx hardhat run scripts/hunt/rehearse-play.js --network localhost
 STEP=claim   npx hardhat run scripts/hunt/rehearse-play.js --network localhost
-STEP=settle  npx hardhat run scripts/hunt/rehearse-play.js --network localhost
+STEP=release npx hardhat run scripts/hunt/rehearse-play.js --network localhost
 STEP=check   npx hardhat run scripts/hunt/rehearse-play.js --network localhost
 echo "REHEARSAL COMPLETE"

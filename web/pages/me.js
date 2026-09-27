@@ -52,7 +52,7 @@ export default function Me() {
   const { riddles } = useRiddles(now);
   const busy = !!hunt.pending || !!faucet.pending;
   const lowGas = isConnected && totals.gas < 10n ** 16n;
-  const collectable = tokens.filter((t) => { const r = riddles.find((x) => Number(x.id) === t.riddleId); return r?.settled && t.claimedAt > 0 && !t.collected; });
+  const waiting = tokens.filter((t) => t.claimedAt > 0 && !t.released);
 
   return (
     <Layout title="Dashboard">
@@ -101,8 +101,8 @@ export default function Me() {
             {hunt.error && <p className="notice warn">{hunt.error}</p>}
             {faucet.error && <p className="notice warn">{faucet.error}</p>}
 
-            {collectable.length > 0 && (
-              <p className="notice">You have {collectable.length} settled {collectable.length === 1 ? 'find' : 'finds'} to collect. Open the riddle and press Collect.</p>
+            {waiting.length > 0 && (
+              <p className="notice">{waiting.length === 1 ? 'One of your finds is' : `${waiting.length} of your finds are`} waiting for the next finder to release the share.</p>
             )}
 
             <section>
@@ -110,7 +110,7 @@ export default function Me() {
               {tokens.length === 0 && <p className="muted">None yet. <Link href="/">Buy one.</Link></p>}
               {tokens.map((t) => {
                 const r = riddles.find((x) => Number(x.id) === t.riddleId);
-                const state = t.collected ? 'collected' : t.claimedAt ? 'found' : t.unlockedAt ? 'location unlocked' : 'unsolved';
+                const state = t.claimedAt ? (t.released ? 'paid' : `found #${t.rank} · waiting`) : t.unlockedAt ? 'location unlocked' : 'unsolved';
                 return (
                   <Link key={t.id.toString()} href={`/r/${t.riddleId}`} legacyBehavior>
                     <a className="row">
@@ -120,7 +120,6 @@ export default function Me() {
                         {r && <HuntPill phase={r.phase} />}
                         <span className={`pill ${t.claimedAt ? 'human' : t.unlockedAt ? 'accent' : ''}`}>{state}</span>
                         <span className="mono muted">NFT {t.id.toString()} · {t.attempts} tries{r ? ` · ${DIFFICULTY[r.difficulty]} · ${rdln(r.pot)} RDLN` : ''}</span>
-                        {r?.settled && t.claimedAt > 0 && !t.collected && <span className="pill accent">Collect</span>}
                       </span>
                     </a>
                   </Link>

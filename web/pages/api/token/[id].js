@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       pub.readContract({ address: CONTRACTS.HUNT, abi: HUNT_ABI, functionName: 'getRiddle', args: [BigInt(t.riddleId)] }),
       pub.readContract({ address: CONTRACTS.HUNT_NFT, abi: HUNT_NFT_ABI, functionName: 'ownerOf', args: [id] }).catch(() => null),
     ]);
-    const state = t.claimedAt ? 'found' : t.unlockedAt ? 'location unlocked' : 'unsolved';
+    const state = t.claimedAt ? (t.released ? `found #${t.rank}, paid` : `found #${t.rank}, share waiting`) : t.unlockedAt ? 'location unlocked' : 'unsolved';
     const meta = {
       name: `Riddlen Hunt #${t.riddleId} · NFT ${id}`,
       description: `${r.text}\n\nRiddle ${t.riddleId}, NFT ${Number(t.index) + 1} of ${r.nftCount}. Attempts on this NFT: ${t.attempts}. State: ${state}. Progress travels with the token.`,

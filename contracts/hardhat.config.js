@@ -133,7 +133,7 @@ module.exports = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: false, // Allow oversized contracts for testing
-    only: [":RDLN$", ":RDLNUpgradeable$", ":RON$", ":RONAdvanced$", ":RiddleNFT$", ":RiddleNFTAdvanced$", ":StumpTheMachine$", ":RiddlenHunt$", ":HuntNFT$", ":HuntCommitments$"],
+    only: [":RDLN$", ":RDLNUpgradeable$", ":RON$", ":RONAdvanced$", ":RiddleNFT$", ":RiddleNFTAdvanced$", ":StumpTheMachine$", ":RiddlenHunt$", ":HuntNFT$", ":HuntCommitments$", ":RDLNSplit$", ":RDLNDeployed$"],
   },
   mocha: {
     timeout: 40000,

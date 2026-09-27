@@ -34,6 +34,8 @@ export const CONTRACTS = {
   AIRDROP: "0x330275259AfCeC8822A861ecbbdfD026dB1B0A13",
   // Stump the Machine: set after scripts/stump/deploy.js; empty hides the page's on-chain parts
   STUMP: process.env.NEXT_PUBLIC_STUMP_ADDRESS || "0x660cEF782AEc87b0667De610B2077A9A4B81dB14",
+  // Testnet faucet: one-time RDLN per wallet so anyone can try the game
+  FAUCET: process.env.NEXT_PUBLIC_FAUCET_ADDRESS || "0xb6860Af03bb0FbD9b63322a7EbDaC29fd9aB7f7E",
 };
 
 export const NETWORK_CONFIG = {

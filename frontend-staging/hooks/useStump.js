@@ -11,6 +11,14 @@ import {
 } from '../lib/stumpAnswers';
 
 const game = { address: CONTRACTS.STUMP, abi: STUMP_ABI };
+const FAUCET_ABI = [
+  { type: 'function', name: 'claim', stateMutability: 'nonpayable', inputs: [], outputs: [] },
+  { type: 'function', name: 'canClaim', stateMutability: 'view', inputs: [{ type: 'address' }], outputs: [{ type: 'bool' }] },
+  { type: 'function', name: 'claimAmount', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { type: 'error', name: 'AlreadyClaimed', inputs: [] },
+  { type: 'error', name: 'FaucetEmpty', inputs: [{ type: 'uint256' }] },
+];
+const faucet = { address: CONTRACTS.FAUCET, abi: FAUCET_ABI };
 
 const FRIENDLY = {
   NotAuthor: 'Only the author can do that.',
@@ -29,6 +37,8 @@ const FRIENDLY = {
   PanelRevealMissing: "The game master hasn't revealed the panel yet.",
   PoolUnderfunded: 'The prize pool is underfunded. Try again later.',
   NothingOwed: 'Nothing to withdraw.',
+  AlreadyClaimed: 'This wallet already claimed from the faucet.',
+  FaucetEmpty: 'The faucet is empty. Tell the team.',
   BadRiddle: 'Riddle or answer is empty or too long.',
   InsufficientBalance: "You don't have enough RDLN for this.",
 };
@@ -139,6 +149,15 @@ export function useMe(id, player) {
   };
 }
 
+export function useFaucet(player) {
+  const enabled = /^0x[0-9a-fA-F]{40}$/.test(CONTRACTS.FAUCET || '') && !!player;
+  const { data: canClaim, refetch } = useReadContract({
+    ...faucet, functionName: 'canClaim', args: [player], query: { enabled, refetchInterval: REFRESH_MS },
+  });
+  const { data: amount } = useReadContract({ ...faucet, functionName: 'claimAmount', query: { enabled } });
+  return { available: enabled && !!canClaim, amount: amount ?? 0n, refetch };
+}
+
 export function useReveals(id, enabled) {
   const { data } = useReadContract({
     ...game, functionName: 'getReveals', args: [id], query: { enabled: isConfigured() && enabled, refetchInterval: REFRESH_MS },
@@ -217,5 +236,6 @@ export function useStumpActions(player) {
     finalize: (id) => run('Finalizing', () => writeContractAsync({ ...game, functionName: 'finalize', args: [id] })),
     claimRefund: (id) => run('Claiming refund', () => writeContractAsync({ ...game, functionName: 'claimRefund', args: [id] })),
     withdraw: () => run('Withdrawing', () => writeContractAsync({ ...game, functionName: 'withdraw', args: [] })),
+    claimFaucet: () => run('Claiming testnet RDLN', () => writeContractAsync({ ...faucet, functionName: 'claim', args: [] })),
   };
 }

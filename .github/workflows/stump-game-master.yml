@@ -1,0 +1,40 @@
+# Unattended game master for Stump the Machine on Amoy: screens, runs the AI panel, opens,
+# reveals and settles. Panel secrets are cached between runs; ALSO back them up elsewhere,
+# because a lost salt means that riddle can never settle.
+#
+# Repository secrets needed: GAME_MASTER_PRIVATE_KEY, ANTHROPIC_API_KEY. Optional: AMOY_RPC_URL.
+# Enable by removing the `if: false` line once the secrets are set.
+name: Stump the Machine game master
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+concurrency: stump-game-master
+jobs:
+  pass:
+    if: false
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: contracts } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install --package-lock=false
+      - name: Restore panel secrets
+        uses: actions/cache/restore@v4
+        with:
+          path: contracts/game-master
+          key: stump-secrets-${{ github.run_id }}
+          restore-keys: stump-secrets-
+      - run: npx hardhat compile
+      - run: CONFIRM=yes npx hardhat run scripts/stump/cron.js --network amoy
+        env:
+          PRIVATE_KEY: ${{ secrets.GAME_MASTER_PRIVATE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AMOY_RPC_URL: ${{ secrets.AMOY_RPC_URL || 'https://polygon-amoy-bor-rpc.publicnode.com' }}
+      - name: Save panel secrets
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: contracts/game-master
+          key: stump-secrets-${{ github.run_id }}

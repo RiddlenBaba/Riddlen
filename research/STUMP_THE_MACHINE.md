@@ -80,6 +80,7 @@ TEE-run panel, or let validators dispute.
 | StumpTheMachine proxy | `0x660cEF782AEc87b0667De610B2077A9A4B81dB14` |
 | Implementation | `0x9C5F55194FFBB0c86600B99F29A4DEEf376bE185` |
 | Game master / admin / upgrader | `0x73a7f88ccdF7E172EcAb321500cb7C77C81fD040` |
+| RDLNFaucet (testnet only, 500 RDLN once per wallet, funded 250k) | `0xb6860Af03bb0FbD9b63322a7EbDaC29fd9aB7f7E` |
 
 Deployed 2026-09-26 with `GAME_ROLE` on RDLN and RON and 1,000,000 RDLN prize funding. The
 OpenZeppelin manifest is `contracts/.openzeppelin/unknown-80002.json` (gitignored; back it up).
@@ -105,6 +106,21 @@ Keep `contracts/game-master/*-stump-*.json` safe until the panel is revealed: wi
 the panel can't be revealed and the riddle can't settle (players would be stuck until an admin
 sweeps; there is no escape hatch on purpose, so back the files up).
 
+### Unattended mode
+
+`scripts/stump/cron.js` does one full pass: screens new submissions with a Haiku call (rejects
+spam), runs the panel and opens up to `MAX_OPEN` (6) riddles at once with at most 2 pending per
+author, reveals panels for closed riddles, and settles anything whose reveal window has passed.
+`.github/workflows/stump-game-master.yml` runs it every 15 minutes once the repository secrets
+`GAME_MASTER_PRIVATE_KEY` and `ANTHROPIC_API_KEY` exist and the `if: false` line is removed.
+The workflow caches `contracts/game-master/` between runs; keep a second backup of it.
+
+### Running cost
+
+Only the panel bills: about $0.10–0.15 per riddle at typical thinking lengths (Opus 5,
+Sonnet 5, Haiku 4.5, two samples each, 4,000 output-token cap), worst case about $0.33.
+Amoy gas is free; GitHub Actions is free for a public repository.
+
 ## Frontend
 
 `frontend-staging/pages/stump.js` (component `StumpTheMachine`, hooks in `hooks/useStump.js`).
@@ -123,12 +139,8 @@ work; the page proves the flow, not the look.
 
 ## Open items
 
-1. **RDLN for new players.** Nobody can enter without RDLN. A faucet (one-time 500 RDLN per
-   address, `MINTER_ROLE`) or an airdrop claim in the game page is the next blocker to strangers
-   playing.
-2. **Panel automation.** A cron (Vercel or the game-master machine) running `open-challenge.js`
-   with `ALL=yes` and `reveal-panel.js` every few minutes removes the human game master from
-   the loop.
+1. ~~RDLN for new players~~: faucet deployed, button on the game page.
+2. ~~Panel automation~~: `cron.js` + workflow; needs the two repository secrets.
 3. **Sybil solvers.** Entry cost is the only cost of a second wallet. Adding the humanity gate
    (`enterAsHuman` pattern) to `enter` is a small change when a verifier is worth its friction.
 4. **Author collusion.** An author can tell a friend the answer. It costs the friend an entry and

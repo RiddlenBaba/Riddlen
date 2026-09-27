@@ -4,7 +4,7 @@ import { formatEther } from 'viem';
 import { polygonAmoy } from 'wagmi/chains';
 import { useNow } from '../hooks/useRiddleGame';
 import {
-  DIFFICULTY, OUTCOME, isConfigured, useChallenges, useEconomics, useMe, useReveals, useStumpActions,
+  DIFFICULTY, OUTCOME, isConfigured, useChallenges, useEconomics, useFaucet, useMe, useReveals, useStumpActions,
 } from '../hooks/useStump';
 
 const PHASE = {
@@ -81,6 +81,8 @@ export default function StumpTheMachine() {
           <button className="link" onClick={() => switchChain({ chainId: polygonAmoy.id })}>Switch network</button>
         </div>
       )}
+
+      <Faucet player={address} isConnected={isConnected} />
 
       <div className="tabs">
         <button className={tab === 'play' ? 'on' : ''} onClick={() => setTab('play')}>Solve</button>
@@ -392,6 +394,28 @@ function Winnings({ player, isConnected }) {
         .primary { align-self: flex-start; padding: 0.8rem 1.4rem; border-radius: 10px; border: none; background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1a1a; font-weight: 700; cursor: pointer; font: inherit; }
         .primary:disabled { opacity: 0.5; cursor: not-allowed; }
         .warn { color: #fca5a5; margin: 0; }
+      `}</style>
+    </div>
+  );
+}
+
+function Faucet({ player, isConnected }) {
+  const f = useFaucet(player);
+  const me = useMe(undefined, player);
+  const actions = useStumpActions(player);
+  if (!isConnected || !f.available) return null;
+  return (
+    <div className="faucet">
+      <span>This is the Amoy testnet. Grab <strong>{rdln(f.amount)} free RDLN</strong> once per wallet to play.</span>
+      <button disabled={!!actions.pending} onClick={() => actions.claimFaucet().then((ok) => { if (ok) { f.refetch(); me.refetch(); } })}>
+        {actions.pending ? `${actions.pending}…` : 'Get testnet RDLN'}
+      </button>
+      {actions.error && <span className="warn">{actions.error}</span>}
+      <style jsx>{`
+        .faucet { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; padding: 0.9rem 1.2rem; border-radius: 12px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.35); }
+        button { padding: 0.55rem 1rem; border-radius: 8px; border: none; background: #4ade80; color: #052e16; font-weight: 700; cursor: pointer; font: inherit; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .warn { color: #fca5a5; }
       `}</style>
     </div>
   );

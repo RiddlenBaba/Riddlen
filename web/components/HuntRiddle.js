@@ -320,7 +320,7 @@ export default function HuntRiddle({ riddle, now, onChange }) {
       <section className="how">
         <h2 className="display">How this one pays</h2>
         <ul>
-          <li>Buy an NFT. Each try costs {fmt(riddle.attemptStep)} RDLN more than the last on that NFT. Half of every payment is burned.</li>
+          <li>Buy an NFT. Each try costs {fmt(riddle.attemptStep)} RDLN more than the last on that NFT. Every payment splits four ways: burned, grand prize, treasury, liquidity.</li>
           <li>The right answer unlocks a place. Go there and scan what you find. That is the claim; it costs {fmt(riddle.claimFee)} RDLN.</li>
           <li>First to claim takes {riddle.firstFinderBps / 100}% of the pot. Anyone who claims within {Math.round(riddle.finisherWindow / 86400)} days splits the rest. Every finder gets a piece of the map.</li>
           <li>Nothing here expires. If nobody finds it, the pot waits.</li>

@@ -33,9 +33,11 @@ RDLN is what you enter with and get paid in. Total supply is 1,000,000,000, mint
 RDLN is designed to shrink as it is played:
 
 - **Game protocol burns.** Every entry cost and author stake goes through the token's game
-  functions: 50% burned, 25% to the grand prize wallet, 25% to operations.
+  functions: 25% burned, 25% to the grand prize wallet, 25% to the treasury, 25% to the
+  liquidity reserve (`0xa9Cd5a6b1726436d144dF0FF583Ff72a7CF05abD` on Amoy). Until 2026-09-27 the
+  split was 50/25/25 with no liquidity share; the token was upgraded in place to change it.
 - **Failed attempts.** A wrong or unrevealed guess burns 1 RDLN the first time, 2 the second,
-  and so on per wallet, through the same 50/25/25 split.
+  and so on per wallet, through the same four-way split.
 - **Question submissions.** An author's stake is 1 RDLN, then 2, then 3, per wallet.
 - **Transfer burn.** The token can burn 1% of every ordinary transfer. It is a switch the admin
   controls.

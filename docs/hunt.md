@@ -46,9 +46,12 @@ and the buyer can claim.
 | Finisher window | 14 days after the first claim; finishers split the other 50% equally | tunable, snapshotted |
 | Blocks before open | 10 | tunable |
 
-Every RDLN payment in the hunt goes through the token's game protocol: 50% burned, 25% to the
-grand prize wallet, 25% to the treasury. On this testnet both of those wallets are the
-deployer's address; on mainnet the grand prize wallet is a contract nobody holds keys to.
+Every RDLN payment in the hunt goes through the token's game protocol: 25% burned, 25% to the
+grand prize wallet, 25% to the treasury, 25% to the liquidity reserve. On this testnet the grand
+prize and treasury wallets are the deployer's address and the liquidity reserve is
+`0xa9Cd5a6b1726436d144dF0FF583Ff72a7CF05abD`; on mainnet the grand prize wallet is a contract
+nobody holds keys to. The token was upgraded to this split on 2026-09-27 (implementation
+`0xe5A4e3EbaE1878b860cC440744442D5718Beb014`, `protocolVersion() == 2`).
 
 ## What is committed and cannot change
 

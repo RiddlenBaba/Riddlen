@@ -41,7 +41,7 @@ Deployed 2026-09-27. Roles held by the deployer as above. See [Playing the hunt]
 
 | Contract | Address | Notes |
 |---|---|---|
-| RDLN (proxy) | [`0x133029184EC460F661d05b0dC57BFC916b4AB0eB`](https://amoy.polygonscan.com/address/0x133029184EC460F661d05b0dC57BFC916b4AB0eB) | ERC-20 with game burns. The game holds `GAME_ROLE`. |
+| RDLN (proxy) | [`0x133029184EC460F661d05b0dC57BFC916b4AB0eB`](https://amoy.polygonscan.com/address/0x133029184EC460F661d05b0dC57BFC916b4AB0eB) | ERC-20 with the game split (25% burn / 25% grand prize / 25% treasury / 25% liquidity since 2026-09-27; implementation `0xe5A4e3EbaE1878b860cC440744442D5718Beb014`). Both games hold `GAME_ROLE`. |
 | RON (proxy) | [`0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635`](https://amoy.polygonscan.com/address/0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635) | Non-transferable reputation. The game holds `GAME_ROLE`. |
 
 ## Earlier contracts

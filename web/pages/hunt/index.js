@@ -9,7 +9,7 @@ import { formatEther } from 'viem';
 const STEPS = [
   ['A riddle goes live', 'The house releases it. A few blocks later the contract rolls how many NFTs exist for it, and they go on sale.'],
   ['Buy one', 'The NFT is the riddle. It never expires, and it keeps its own count of tries. Sell it and everything goes with it.'],
-  ['Solve it', 'Each try on your NFT costs 1 RDLN, then 2, then 3. Half is burned. The right answer unlocks a place.'],
+  ['Solve it', 'Each try on your NFT costs 1 RDLN, then 2, then 3. A quarter is burned, a quarter feeds the grand prize. The right answer unlocks a place.'],
   ['Go there', 'Find what was hidden. Scan it. That is the claim, and the pay. Every solved riddle holds a piece of one map.'],
 ];
 

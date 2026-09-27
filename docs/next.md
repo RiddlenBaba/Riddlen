@@ -31,7 +31,7 @@ without trusting the people running it.
 |---|---|
 | Riddles | 1,000, released on a published schedule, roughly one a week |
 | The end | When riddle 1,000 is released. Not when it is solved. |
-| Burn split | Every payment: 50% burned, 25% grand prize, 25% treasury |
+| Burn split | Every payment: 25% burned, 25% grand prize, 25% treasury, 25% liquidity reserve |
 | Mint price | Computed at the moment you mint. Halves every two years from launch. |
 | The map | The whole map and the prize location are hashed on chain on day one and sealed off chain with a successor. Every fragment ever revealed checks against that hash. |
 | The handoff | The founder's authorship rights expire on the schedule, not at the founder's discretion |
@@ -70,8 +70,10 @@ Everything else on this page is a parameter the DAO can tune.
 
 ## What is burned, and when
 
-Every payment in the game goes through the same protocol: 50% burned and gone from supply,
-25% to the grand prize wallet, 25% to the treasury.
+Every payment in the game goes through the same protocol: 25% burned and gone from supply,
+25% to the grand prize wallet, 25% to the treasury, 25% to a liquidity reserve that seeds the
+market the prize is paid in. Burns alone are small against the supply; a market is what makes
+the pot worth finding.
 
 | Event | Cost |
 |---|---|

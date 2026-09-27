@@ -6,7 +6,9 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../interfaces/IRON.sol";
 
 /**
@@ -24,11 +26,11 @@ import "../interfaces/IRON.sol";
  * - Cross-chain bridge preparation
  * - Comprehensive error handling
  *
- * Access Tiers:
- * - Novice (0-999 RON): Basic riddle access only
- * - Solver (1,000-9,999 RON): Medium riddles + basic oracle validation
- * - Expert (10,000-99,999 RON): Hard riddles + complex oracle validation
- * - Oracle (100,000+ RON): All riddles + elite validation + governance
+ * Access Tiers (Updated 2025):
+ * - Seeker (1,000-9,999 RON): Basic validation + earned after ~20-30 riddle wins
+ * - Solver (10,000-24,999 RON): Complex validation + earned after ~60-80 wins
+ * - Validator (25,000-49,999 RON): Advanced validation + earned after ~150-200 wins
+ * - Oracle (50,000+ RON): Elite governance + earned after ~300+ wins (4-6 years)
  */
 contract RONUpgradeable is
     Initializable,
@@ -36,6 +38,7 @@ contract RONUpgradeable is
     ReentrancyGuardUpgradeable,
     PausableUpgradeable,
     UUPSUpgradeable,
+    VotesUpgradeable,
     IRON
 {
     // ============ CONSTANTS ============
@@ -47,10 +50,11 @@ contract RONUpgradeable is
     bytes32 public constant COMPLIANCE_ROLE = keccak256("COMPLIANCE_ROLE");
     bytes32 public constant BRIDGE_ROLE = keccak256("BRIDGE_ROLE");
 
-    // Tier thresholds (kept as constants - governance structure)
-    uint256 public constant SOLVER_THRESHOLD = 1_000;
-    uint256 public constant EXPERT_THRESHOLD = 10_000;
-    uint256 public constant ORACLE_THRESHOLD = 100_000;
+    // Tier thresholds (Updated 2025 - Based on ecosystem analysis)
+    uint256 public constant SEEKER_THRESHOLD = 1_000;      // Was SOLVER
+    uint256 public constant SOLVER_THRESHOLD = 10_000;     // Unchanged threshold
+    uint256 public constant VALIDATOR_THRESHOLD = 25_000;  // NEW tier
+    uint256 public constant ORACLE_THRESHOLD = 50_000;     // Reduced from 100K
 
     // RON rewards by difficulty (NOW ADJUSTABLE via governance)
     uint256 public easyRONMin;
@@ -75,6 +79,7 @@ contract RONUpgradeable is
     // ============ CUSTOM ERRORS ============
 
     error SoulBoundTokenTransfer();
+    error InvalidAddress(address addr);
     error TierRequirementNotMet(address user, AccessTier required, AccessTier current);
     error ValidationTypeNotSupported(string validationType);
     error StreakBonusExceeded(uint256 attempted, uint256 maximum);
@@ -282,6 +287,11 @@ contract RONUpgradeable is
         __ReentrancyGuard_init();
         __Pausable_init();
         __UUPSUpgradeable_init();
+        __EIP712_init("RiddlenOracle", "1");
+        __Votes_init();
+
+        // Validate addresses
+        if (_admin == address(0)) revert InvalidAddress(_admin);
 
         // Grant roles
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
@@ -334,6 +344,43 @@ contract RONUpgradeable is
     }
 
     /**
+     * @dev Award fixed RON amount based on 300:1 RDLN:RON ratio (new system)
+     * @param user Address to award RON to
+     * @param ronAmount Fixed amount of RON to award (calculated from prize amount ÷ 300)
+     * @param difficulty Difficulty for tracking purposes
+     * @param isFirstSolver Whether user was first solver (for bonus tracking)
+     */
+    function awardRONFixed(
+        address user,
+        uint256 ronAmount,
+        RiddleDifficulty difficulty,
+        bool isFirstSolver
+    )
+        external
+        override
+        onlyRole(GAME_ROLE)
+        whenNotPaused
+        nonReentrant
+        onlyCompliant(user)
+        rateLimited(user)
+        returns (uint256)
+    {
+        // Validate amount doesn't exceed circuit breaker
+        if (ronAmount > MAX_SINGLE_RON_AWARD) {
+            revert SingleAwardLimitExceeded(ronAmount, MAX_SINGLE_RON_AWARD);
+        }
+
+        return _awardRONInternal(
+            user,
+            difficulty,
+            isFirstSolver,
+            false, // isSpeedSolver not applicable for fixed awards
+            "Riddle completion (prize-based)",
+            ronAmount
+        );
+    }
+
+    /**
      * @dev Internal RON awarding with circuit breaker protection
      */
     function _awardRONInternal(
@@ -346,10 +393,16 @@ contract RONUpgradeable is
     ) internal ronLimits(ronAmount) returns (uint256) {
         UserStatsOptimized storage stats = userStats[user];
 
+        // Store old balance for voting power update
+        uint256 oldBalance = stats.totalRON;
+
         // Update user statistics (gas-optimized)
         stats.totalRON += uint128(ronAmount);
         stats.correctAnswers += 1;
         stats.lastActivityTime = uint32(block.timestamp);
+
+        // Update voting power (square root voting)
+        _updateVotingPower(user, oldBalance, stats.totalRON);
 
         // Handle streak logic
         if (isFirstSolver || isSpeedSolver) {
@@ -513,9 +566,15 @@ contract RONUpgradeable is
     ) internal {
         UserStatsOptimized storage stats = userStats[validator];
 
+        // Store old balance for voting power update
+        uint256 oldBalance = stats.totalRON;
+
         stats.totalRON += uint128(ronAmount);
         stats.validationsPerformed += 1;
         stats.lastActivityTime = uint32(block.timestamp);
+
+        // Update voting power (square root voting)
+        _updateVotingPower(validator, oldBalance, stats.totalRON);
 
         globalStats.totalRONMinted += uint128(ronAmount);
         globalStats.totalValidations += 1;
@@ -539,12 +598,12 @@ contract RONUpgradeable is
     {
         AccessTier tier = AccessTier(userStats[user].tier);
 
-        if (difficulty == RiddleDifficulty.EASY) return true;
-        if (difficulty == RiddleDifficulty.MEDIUM) return tier >= AccessTier.SOLVER;
-        if (difficulty == RiddleDifficulty.HARD) return tier >= AccessTier.EXPERT;
-        if (difficulty == RiddleDifficulty.LEGENDARY) return tier >= AccessTier.ORACLE;
+        // Based on ecosystem report: Remove purchase tier-gating
+        // Anyone can buy any riddle with RDLN (no RON requirement for purchases)
+        return true;
 
-        return false;
+        // NOTE: RON still gates validation income, but not riddle purchases
+        // This allows zero-barrier entry while maintaining progression incentives
     }
 
     function hasOracleAccess(address user) external view returns (bool) {
@@ -749,9 +808,10 @@ contract RONUpgradeable is
 
     function _calculateUserTier(uint256 totalRON) internal pure returns (AccessTier) {
         if (totalRON >= ORACLE_THRESHOLD) return AccessTier.ORACLE;
-        if (totalRON >= EXPERT_THRESHOLD) return AccessTier.EXPERT;
+        if (totalRON >= VALIDATOR_THRESHOLD) return AccessTier.VALIDATOR;
         if (totalRON >= SOLVER_THRESHOLD) return AccessTier.SOLVER;
-        return AccessTier.NOVICE;
+        if (totalRON >= SEEKER_THRESHOLD) return AccessTier.SEEKER;
+        return AccessTier.SEEKER; // Below 1000 RON = SEEKER (was NOVICE)
     }
 
     // ============ VIEW FUNCTIONS ============
@@ -799,10 +859,10 @@ contract RONUpgradeable is
         AccessTier tier = AccessTier(userStats[user].tier);
 
         return (
-            true, // Everyone can access easy
-            tier >= AccessTier.SOLVER,
-            tier >= AccessTier.EXPERT,
-            tier >= AccessTier.ORACLE
+            true, // Everyone can access easy (tier-gating removed per ecosystem report)
+            true, // Everyone can access medium (tier-gating removed per ecosystem report)
+            true, // Everyone can access hard (tier-gating removed per ecosystem report)
+            true  // Everyone can access legendary (tier-gating removed per ecosystem report)
         );
     }
 
@@ -815,19 +875,20 @@ contract RONUpgradeable is
         AccessTier tier = AccessTier(userStats[user].tier);
 
         return (
-            tier >= AccessTier.SOLVER,
-            tier >= AccessTier.EXPERT,
-            tier >= AccessTier.ORACLE,
-            tier >= AccessTier.ORACLE
+            userStats[user].totalRON >= SEEKER_THRESHOLD, // Basic validation (1K+ RON)
+            tier >= AccessTier.VALIDATOR,  // Complex validation (25K+ RON)
+            tier >= AccessTier.ORACLE,     // Elite validation (50K+ RON)
+            tier >= AccessTier.ORACLE      // Governance (50K+ RON)
         );
     }
 
     function getTierThresholds() external pure override returns (
+        uint256 seekerThreshold,
         uint256 solverThreshold,
-        uint256 expertThreshold,
+        uint256 validatorThreshold,
         uint256 oracleThreshold
     ) {
-        return (SOLVER_THRESHOLD, EXPERT_THRESHOLD, ORACLE_THRESHOLD);
+        return (SEEKER_THRESHOLD, SOLVER_THRESHOLD, VALIDATOR_THRESHOLD, ORACLE_THRESHOLD);
     }
 
     function calculateRONReward(
@@ -874,15 +935,15 @@ contract RONUpgradeable is
         AccessTier currentTier = AccessTier(userStats[user].tier);
         uint256 currentRON = userStats[user].totalRON;
 
-        if (currentTier == AccessTier.NOVICE) {
+        if (currentTier == AccessTier.SEEKER) {
             nextTier = AccessTier.SOLVER;
             ronRequired = SOLVER_THRESHOLD;
             ronRemaining = currentRON >= SOLVER_THRESHOLD ? 0 : SOLVER_THRESHOLD - currentRON;
         } else if (currentTier == AccessTier.SOLVER) {
-            nextTier = AccessTier.EXPERT;
-            ronRequired = EXPERT_THRESHOLD;
-            ronRemaining = currentRON >= EXPERT_THRESHOLD ? 0 : EXPERT_THRESHOLD - currentRON;
-        } else if (currentTier == AccessTier.EXPERT) {
+            nextTier = AccessTier.VALIDATOR;
+            ronRequired = VALIDATOR_THRESHOLD;
+            ronRemaining = currentRON >= VALIDATOR_THRESHOLD ? 0 : VALIDATOR_THRESHOLD - currentRON;
+        } else if (currentTier == AccessTier.VALIDATOR) {
             nextTier = AccessTier.ORACLE;
             ronRequired = ORACLE_THRESHOLD;
             ronRemaining = currentRON >= ORACLE_THRESHOLD ? 0 : ORACLE_THRESHOLD - currentRON;
@@ -952,11 +1013,70 @@ contract RONUpgradeable is
         // Additional upgrade validation could be added here
     }
 
+    // Note: RON is soul-bound and doesn't need gasless transfers
+    // Gasless support would mainly benefit administrative functions
+    // which is less critical than user-facing token operations
+
     function getImplementation() external view returns (address) {
         return ERC1967Utils.getImplementation();
     }
 
     // ============ COMPATIBILITY ============
+
+    // ============ SQUARE ROOT VOTING SYSTEM ============
+
+    /**
+     * @dev Implements square root voting power: 1 RON = √RON votes
+     * This reduces whale dominance while still rewarding larger stakes
+     *
+     * Examples:
+     * - 1,000 RON = √1,000 = ~31 votes
+     * - 10,000 RON = √10,000 = 100 votes
+     * - 100,000 RON = √100,000 = ~316 votes
+     *
+     * @param account Address to get voting power for
+     * @return Square root of account's RON balance (scaled to 18 decimals)
+     */
+    function _getVotingUnits(address account) internal view override returns (uint256) {
+        return _sqrtVotes(userStats[account].totalRON);
+    }
+
+    /**
+     * @dev RON balances are whole units, so √(RON × 1e18) × 1e9 = √RON × 1e18
+     */
+    function _sqrtVotes(uint256 balance) internal pure returns (uint256) {
+        return Math.sqrt(balance * 1e18) * 1e9;
+    }
+
+    /**
+     * @dev Update voting checkpoints when RON balance changes.
+     * Uses mint/burn semantics so total supply (quorum base) is tracked, and
+     * auto self-delegates on first award since soul-bound holders can't move RON.
+     */
+    function _updateVotingPower(address account, uint256 oldBalance, uint256 newBalance) internal {
+        uint256 oldVotes = _sqrtVotes(oldBalance);
+        uint256 newVotes = _sqrtVotes(newBalance);
+
+        if (newVotes > oldVotes) {
+            _transferVotingUnits(address(0), account, newVotes - oldVotes);
+        } else if (oldVotes > newVotes) {
+            _transferVotingUnits(account, address(0), oldVotes - newVotes);
+        }
+
+        if (delegates(account) == address(0)) {
+            _delegate(account, account);
+        }
+    }
+
+    /**
+     * @dev Get historical voting power at specific block
+     * @param account Address to check
+     * @param timepoint Block number to check
+     * @return Voting power at that block
+     */
+    function getPastVotes(address account, uint256 timepoint) public view override returns (uint256) {
+        return super.getPastVotes(account, timepoint);
+    }
 
     function supportsInterface(bytes4 interfaceId)
         public

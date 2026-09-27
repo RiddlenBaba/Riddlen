@@ -52,6 +52,23 @@ module.exports = {
         },
       },
     ],
+    overrides: {
+      // Near the 24 KiB limit: optimize for size rather than runtime gas
+      "contracts/nft/RiddleNFTAdvanced.sol": {
+        version: "0.8.24",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1,
+          },
+          viaIR: true,
+          evmVersion: "cancun",
+          metadata: {
+            bytecodeHash: "none",
+          },
+        },
+      },
+    },
   },
   networks: {
     hardhat: {
@@ -79,10 +96,10 @@ module.exports = {
       chainId: 80001,
     },
     amoy: {
-      url: process.env.AMOY_RPC_URL || "https://rpc-amoy.polygon.technology/",
+      url: process.env.AMOY_RPC_URL || "https://polygon-amoy-bor-rpc.publicnode.com",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 80002,
-      gasPrice: 30000000000, // 30 gwei for testnet
+      // No fixed gasPrice: Amoy fees move (≈73 gwei on 2026-09-26); a stale fixed price gets txs stuck
     },
   },
   etherscan: {

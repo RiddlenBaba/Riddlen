@@ -10,10 +10,10 @@ interface IRON {
     // ============ ENUMS ============
 
     enum AccessTier {
-        NOVICE,     // 0-999 RON
-        SOLVER,     // 1,000-9,999 RON
-        EXPERT,     // 10,000-99,999 RON
-        ORACLE      // 100,000+ RON
+        SEEKER,     // 1,000-9,999 RON (was NOVICE, renamed + threshold increased)
+        SOLVER,     // 10,000-24,999 RON (threshold unchanged, range reduced)
+        VALIDATOR,  // 25,000-49,999 RON (NEW tier, was EXPERT)
+        ORACLE      // 50,000+ RON (threshold reduced from 100,000)
     }
 
     enum RiddleDifficulty {
@@ -68,6 +68,13 @@ interface IRON {
         string calldata reason
     ) external returns (uint256 ronAwarded);
 
+    function awardRONFixed(
+        address user,
+        uint256 ronAmount,
+        RiddleDifficulty difficulty,
+        bool isFirstSolver
+    ) external returns (uint256 ronAwarded);
+
     function updateAccuracy(
         address user,
         bool correct
@@ -110,8 +117,9 @@ interface IRON {
     );
 
     function getTierThresholds() external pure returns (
+        uint256 seekerThreshold,
         uint256 solverThreshold,
-        uint256 expertThreshold,
+        uint256 validatorThreshold,
         uint256 oracleThreshold
     );
 

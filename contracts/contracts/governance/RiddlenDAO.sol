@@ -56,6 +56,9 @@ contract RiddlenDAO is
     bool public founderRoleActive;
     uint256 public immutable deploymentTime;
 
+    // Gasless governance support
+    address private _trustedForwarderAddress;
+
     // Proposal veto tracking
     mapping(uint256 => bool) public founderVetoed;
     mapping(uint256 => string) public vetoReason;
@@ -126,7 +129,8 @@ contract RiddlenDAO is
         IRON _ronToken,
         TimelockControllerUpgradeable _timelock,
         address _founder,
-        uint256 _genesisTime
+        uint256 _genesisTime,
+        address _trustedForwarder
     ) public initializer {
         __Governor_init("RiddlenDAO");
         __GovernorSettings_init(
@@ -140,6 +144,10 @@ contract RiddlenDAO is
         __GovernorTimelockControl_init(_timelock);
         __AccessControl_init();
         __UUPSUpgradeable_init();
+
+        // Initialize gasless governance support
+        require(_trustedForwarder != address(0), "Invalid trusted forwarder");
+        _trustedForwarderAddress = _trustedForwarder;
 
         founder = _founder;
         founderRoleActive = true;
@@ -515,5 +523,45 @@ contract RiddlenDAO is
         returns (string memory)
     {
         return "";
+    }
+
+    // ============ ERC2771 GASLESS GOVERNANCE ============
+
+    /**
+     * @dev Override _msgSender to support gasless governance via ERC2771
+     */
+    function _msgSender() internal view virtual override returns (address) {
+        if (msg.data.length >= 20 && isTrustedForwarder(msg.sender)) {
+            // Extract the sender address from the end of msg.data
+            return address(bytes20(msg.data[msg.data.length - 20:]));
+        } else {
+            return super._msgSender();
+        }
+    }
+
+    /**
+     * @dev Override _msgData to support gasless governance via ERC2771
+     */
+    function _msgData() internal view virtual override returns (bytes calldata) {
+        if (msg.data.length >= 20 && isTrustedForwarder(msg.sender)) {
+            // Remove the appended sender address from msg.data
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
+    }
+
+    /**
+     * @dev Check if forwarder is trusted for gasless governance
+     */
+    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+        return forwarder == _trustedForwarderAddress;
+    }
+
+    /**
+     * @dev Get the trusted forwarder address for governance
+     */
+    function trustedForwarder() public view virtual returns (address) {
+        return _trustedForwarderAddress;
     }
 }

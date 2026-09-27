@@ -3,8 +3,7 @@
   <div class="top-nav-container">
     <div class="nav-brand">
       <a href="{{ site.url }}">
-        <span class="brain-icon">🧠</span>
-        <strong>riddlen</strong>
+        <strong>Riddlen</strong>
       </a>
     </div>
     <div class="nav-center">
@@ -33,7 +32,7 @@
         </svg>
       </a>
       <a href="https://t.me/RiddlenCommunity" target="_blank" class="btn-outline">Community</a>
-      <a href="https://riddlen.com" target="_blank" class="btn-primary">Launch App</a>
+      <a href="https://riddlen.com" target="_blank" class="btn-primary">Play</a>
     </div>
   </div>
 </nav>
@@ -54,64 +53,32 @@
       Home
     </a>
 
-    <div class="sidebar-category">USER DOCS</div>
-
+    <div class="sidebar-category">THE GAME</div>
     <div class="sidebar-section">
-      <div class="sidebar-item-header">Getting Started</div>
       <ul>
-        <li><a href="{{ site.url }}" {% if page.url == "/" %}class="active"{% endif %}>Overview</a></li>
-        <li><a href="{{ site.url }}/testnet/" {% if page.url contains "/testnet/" %}class="active"{% endif %}>Testnet Deployment</a></li>
-        <li><a href="{{ site.url }}/FRONTEND_INTEGRATION.html" {% if page.title contains "Frontend" %}class="active"{% endif %}>Frontend Integration</a></li>
+        <li><a href="{{ site.url }}/play/" {% if page.url contains "/play/" %}class="active"{% endif %}>Playing</a></li>
+        <li><a href="{{ site.url }}/write/" {% if page.url contains "/write/" %}class="active"{% endif %}>Writing riddles</a></li>
+        <li><a href="{{ site.url }}/rules/" {% if page.url contains "/rules/" %}class="active"{% endif %}>Rules and payouts</a></li>
+        <li><a href="{{ site.url }}/machines/" {% if page.url contains "/machines/" %}class="active"{% endif %}>The machines</a></li>
       </ul>
     </div>
 
+    <div class="sidebar-category">THE PROTOCOL</div>
     <div class="sidebar-section">
-      <div class="sidebar-item-header">Core Features</div>
       <ul>
-        <li><a href="{{ site.url }}/guides/nft-mechanics.html" {% if page.url contains "nft-mechanics" %}class="active"{% endif %}>NFT Riddle Mechanics</a></li>
-        <li><a href="{{ site.url }}/guides/tokenomics.html" {% if page.url contains "tokenomics" %}class="active"{% endif %}>Tokenomics</a></li>
-        <li><a href="{{ site.url }}/guides/burning-protocol.html" {% if page.url contains "burning-protocol" %}class="active"{% endif %}>Burning Protocol</a></li>
-        <li><a href="{{ site.url }}/group-mechanics.html" {% if page.url contains "group-mechanics" %}class="active"{% endif %}>Group Mechanics</a></li>
+        <li><a href="{{ site.url }}/tokens/" {% if page.url contains "/tokens/" %}class="active"{% endif %}>RDLN and RON</a></li>
+        <li><a href="{{ site.url }}/contracts/" {% if page.url contains "/contracts/" %}class="active"{% endif %}>Contracts and addresses</a></li>
+        <li><a href="{{ site.url }}/developers/" {% if page.url contains "/developers/" %}class="active"{% endif %}>For developers</a></li>
+        <li><a href="{{ site.url }}/game-master/" {% if page.url contains "/game-master/" %}class="active"{% endif %}>Running the game master</a></li>
       </ul>
     </div>
 
+    <div class="sidebar-category">WHERE THIS GOES</div>
     <div class="sidebar-section">
-      <div class="sidebar-item-header">v6.0 Features</div>
       <ul>
-        <li><a href="{{ site.url }}/airdrop.html" {% if page.url contains "airdrop" %}class="active"{% endif %}>Airdrop System</a></li>
-        <li><a href="{{ site.url }}/oracle-network.html" {% if page.url contains "oracle-network" %}class="active"{% endif %}>Oracle Network</a></li>
-        <li><a href="{{ site.url }}/governance.html" {% if page.url contains "governance" %}class="active"{% endif %}>DAO Governance</a></li>
-        <li><a href="{{ site.url }}/farcaster-frames.html" {% if page.url contains "farcaster-frames" %}class="active"{% endif %}>Farcaster Frames</a></li>
-      </ul>
-    </div>
-
-    <div class="sidebar-category">ENGINEERING DOCS</div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-item-header">Smart Contracts</div>
-      <ul>
-        <li><a href="{{ site.url }}/contracts/" {% if page.url contains "/contracts/" and page.url != "/contracts/" %}class="active"{% endif %}>Overview</a></li>
-        <li><a href="{{ site.url }}/contracts/RDLN-Contract-Specification.html">RDLN Token</a></li>
-        <li><a href="{{ site.url }}/contracts/RON-Reputation-System.html">RON Reputation</a></li>
-        <li><a href="{{ site.url }}/contracts/RiddlenAirdrop-specification.html">Airdrop Contract</a></li>
-        <li><a href="{{ site.url }}/contracts/TreasuryDrip-specification.html">Treasury Drip</a></li>
-      </ul>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-item-header">Developer Resources</div>
-      <ul>
-        <li><a href="{{ site.url }}/api/" {% if page.url contains "/api/" %}class="active"{% endif %}>API Reference</a></li>
-        <li><a href="{{ site.url }}/deployment/" {% if page.url contains "/deployment/" %}class="active"{% endif %}>Deployment Guide</a></li>
-        <li><a href="{{ site.url }}/guides/DEVELOPMENT-LOG.html" {% if page.url contains "DEVELOPMENT-LOG" %}class="active"{% endif %}>Development Log</a></li>
-      </ul>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-item-header">Community</div>
-      <ul>
-        <li><a href="{{ site.url }}/faq.html" {% if page.url contains "faq" %}class="active"{% endif %}>FAQ</a></li>
-        <li><a href="{{ site.url }}/archive/" {% if page.url contains "/archive/" %}class="active"{% endif %}>Archive</a></li>
+        <li><a href="{{ site.url }}/next/" {% if page.url contains "/next/" %}class="active"{% endif %}>The next rules (v2)</a></li>
+        <li><a href="{{ site.url }}/roadmap/" {% if page.url contains "/roadmap/" %}class="active"{% endif %}>Mainnet, airdrop, gasless</a></li>
+        <li><a href="{{ site.url }}/archive/2025/" {% if page.url contains "/archive/" %}class="active"{% endif %}>2025 archive</a></li>
       </ul>
     </div>
   </div>

@@ -152,7 +152,7 @@ if (await rdln.canExecuteMonthlyRelease()) {
 ### **Test Network Info**
 - **Network**: Polygon Amoy
 - **Chain ID**: 80002
-- **RPC**: https://rpc-amoy.polygon.technology/
+- **RPC**: https://polygon-amoy-bor-rpc.publicnode.com
 - **Faucet**: https://faucet.polygon.technology/
 
 ---

@@ -23,7 +23,7 @@ export const config = createConfig({
     }),
   ],
   transports: {
-    [polygonAmoy.id]: http('https://rpc-amoy.polygon.technology/')
+    [polygonAmoy.id]: http('https://polygon-amoy-bor-rpc.publicnode.com')
   },
 });
 
@@ -31,13 +31,17 @@ export const CONTRACTS = {
   RDLN: "0x133029184EC460F661d05b0dC57BFC916b4AB0eB",
   RON: "0xD86b146Ed091b59cE050B9d40f8e2760f14Ab635",
   RIDDLE_NFT: "0x529e3076cB9A48D6FAd086abE5d23ea76159e9E3",
-  AIRDROP: "0x330275259AfCeC8822A861ecbbdfD026dB1B0A13"
+  AIRDROP: "0x330275259AfCeC8822A861ecbbdfD026dB1B0A13",
+  // Stump the Machine: set after scripts/stump/deploy.js; empty hides the page's on-chain parts
+  STUMP: process.env.NEXT_PUBLIC_STUMP_ADDRESS || "0x660cEF782AEc87b0667De610B2077A9A4B81dB14",
+  // Testnet faucet: one-time RDLN per wallet so anyone can try the game
+  FAUCET: process.env.NEXT_PUBLIC_FAUCET_ADDRESS || "0xb6860Af03bb0FbD9b63322a7EbDaC29fd9aB7f7E",
 };
 
 export const NETWORK_CONFIG = {
   chainId: 80002,
   name: 'Polygon Amoy Testnet',
-  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+  rpcUrls: ['https://polygon-amoy-bor-rpc.publicnode.com'],
   blockExplorerUrls: ['https://amoy.polygonscan.com/'],
   nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 }
 };

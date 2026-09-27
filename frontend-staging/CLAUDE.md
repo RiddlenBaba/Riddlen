@@ -21,7 +21,7 @@ const CONTRACTS = {
 const NETWORK = {
   chainId: 80002,
   name: 'Polygon Amoy Testnet',
-  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+  rpcUrls: ['https://polygon-amoy-bor-rpc.publicnode.com'],
   blockExplorerUrls: ['https://amoy.polygonscan.com/'],
   nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 }
 }

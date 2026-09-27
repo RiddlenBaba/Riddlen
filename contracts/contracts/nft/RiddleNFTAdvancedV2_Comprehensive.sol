@@ -3,6 +3,7 @@ pragma solidity ^0.8.22;
 
 import "./RiddleNFTAdvanced.sol";
 import "../groups/interfaces/IRiddleGroupManager.sol";
+import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 
 /**
  * @title RiddleNFTAdvancedV2_Comprehensive
@@ -11,11 +12,12 @@ import "../groups/interfaces/IRiddleGroupManager.sol";
  *      2. Progressive cost calculations (from RiddleNFTv3)
  *      3. User question submission (from RiddleNFTv3)
  *      4. Group mechanics integration (new)
+ *      5. OpenZeppelin Defender gasless transactions (EIP-2771)
  *
  * Storage Safety:
- * - Consumes 3 slots from V1's 50-slot gap
+ * - Consumes 4 slots from V1's 50-slot gap
  * - No modifications to existing V1 structures
- * - 47 slots remain for future upgrades
+ * - 46 slots remain for future upgrades
  *
  * Era System:
  * - Each NFT locks costs at mint time based on current era
@@ -35,7 +37,12 @@ import "../groups/interfaces/IRiddleGroupManager.sol";
  * - Solo play unchanged
  * - Groups are optional
  */
-contract RiddleNFTAdvancedV2_Comprehensive is RiddleNFTAdvanced {
+contract RiddleNFTAdvancedV2_Comprehensive is RiddleNFTAdvanced, ERC2771ContextUpgradeable {
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() ERC2771ContextUpgradeable(address(0)) {
+        _disableInitializers();
+    }
     // =============================================================
     //                        V2 STRUCTS
     // =============================================================
@@ -66,8 +73,11 @@ contract RiddleNFTAdvancedV2_Comprehensive is RiddleNFTAdvanced {
     // Era-locked cost system (1 slot from gap)
     mapping(uint256 => NFTCostData) public nftCostData; // tokenId => cost data
 
-    // Total slots used: 3
-    // Remaining gap: 47 slots
+    // Gasless transactions (1 slot from gap)
+    address private _trustedForwarder;
+
+    // Total slots used: 4
+    // Remaining gap: 46 slots
 
     // =============================================================
     //                        V2 CONSTANTS
@@ -103,6 +113,13 @@ contract RiddleNFTAdvancedV2_Comprehensive is RiddleNFTAdvanced {
         uint256 baseAttemptCost,
         uint256 baseSubmissionCost
     );
+    event TrustedForwarderUpdated(address indexed oldForwarder, address indexed newForwarder);
+    event GaslessTransactionExecuted(
+        address indexed user,
+        address indexed forwarder,
+        bytes4 indexed functionSelector,
+        uint256 nonce
+    );
 
     // =============================================================
     //                        V2 ERRORS
@@ -115,6 +132,8 @@ contract RiddleNFTAdvancedV2_Comprehensive is RiddleNFTAdvanced {
     error InsufficientBalance();
     error CostCalculationFailed();
     error SubmissionFailed();
+    error InvalidForwarder();
+    error ForwarderNotSet();
 
     // =============================================================
     //                        V2 INITIALIZATION
@@ -138,6 +157,23 @@ contract RiddleNFTAdvancedV2_Comprehensive is RiddleNFTAdvanced {
         } catch {
             revert InvalidGroupManager();
         }
+    }
+
+    /**
+     * @dev Initialize gasless support with trusted forwarder
+     * @param trustedForwarder_ Address of the ERC2771Forwarder contract
+     */
+    function initializeGasless(address trustedForwarder_)
+        external
+        reinitializer(3)
+        onlyRole(ADMIN_ROLE)
+    {
+        require(trustedForwarder_ != address(0), "Zero address");
+
+        // Set trusted forwarder (ERC2771Context doesn't need explicit initialization)
+        _trustedForwarder = trustedForwarder_;
+
+        emit TrustedForwarderUpdated(address(0), trustedForwarder_);
     }
 
     // =============================================================
@@ -357,22 +393,27 @@ contract RiddleNFTAdvancedV2_Comprehensive is RiddleNFTAdvanced {
     }
 
     /**
-     * @dev Distribute submission costs (50% burn, 25% grand prize, 25% devops)
+     * @dev Distribute submission costs using revolutionary creator economy
+     * New tokenomics: 10% grand prize, 30% dev/ops, 30% contributors, 30% validators
      * @param amount Total cost to distribute
      */
     function _distributeSubmissionCost(uint256 amount) internal {
-        uint256 burnAmount = (amount * 50) / 100;
-        uint256 grandPrizeAmount = (amount * 25) / 100;
-        uint256 devOpsAmount = (amount * 25) / 100;
+        // Revolutionary tokenomics: NO BURNING, ALL REWARDS
+        uint256 grandPrizeAmount = (amount * 10) / 100;      // 10% - Keep the excitement!
+        uint256 devOpsAmount = (amount * 30) / 100;          // 30% - Platform development
+        uint256 contributorAmount = (amount * 30) / 100;     // 30% - Question creators
+        uint256 validatorAmount = (amount * 30) / 100;       // 30% - Validation work
 
-        // Burn 50% (transfer to dead address)
-        rdlnToken.transfer(address(0xdead), burnAmount);
-
-        // Transfer 25% to grand prize wallet
+        // Transfer to immediate recipients
         rdlnToken.transfer(grandPrizeWallet, grandPrizeAmount);
-
-        // Transfer 25% to devops wallet
         rdlnToken.transfer(devOpsWallet, devOpsAmount);
+
+        // Transfer to reward pools (will be implemented with wallet addresses)
+        // For now, send to devOps as placeholder - proper reward distribution coming
+        rdlnToken.transfer(devOpsWallet, contributorAmount + validatorAmount);
+
+        // TODO: Implement proper reward pool distribution
+        // This will require integration with RDLN token's creator economy functions
     }
 
     // =============================================================
@@ -581,6 +622,127 @@ contract RiddleNFTAdvancedV2_Comprehensive is RiddleNFTAdvanced {
         uint256 oldGroupId = nftGroupIds[tokenId];
         nftGroupIds[tokenId] = 0;
         emit NFTConvertedToGroup(tokenId, 0, 0, msg.sender, 0);
+    }
+
+    // =============================================================
+    //                        GASLESS FUNCTIONALITY
+    // =============================================================
+
+    /**
+     * @dev Override _msgSender to support meta-transactions
+     * @return The actual sender (original user, not forwarder)
+     */
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (address)
+    {
+        return ERC2771ContextUpgradeable._msgSender();
+    }
+
+    /**
+     * @dev Override _msgData to support meta-transactions
+     * @return The actual message data (without forwarder suffix)
+     */
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        return ERC2771ContextUpgradeable._msgData();
+    }
+
+    /**
+     * @dev Override _contextSuffixLength for ERC2771 compatibility
+     * @return Length of context suffix
+     */
+    function _contextSuffixLength()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (uint256)
+    {
+        return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
+
+    /**
+     * @dev Check if forwarder is trusted for meta-transactions
+     * @param forwarder The forwarder address to check
+     * @return True if forwarder is trusted
+     */
+    function isTrustedForwarder(address forwarder)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
+        return forwarder == _trustedForwarder;
+    }
+
+    /**
+     * @dev Update trusted forwarder address
+     * @param _newForwarder New trusted forwarder address
+     */
+    function updateTrustedForwarder(address _newForwarder)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
+        require(_newForwarder != address(0), "Zero address");
+
+        address oldForwarder = _trustedForwarder;
+        _trustedForwarder = _newForwarder;
+
+        emit TrustedForwarderUpdated(oldForwarder, _newForwarder);
+    }
+
+    /**
+     * @dev Emergency pause gasless functionality
+     */
+    function pauseGasless() external onlyRole(ADMIN_ROLE) {
+        address oldForwarder = _trustedForwarder;
+        _trustedForwarder = address(0);
+        emit TrustedForwarderUpdated(oldForwarder, address(0));
+    }
+
+    /**
+     * @dev Check if gasless functionality is enabled
+     * @return True if gasless is enabled
+     */
+    function isGaslessEnabled() external view returns (bool) {
+        return _trustedForwarder != address(0);
+    }
+
+    /**
+     * @dev Get gasless transaction info
+     * @return forwarder The trusted forwarder address
+     * @return enabled Whether gasless is enabled
+     */
+    function getGaslessInfo()
+        external
+        view
+        returns (address forwarder, bool enabled)
+    {
+        forwarder = _trustedForwarder;
+        enabled = forwarder != address(0);
+    }
+
+    /**
+     * @dev Record gasless transaction for analytics
+     * @param functionName The function being called
+     */
+    function _recordGaslessTransaction(string memory functionName) internal {
+        emit GaslessTransactionExecuted(
+            _msgSender(),
+            _trustedForwarder,
+            bytes4(keccak256(bytes(functionName))),
+            0 // Nonce could be tracked if needed
+        );
     }
 
     // =============================================================

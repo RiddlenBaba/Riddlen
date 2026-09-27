@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import "../interfaces/IRDLN.sol";
 
 /**
@@ -61,6 +62,9 @@ contract RDLNUpgradeable is
 
     // ============ STATE VARIABLES ============
 
+    // Gasless transaction support
+    address private _trustedForwarderAddress;
+
     // Allocation tracking
     uint256 public prizePoolMinted;
     uint256 public treasuryMinted;
@@ -97,6 +101,29 @@ contract RDLNUpgradeable is
     mapping(uint256 => bool) public supportedChains;
     mapping(bytes32 => bool) public processedTransactions;
 
+    // ============ CREATOR ECONOMY REWARD POOLS ============
+    // Revolutionary tokenomics: 0% burn, rewards fuel the ecosystem
+
+    // Reward pool wallets
+    address public contributorRewardsWallet;
+    address public validatorRewardsWallet;
+
+    // Accumulated reward pools
+    uint256 public totalContributorRewards;
+    uint256 public totalValidatorRewards;
+    uint256 public totalDistributedRewards;
+
+    // Individual contributor tracking
+    mapping(address => uint256) public contributorEarnings;
+    mapping(address => uint256) public validatorEarnings;
+    mapping(address => uint256) public contributorClaimed;
+    mapping(address => uint256) public validatorClaimed;
+
+    // Question usage tracking for contributor rewards
+    mapping(uint256 => address) public questionCreators; // questionId => creator
+    mapping(uint256 => uint256) public questionUsageCount; // questionId => times used
+    mapping(address => uint256[]) public creatorQuestions; // creator => questionIds[]
+
     // ============ RUG-PROOF TREASURY SYSTEM ============
     // 🔒 IMMUTABLE PROTECTION (Cannot be changed by anyone, ever)
     uint256 public constant MONTHLY_OPERATIONS_RELEASE = 1_000_000 * 10**18; // FIXED 1M RDLN
@@ -119,6 +146,54 @@ contract RDLNUpgradeable is
         uint256 burnedAmount,
         uint256 grandPrizeAmount,
         uint256 devOpsAmount,
+        uint256 timestamp
+    );
+
+    // ============ CREATOR ECONOMY EVENTS ============
+
+    event RewardDistributionExecuted(
+        address indexed user,
+        uint256 indexed distributionType,
+        uint256 totalAmount,
+        uint256 grandPrizeAmount,
+        uint256 devOpsAmount,
+        uint256 contributorAmount,
+        uint256 validatorAmount,
+        uint256 timestamp
+    );
+
+    event ContributorRewarded(
+        address indexed contributor,
+        uint256 indexed questionId,
+        uint256 amount,
+        uint256 usageCount,
+        uint256 timestamp
+    );
+
+    event ValidatorRewarded(
+        address indexed validator,
+        uint256 amount,
+        uint256 validationCount,
+        uint256 timestamp
+    );
+
+    event RewardsClaimed(
+        address indexed claimer,
+        uint256 contributorAmount,
+        uint256 validatorAmount,
+        uint256 totalClaimed,
+        uint256 timestamp
+    );
+
+    event QuestionRegistered(
+        uint256 indexed questionId,
+        address indexed creator,
+        uint256 timestamp
+    );
+
+    event RewardWalletsUpdated(
+        address indexed contributorWallet,
+        address indexed validatorWallet,
         uint256 timestamp
     );
 
@@ -206,7 +281,8 @@ contract RDLNUpgradeable is
         address _liquidityWallet,
         address _airdropWallet,
         address _grandPrizeWallet,
-        address _operationsWallet
+        address _operationsWallet,
+        address _trustedForwarder
     ) public initializer {
         __ERC20_init("Riddlen Token", "RDLN");
         __ERC20Burnable_init();
@@ -217,12 +293,16 @@ contract RDLNUpgradeable is
         __Pausable_init();
         __UUPSUpgradeable_init();
 
+        // Initialize trusted forwarder for gasless transactions
+        _trustedForwarderAddress = _trustedForwarder;
+
         if (_admin == address(0)) revert InvalidAddress(_admin);
         if (_treasuryWallet == address(0)) revert InvalidAddress(_treasuryWallet);
         if (_liquidityWallet == address(0)) revert InvalidAddress(_liquidityWallet);
         if (_airdropWallet == address(0)) revert InvalidAddress(_airdropWallet);
         if (_grandPrizeWallet == address(0)) revert InvalidAddress(_grandPrizeWallet);
         if (_operationsWallet == address(0)) revert InvalidAddress(_operationsWallet);
+        if (_trustedForwarder == address(0)) revert InvalidAddress(_trustedForwarder);
 
         treasuryWallet = _treasuryWallet;
         liquidityWallet = _liquidityWallet;
@@ -247,6 +327,179 @@ contract RDLNUpgradeable is
         _mint(_admin, 1_000_000 * 10**18); // 1M RDLN for initial setup
     }
 
+    /**
+     * @dev Initialize creator economy system with reward wallets
+     * @param _contributorRewardsWallet Wallet for contributor rewards
+     * @param _validatorRewardsWallet Wallet for validator rewards
+     */
+    function initializeCreatorEconomy(
+        address _contributorRewardsWallet,
+        address _validatorRewardsWallet
+    ) external reinitializer(2) onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_contributorRewardsWallet != address(0), "Invalid contributor wallet");
+        require(_validatorRewardsWallet != address(0), "Invalid validator wallet");
+
+        contributorRewardsWallet = _contributorRewardsWallet;
+        validatorRewardsWallet = _validatorRewardsWallet;
+
+        emit RewardWalletsUpdated(_contributorRewardsWallet, _validatorRewardsWallet, block.timestamp);
+    }
+
+    // ============ CREATOR ECONOMY FUNCTIONS ============
+
+    /**
+     * @dev Register a question creator for reward tracking
+     * @param questionId The ID of the question
+     * @param creator The address of the question creator
+     */
+    function registerQuestionCreator(uint256 questionId, address creator)
+        external
+        onlyRole(GAME_ROLE)
+    {
+        require(creator != address(0), "Invalid creator address");
+        require(questionCreators[questionId] == address(0), "Question already registered");
+
+        questionCreators[questionId] = creator;
+        creatorQuestions[creator].push(questionId);
+
+        emit QuestionRegistered(questionId, creator, block.timestamp);
+    }
+
+    /**
+     * @dev Reward a contributor when their question is used
+     * @param questionId The ID of the question that was used
+     * @param rewardAmount The amount to reward the creator
+     */
+    function rewardQuestionUsage(uint256 questionId, uint256 rewardAmount)
+        external
+        onlyRole(GAME_ROLE)
+    {
+        address creator = questionCreators[questionId];
+        require(creator != address(0), "Question creator not found");
+
+        questionUsageCount[questionId]++;
+        contributorEarnings[creator] += rewardAmount;
+
+        emit ContributorRewarded(
+            creator,
+            questionId,
+            rewardAmount,
+            questionUsageCount[questionId],
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Reward a validator for their validation work
+     * @param validator The address of the validator
+     * @param rewardAmount The amount to reward
+     * @param validationCount The number of validations completed
+     */
+    function rewardValidator(address validator, uint256 rewardAmount, uint256 validationCount)
+        external
+        onlyRole(GAME_ROLE)
+    {
+        require(validator != address(0), "Invalid validator address");
+
+        validatorEarnings[validator] += rewardAmount;
+
+        emit ValidatorRewarded(validator, rewardAmount, validationCount, block.timestamp);
+    }
+
+    /**
+     * @dev Allow contributors and validators to claim their accumulated rewards
+     */
+    function claimRewards() external nonReentrant {
+        uint256 contributorAmount = contributorEarnings[msg.sender] - contributorClaimed[msg.sender];
+        uint256 validatorAmount = validatorEarnings[msg.sender] - validatorClaimed[msg.sender];
+        uint256 totalToClaim = contributorAmount + validatorAmount;
+
+        require(totalToClaim > 0, "No rewards to claim");
+
+        // Update claimed amounts
+        contributorClaimed[msg.sender] += contributorAmount;
+        validatorClaimed[msg.sender] += validatorAmount;
+
+        // Transfer rewards from pool wallets
+        if (contributorAmount > 0) {
+            IERC20(address(this)).transferFrom(contributorRewardsWallet, msg.sender, contributorAmount);
+        }
+        if (validatorAmount > 0) {
+            IERC20(address(this)).transferFrom(validatorRewardsWallet, msg.sender, validatorAmount);
+        }
+
+        emit RewardsClaimed(
+            msg.sender,
+            contributorAmount,
+            validatorAmount,
+            totalToClaim,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Get pending rewards for a user
+     * @param user The user to check rewards for
+     * @return contributorRewards Pending contributor rewards
+     * @return validatorRewards Pending validator rewards
+     * @return totalPending Total pending rewards
+     */
+    function getPendingRewards(address user)
+        external
+        view
+        returns (
+            uint256 contributorRewards,
+            uint256 validatorRewards,
+            uint256 totalPending
+        )
+    {
+        contributorRewards = contributorEarnings[user] - contributorClaimed[user];
+        validatorRewards = validatorEarnings[user] - validatorClaimed[user];
+        totalPending = contributorRewards + validatorRewards;
+    }
+
+    /**
+     * @dev Get creator economy statistics
+     * @return totalDistributed Total amount distributed to creators and validators
+     * @return totalContributorPool Total contributor reward pool
+     * @return totalValidatorPool Total validator reward pool
+     * @return activeCreators Number of registered question creators
+     */
+    function getCreatorEconomyStats()
+        external
+        view
+        returns (
+            uint256 totalDistributed,
+            uint256 totalContributorPool,
+            uint256 totalValidatorPool,
+            uint256 activeCreators
+        )
+    {
+        totalDistributed = totalDistributedRewards;
+        totalContributorPool = totalContributorRewards;
+        totalValidatorPool = totalValidatorRewards;
+        // activeCreators would need additional tracking
+        activeCreators = 0; // Placeholder - implement if needed
+    }
+
+    /**
+     * @dev Update reward wallet addresses (admin only)
+     * @param _contributorWallet New contributor rewards wallet
+     * @param _validatorWallet New validator rewards wallet
+     */
+    function updateRewardWallets(address _contributorWallet, address _validatorWallet)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(_contributorWallet != address(0), "Invalid contributor wallet");
+        require(_validatorWallet != address(0), "Invalid validator wallet");
+
+        contributorRewardsWallet = _contributorWallet;
+        validatorRewardsWallet = _validatorWallet;
+
+        emit RewardWalletsUpdated(_contributorWallet, _validatorWallet, block.timestamp);
+    }
+
     // ============ UPGRADE AUTHORIZATION ============
 
     function _authorizeUpgrade(address newImplementation)
@@ -266,6 +519,46 @@ contract RDLNUpgradeable is
             abi.encode(newImplementation),
             block.timestamp
         );
+    }
+
+    // ============ ERC2771 GASLESS SUPPORT ============
+
+    /**
+     * @dev Override _msgSender to support gasless transactions via ERC2771
+     */
+    function _msgSender() internal view virtual override returns (address) {
+        if (msg.data.length >= 20 && isTrustedForwarder(msg.sender)) {
+            // Extract the sender address from the end of msg.data
+            return address(bytes20(msg.data[msg.data.length - 20:]));
+        } else {
+            return super._msgSender();
+        }
+    }
+
+    /**
+     * @dev Override _msgData to support gasless transactions via ERC2771
+     */
+    function _msgData() internal view virtual override returns (bytes calldata) {
+        if (msg.data.length >= 20 && isTrustedForwarder(msg.sender)) {
+            // Remove the appended sender address from msg.data
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
+    }
+
+    /**
+     * @dev Check if forwarder is trusted
+     */
+    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+        return forwarder == _trustedForwarderAddress;
+    }
+
+    /**
+     * @dev Get the trusted forwarder address
+     */
+    function trustedForwarder() public view virtual returns (address) {
+        return _trustedForwarderAddress;
     }
 
     // ============ BATCH OPERATIONS ============
@@ -491,23 +784,54 @@ contract RDLNUpgradeable is
     }
 
     function _executeBurnProtocol(address user, uint256 burnAmount, uint256 burnType) internal {
-        // 50% burned, 25% Grand Prize, 25% dev/ops
-        uint256 actualBurn = (burnAmount * 50) / 100;
-        uint256 grandPrizeAmount = (burnAmount * 25) / 100;
-        uint256 devOpsAmount = burnAmount - actualBurn - grandPrizeAmount;
+        // Legacy function - redirect to new reward distribution
+        _executeRewardDistribution(user, burnAmount, burnType);
+    }
 
-        _burn(user, actualBurn);
+    /**
+     * @dev Revolutionary reward distribution: 0% burn, 100% rewards
+     * New tokenomics: 10% grand prize, 30% dev/ops, 30% contributors, 30% validators
+     * @param user The user triggering the distribution
+     * @param amount The total amount to distribute
+     * @param distributionType The type of distribution (for analytics)
+     */
+    function _executeRewardDistribution(address user, uint256 amount, uint256 distributionType) internal {
+        // Revolutionary tokenomics: NO BURNING, ALL REWARDS
+        uint256 grandPrizeAmount = (amount * 10) / 100;      // 10% - Keep the excitement!
+        uint256 devOpsAmount = (amount * 30) / 100;          // 30% - Platform development
+        uint256 contributorAmount = (amount * 30) / 100;     // 30% - Question creators
+        uint256 validatorAmount = (amount * 30) / 100;       // 30% - Validation work
+
+        // Transfer to immediate recipients
         _transfer(user, grandPrizeWallet, grandPrizeAmount);
         _transfer(user, treasuryWallet, devOpsAmount);
 
-        gameplayBurned += actualBurn;
-        totalBurned += actualBurn;
+        // Add to reward pools for distribution
+        _transfer(user, contributorRewardsWallet, contributorAmount);
+        _transfer(user, validatorRewardsWallet, validatorAmount);
 
+        // Update pool totals
+        totalContributorRewards += contributorAmount;
+        totalValidatorRewards += validatorAmount;
+        totalDistributedRewards += amount;
+
+        emit RewardDistributionExecuted(
+            user,
+            distributionType,
+            amount,
+            grandPrizeAmount,
+            devOpsAmount,
+            contributorAmount,
+            validatorAmount,
+            block.timestamp
+        );
+
+        // Keep legacy burn event for compatibility (but with 0 burn)
         emit BurnExecuted(
             user,
-            burnType,
-            burnAmount,
-            actualBurn,
+            distributionType,
+            amount,
+            0, // No more burning!
             grandPrizeAmount,
             devOpsAmount,
             block.timestamp

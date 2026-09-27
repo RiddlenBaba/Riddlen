@@ -24,6 +24,6 @@ export const config = createConfig({
     }),
   ],
   transports: {
-    [polygonAmoy.id]: http(process.env.NEXT_PUBLIC_POLYGON_AMOY_RPC || 'https://rpc-amoy.polygon.technology/')
+    [polygonAmoy.id]: http(process.env.NEXT_PUBLIC_POLYGON_AMOY_RPC || 'https://polygon-amoy-bor-rpc.publicnode.com')
   },
 });

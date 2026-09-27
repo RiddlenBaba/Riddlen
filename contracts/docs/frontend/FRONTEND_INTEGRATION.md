@@ -14,7 +14,7 @@ Ready to build the frontend for the revolutionary Riddlen ecosystem? This guide 
 const networkConfig = {
   chainId: 80002,
   name: 'Polygon Amoy Testnet',
-  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+  rpcUrls: ['https://polygon-amoy-bor-rpc.publicnode.com'],
   blockExplorerUrls: ['https://amoy.polygonscan.com/'],
   nativeCurrency: {
     name: 'MATIC',

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IRON.sol";
 
@@ -51,7 +52,8 @@ contract RiddlenAirdrop is
     AccessControlUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
-    UUPSUpgradeable
+    UUPSUpgradeable,
+    ERC2771ContextUpgradeable
 {
     // =============================================================
     //                        CONSTANTS
@@ -103,6 +105,9 @@ contract RiddlenAirdrop is
     IERC20 public rdlnToken;
     IRON public ronToken;
     address public oracleNetwork;
+
+    // Gasless transactions
+    address private _trustedForwarder;
 
     // Phase 1 state
     bool public phase1Active;
@@ -227,6 +232,23 @@ contract RiddlenAirdrop is
         uint256 bonusAmount
     );
 
+    /// @notice Emitted when trusted forwarder is updated
+    /// @param oldForwarder Previous forwarder address
+    /// @param newForwarder New forwarder address
+    event TrustedForwarderUpdated(address indexed oldForwarder, address indexed newForwarder);
+
+    /// @notice Emitted when a gasless transaction is executed
+    /// @param user The actual user (not forwarder)
+    /// @param forwarder The trusted forwarder address
+    /// @param functionSelector The function being called
+    /// @param nonce Transaction nonce
+    event GaslessTransactionExecuted(
+        address indexed user,
+        address indexed forwarder,
+        bytes4 indexed functionSelector,
+        uint256 nonce
+    );
+
     // =============================================================
     //                        ERRORS
     // =============================================================
@@ -245,6 +267,17 @@ contract RiddlenAirdrop is
     error NoNewValidations();
     error ExceedsMaxPerWallet();
     error InvalidOracleAddress();
+    error InvalidForwarder();
+    error ForwarderNotSet();
+
+    // =============================================================
+    //                        CONSTRUCTOR
+    // =============================================================
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() ERC2771ContextUpgradeable(address(0)) {
+        _disableInitializers();
+    }
 
     // =============================================================
     //                        INITIALIZER
@@ -280,6 +313,23 @@ contract RiddlenAirdrop is
         _grantRole(PAUSER_ROLE, _admin);
         _grantRole(OPERATOR_ROLE, _admin);
         _grantRole(COMPLIANCE_ROLE, _admin);
+    }
+
+    /**
+     * @dev Initialize gasless support with trusted forwarder
+     * @param trustedForwarder_ Address of the ERC2771Forwarder contract
+     */
+    function initializeGasless(address trustedForwarder_)
+        external
+        reinitializer(2)
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(trustedForwarder_ != address(0), "Zero address");
+
+        // Set trusted forwarder
+        _trustedForwarder = trustedForwarder_;
+
+        emit TrustedForwarderUpdated(address(0), trustedForwarder_);
     }
 
     // =============================================================
@@ -913,6 +963,127 @@ contract RiddlenAirdrop is
             : 0;
         phase3TotalDistributed_ = phase3TotalDistributed;
         contractBalance = rdlnToken.balanceOf(address(this));
+    }
+
+    // =============================================================
+    //                        GASLESS FUNCTIONALITY
+    // =============================================================
+
+    /**
+     * @dev Override _msgSender to support meta-transactions
+     * @return The actual sender (original user, not forwarder)
+     */
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (address)
+    {
+        return ERC2771ContextUpgradeable._msgSender();
+    }
+
+    /**
+     * @dev Override _msgData to support meta-transactions
+     * @return The actual message data (without forwarder suffix)
+     */
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        return ERC2771ContextUpgradeable._msgData();
+    }
+
+    /**
+     * @dev Override _contextSuffixLength for ERC2771 compatibility
+     * @return Length of context suffix
+     */
+    function _contextSuffixLength()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (uint256)
+    {
+        return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
+
+    /**
+     * @dev Check if forwarder is trusted for meta-transactions
+     * @param forwarder The forwarder address to check
+     * @return True if forwarder is trusted
+     */
+    function isTrustedForwarder(address forwarder)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
+        return forwarder == _trustedForwarder;
+    }
+
+    /**
+     * @dev Update trusted forwarder address
+     * @param _newForwarder New trusted forwarder address
+     */
+    function updateTrustedForwarder(address _newForwarder)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(_newForwarder != address(0), "Zero address");
+
+        address oldForwarder = _trustedForwarder;
+        _trustedForwarder = _newForwarder;
+
+        emit TrustedForwarderUpdated(oldForwarder, _newForwarder);
+    }
+
+    /**
+     * @dev Emergency pause gasless functionality
+     */
+    function pauseGasless() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        address oldForwarder = _trustedForwarder;
+        _trustedForwarder = address(0);
+        emit TrustedForwarderUpdated(oldForwarder, address(0));
+    }
+
+    /**
+     * @dev Check if gasless functionality is enabled
+     * @return True if gasless is enabled
+     */
+    function isGaslessEnabled() external view returns (bool) {
+        return _trustedForwarder != address(0);
+    }
+
+    /**
+     * @dev Get gasless transaction info
+     * @return forwarder The trusted forwarder address
+     * @return enabled Whether gasless is enabled
+     */
+    function getGaslessInfo()
+        external
+        view
+        returns (address forwarder, bool enabled)
+    {
+        forwarder = _trustedForwarder;
+        enabled = forwarder != address(0);
+    }
+
+    /**
+     * @dev Record gasless transaction for analytics
+     * @param functionName The function being called
+     */
+    function _recordGaslessTransaction(string memory functionName) internal {
+        emit GaslessTransactionExecuted(
+            _msgSender(),
+            _trustedForwarder,
+            bytes4(keccak256(bytes(functionName))),
+            0 // Nonce could be tracked if needed
+        );
     }
 
     // =============================================================

@@ -156,3 +156,13 @@ proof of flow and can be deleted with the old apps in the repo reorg.
    earns the pair at most the pot; larger pots need the human-solver minimum raised above 1 or
    solver-count-scaled payouts.
 5. ~~Site redesign~~: `web/`. Next: point riddlen.com at the Vercel project, rewrite riddlen.org docs.
+
+## v2: standing riddles with seats (designed 2026-09-27, not built)
+
+Full rules in `docs/next.md` and the approved plan. In short: no deadlines (author picks 7/30/90
+days or until solved); the riddle is an NFT; seats (10–1,000, rolled, weighted scarce) are
+NFTs bought at the difficulty's price, half to the pot, half burned; attempts per seat escalate
+1, 2, 3 RDLN; pots roll a multiplier (70% ×1, 20% ×2, 8% ×5, 2% ×20); the author judges
+attempts with dismiss / hold / confirm without revealing, lies are slashed, silence pauses,
+copies are excluded by seal-before-first-reveal, minimum solvers scale with the pot; no refunds
+ever; unsolved pots return to the treasury.

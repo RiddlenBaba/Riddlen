@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     const meta = {
       name: `Riddlen Hunt #${t.riddleId} · NFT ${id}`,
       description: `${r.text}\n\nRiddle ${t.riddleId}, NFT ${Number(t.index) + 1} of ${r.nftCount}. Attempts on this NFT: ${t.attempts}. State: ${state}. Progress travels with the token.`,
-      external_url: `https://riddlen.com/hunt/${t.riddleId}`,
+      external_url: `https://riddlen.com/r/${t.riddleId}`,
       image: `data:image/svg+xml;utf8,${encodeURIComponent(svg(r.text, `#${t.riddleId} · ${DIFFICULTY[r.difficulty]} · attempts ${t.attempts} · ${state}`))}`,
       attributes: [
         { trait_type: 'Riddle', value: Number(t.riddleId) },

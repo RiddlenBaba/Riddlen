@@ -8,17 +8,17 @@ export { short };
 
 export default function Layout({ title, description, children }) {
   const { pathname } = useRouter();
-  const nav = [['/', 'Board'], ['/hunt', 'The hunt'], ['/write', 'Write'], ['/me', 'Dashboard'], ['/how', 'How it works'], ['/free', 'Free Riddlen'], ['https://riddlen.org', 'Docs']];
-  const tabs = [['/', 'Board'], ['/hunt', 'Hunt'], ['/write', 'Write'], ['/me', 'Me'], ['/free', 'Free']];
+  const nav = [['/', 'Riddles'], ['/map', 'The map'], ['/me', 'Dashboard'], ['/free', 'Free Riddlen'], ['https://riddlen.org/hunt/', 'How it works'], ['https://riddlen.org', 'Docs']];
+  const tabs = [['/', 'Riddles'], ['/map', 'Map'], ['/me', 'Me'], ['/free', 'Free']];
   const fullTitle = title ? `${title} · Riddlen` : 'Riddlen';
   return (
     <>
       <Head>
         <title>{fullTitle}</title>
-        <meta name="description" content={description || 'Riddles the machines could not solve. Written by people, tried by AI first, paid in RDLN when the machines lose.'} />
+        <meta name="description" content={description || 'Riddlen: a scavenger hunt for the whole world. Buy a riddle, solve it, go find what was hidden, get paid in RDLN.'} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta property="og:title" content={fullTitle} />
-        <meta property="og:description" content={description || 'Riddles the machines could not solve.'} />
+        <meta property="og:description" content={description || 'A scavenger hunt for the whole world.'} />
       </Head>
       <header className="hdr">
         <div className="container row">
@@ -42,12 +42,11 @@ export default function Layout({ title, description, children }) {
           <div className="cols">
             <div>
               <div className="brand display">Riddlen</div>
-              <p className="muted">Riddles written by people, tried by machines first, paid in RDLN when the machines lose. Running on Polygon Amoy testnet: the tokens have no value yet.</p>
+              <p className="muted">A scavenger hunt for the whole world, paid in RDLN. Every attempt burns. Running on Polygon Amoy testnet: the tokens have no value yet.</p>
             </div>
             <div className="links">
               <a href="https://riddlen.org" target="_blank" rel="noreferrer">Docs</a>
-              <a href="https://riddlen.org/next/" target="_blank" rel="noreferrer">The hunt rules</a>
-              <a href={`${EXPLORER}/address/${CONTRACTS.STUMP}`} target="_blank" rel="noreferrer">Stump contract</a>
+              <a href="https://riddlen.org/next/" target="_blank" rel="noreferrer">The design</a>
               <a href={`${EXPLORER}/address/${CONTRACTS.HUNT}`} target="_blank" rel="noreferrer">Hunt contract</a>
               <a href={`${EXPLORER}/address/${CONTRACTS.RDLN}`} target="_blank" rel="noreferrer">RDLN token</a>
               <a href="https://github.com/RiddlenBaba/Riddlen" target="_blank" rel="noreferrer">Source</a>
@@ -59,7 +58,7 @@ export default function Layout({ title, description, children }) {
       <style jsx>{`
         .hdr { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
         .row { display: flex; align-items: center; gap: 20px; height: 60px; }
-        .brand { font-size: 24px; font-style: italic; font-weight: 500; text-decoration: none; letter-spacing: -0.01em; }
+        .brand { font-size: 24px; font-style: italic; font-weight: 500; text-decoration: none; letter-spacing: -0.01em; color: var(--accent); }
         nav { display: flex; gap: 4px; margin-left: 8px; }
         nav a { padding: 6px 10px; border-radius: 8px; text-decoration: none; font-size: 14px; color: var(--ink-2); }
         nav a.on { color: var(--ink); background: var(--paper-2); }

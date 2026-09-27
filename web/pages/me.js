@@ -1,66 +1,58 @@
 import Link from 'next/link';
-import { useAccount } from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
 import Layout from '../components/Layout';
-import { Pill } from '../components/Board';
+import { HuntPill } from '../components/HuntRiddle';
 import { ConnectInline, useWalletTotals, short } from '../components/Wallet';
 import { AddTokenButton, GasButton } from '../components/Onboard';
-import { countdown, deadline, rdln } from '../components/format';
-import { DIFFICULTY, useActions, useChallenges, useMe, useMyActivity, useNow } from '../hooks/useStump';
-import { EXPLORER } from '../lib/wagmi';
-import { DIFFICULTY as HUNT_DIFFICULTY, useHuntActions, useHuntOwed, useMyTokens, useRiddles } from '../hooks/useHunt';
-import { HuntPill } from '../components/HuntRiddle';
+import { rdln } from '../components/format';
+import { useFaucet, useNow } from '../hooks/useFaucet';
+import { DIFFICULTY, useHuntActions, useHuntOwed, useMyTokens, useRiddles } from '../hooks/useHunt';
+import { useTx } from '../hooks/useTx';
+import { CONTRACTS, EXPLORER } from '../lib/wagmi';
 
-const NEEDS = {
-  'awaiting-author': 'Reveal your answer',
-  reveal: 'Reveal your guess',
-  finalizing: 'Settle',
-  'void-ready': 'Settle',
+// The first game (Stump the Machine) is retired from the site. Anyone still owed by it can
+// withdraw here; the tile only appears when there is something to take.
+const LEGACY = {
+  address: CONTRACTS.STUMP,
+  abi: [
+    { type: 'function', name: 'owed', stateMutability: 'view', inputs: [{ type: 'address' }], outputs: [{ type: 'uint256' }] },
+    { type: 'function', name: 'withdraw', stateMutability: 'nonpayable', inputs: [], outputs: [] },
+  ],
 };
 
-function Row({ c, revealWindow, now, who }) {
-  const dl = deadline(c, revealWindow);
-  let need = null;
-  if (who === 'author' && c.phase === 'awaiting-author') need = NEEDS[c.phase];
-  if (who === 'solver' && c.phase === 'reveal' && c.sealed && !c.entry?.revealed) need = NEEDS.reveal;
-  if (c.phase === 'finalizing' || c.phase === 'void-ready') need = NEEDS[c.phase];
+function LegacyTile({ address }) {
+  const tx = useTx();
+  const { data: owed, refetch } = useReadContract({ ...LEGACY, functionName: 'owed', args: [address], query: { enabled: !!address && !!CONTRACTS.STUMP } });
+  if (!owed || owed === 0n) return null;
   return (
-    <Link href={`/r/${c.id}`} legacyBehavior>
-      <a className="row">
-        <span className="mono num">#{c.id.toString()}</span>
-        <span className="text riddle-text">{c.riddle}</span>
-        <span className="meta">
-          <Pill c={c} />
-          {need && <span className="pill accent">{need}</span>}
-          <span className="mono muted">{DIFFICULTY[c.difficulty]}{c.pool > 0n ? ` · ${rdln(c.pool)} RDLN` : ''}{dl ? ` · ${dl.label} ${countdown(dl.at - now)}` : ''}</span>
-          {who === 'solver' && c.entry?.revealed && <span className={`mono ${c.entry.correct ? 'ok' : 'muted'}`}>{c.entry.correct ? 'correct' : 'wrong'}</span>}
-        </span>
-        <style jsx>{`
-          .row { display: grid; grid-template-columns: 48px 1fr; gap: 4px 12px; padding: 14px 0; border-top: 1px solid var(--line); text-decoration: none; }
-          .row:hover .text { color: var(--accent); }
-          .num { color: var(--ink-3); padding-top: 2px; }
-          .text { font-size: 17px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-          .meta { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; }
-          .ok { color: var(--human); }
-        `}</style>
-      </a>
-    </Link>
+    <div className="tile">
+      <span className="eyebrow">From the first game</span>
+      <strong className="display">{rdln(owed)} <span className="unit">RDLN</span></strong>
+      <button className="btn small" disabled={!!tx.pending} onClick={() => tx.run('Withdrawing', (w) => w({ ...LEGACY, functionName: 'withdraw', args: [] })).then((ok) => ok && refetch())}>{tx.pending ? 'Withdrawing…' : 'Withdraw'}</button>
+      {tx.error && <span className="muted small">{tx.error}</span>}
+      <style jsx>{`
+        .tile { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; min-height: 130px; }
+        .tile strong { font-size: 30px; font-weight: 500; }
+        .unit { font-size: 14px; font-family: var(--mono); color: var(--ink-3); }
+        .small { font-size: 12px; }
+        .tile .btn { align-self: flex-start; margin-top: auto; }
+      `}</style>
+    </div>
   );
 }
 
 export default function Me() {
   const { address, isConnected, connector } = useAccount();
   const now = useNow();
-  const { challenges, revealWindow } = useChallenges(now);
-  const me = useMe(undefined, address);
+  const faucet = useFaucet(address);
   const totals = useWalletTotals(address);
-  const actions = useActions(address);
-  const { written, entered } = useMyActivity(address, challenges);
   const hunt = useHuntActions();
   const huntOwed = useHuntOwed(address);
-  const { tokens: huntTokens } = useMyTokens(address);
-  const { riddles: huntRiddles } = useRiddles(now);
-  const busy = !!actions.pending || !!hunt.pending;
+  const { tokens } = useMyTokens(address);
+  const { riddles } = useRiddles(now);
+  const busy = !!hunt.pending || !!faucet.pending;
   const lowGas = isConnected && totals.gas < 10n ** 16n;
+  const collectable = tokens.filter((t) => { const r = riddles.find((x) => Number(x.id) === t.riddleId); return r?.settled && t.claimedAt > 0 && !t.collected; });
 
   return (
     <Layout title="Dashboard">
@@ -72,7 +64,7 @@ export default function Me() {
 
         {!isConnected && (
           <div className="card empty">
-            <p>Connect a wallet to see your balances, your hunt NFTs, the riddles you wrote or entered, and what you can withdraw.</p>
+            <p>Connect a wallet to see your balances, your riddle NFTs, the pieces of the map you hold, and what you can withdraw.</p>
             <ConnectInline className="btn primary" />
           </div>
         )}
@@ -81,14 +73,7 @@ export default function Me() {
           <>
             <div className="tiles">
               <div className="tile">
-                <span className="eyebrow">Owed to you</span>
-                <strong className="display">{rdln(me.owed)} <span className="unit">RDLN</span></strong>
-                <button className="btn primary small" disabled={me.owed === 0n || busy} onClick={() => actions.withdraw().then((ok) => ok && me.refetch())}>
-                  {actions.pending === 'Withdrawing' ? 'Withdrawing…' : 'Withdraw'}
-                </button>
-              </div>
-              <div className="tile">
-                <span className="eyebrow">Hunt winnings</span>
+                <span className="eyebrow">Winnings</span>
                 <strong className="display">{rdln(huntOwed.owed)} <span className="unit">RDLN</span></strong>
                 <button className="btn primary small" disabled={huntOwed.owed === 0n || busy} onClick={() => hunt.withdraw().then((ok) => ok && huntOwed.refetch())}>
                   {hunt.pending === 'Withdrawing' ? 'Withdrawing…' : 'Withdraw'}
@@ -97,41 +82,44 @@ export default function Me() {
               <div className="tile">
                 <span className="eyebrow">RDLN</span>
                 <strong className="display">{rdln(totals.rdln)}</strong>
-                {me.faucet.available
-                  ? <button className="btn accent small" disabled={busy} onClick={() => actions.claimFaucet().then((ok) => ok && me.refetch())}>{actions.pending === 'Claiming testnet RDLN' ? 'Claiming…' : `Get ${rdln(me.faucet.amount)} free`}</button>
+                {faucet.available
+                  ? <button className="btn accent small" disabled={busy} onClick={() => faucet.claim().then((ok) => ok && faucet.refetch())}>{faucet.pending ? 'Claiming…' : `Get ${rdln(faucet.amount)} free`}</button>
                   : <AddTokenButton className="btn small" />}
               </div>
               <div className="tile">
                 <span className="eyebrow">RON reputation</span>
                 <strong className="display">{rdln(totals.ron)}</strong>
-                <span className="muted small">Earned by stumping machines and solving. Not transferable.</span>
+                <span className="muted small">Earned by finding. Not transferable.</span>
               </div>
               <div className={`tile ${lowGas ? 'warn' : ''}`}>
                 <span className="eyebrow">Gas (test POL)</span>
                 <strong className="display">{Number(totals.gas) / 1e18 < 0.001 ? '0' : (Number(totals.gas) / 1e18).toFixed(3)}</strong>
-                {lowGas
-                  ? <GasButton address={address} className="btn accent small" />
-                  : <span className="muted small">Every transaction needs a little.</span>}
+                {lowGas ? <GasButton address={address} className="btn accent small" /> : <span className="muted small">Every transaction needs a little.</span>}
               </div>
+              <LegacyTile address={address} />
             </div>
-            {actions.error && <p className="notice warn">{actions.error}</p>}
             {hunt.error && <p className="notice warn">{hunt.error}</p>}
+            {faucet.error && <p className="notice warn">{faucet.error}</p>}
+
+            {collectable.length > 0 && (
+              <p className="notice">You have {collectable.length} settled {collectable.length === 1 ? 'find' : 'finds'} to collect. Open the riddle and press Collect.</p>
+            )}
 
             <section>
-              <div className="sechead"><h2 className="display">Your hunt NFTs</h2><span className="muted">{huntTokens.length}</span></div>
-              {huntTokens.length === 0 && <p className="muted">None yet. <Link href="/hunt">Buy one on the hunt.</Link></p>}
-              {huntTokens.map((t) => {
-                const r = huntRiddles.find((x) => Number(x.id) === t.riddleId);
+              <div className="sechead"><h2 className="display">Your riddle NFTs</h2><span className="muted">{tokens.length}</span></div>
+              {tokens.length === 0 && <p className="muted">None yet. <Link href="/">Buy one.</Link></p>}
+              {tokens.map((t) => {
+                const r = riddles.find((x) => Number(x.id) === t.riddleId);
                 const state = t.collected ? 'collected' : t.claimedAt ? 'found' : t.unlockedAt ? 'location unlocked' : 'unsolved';
                 return (
-                  <Link key={t.id.toString()} href={`/hunt/${t.riddleId}`} legacyBehavior>
-                    <a className="hrow">
+                  <Link key={t.id.toString()} href={`/r/${t.riddleId}`} legacyBehavior>
+                    <a className="row">
                       <span className="mono num">#{t.riddleId}</span>
-                      <span className="text riddle-text">{r ? r.text : `Hunt riddle ${t.riddleId}`}</span>
+                      <span className="text riddle-text">{r ? r.text : `Riddle ${t.riddleId}`}</span>
                       <span className="meta">
                         {r && <HuntPill phase={r.phase} />}
                         <span className={`pill ${t.claimedAt ? 'human' : t.unlockedAt ? 'accent' : ''}`}>{state}</span>
-                        <span className="mono muted">NFT {t.id.toString()} · {t.attempts} tries{r ? ` · ${HUNT_DIFFICULTY[r.difficulty]} · ${rdln(r.pot)} RDLN` : ''}</span>
+                        <span className="mono muted">NFT {t.id.toString()} · {t.attempts} tries{r ? ` · ${DIFFICULTY[r.difficulty]} · ${rdln(r.pot)} RDLN` : ''}</span>
                         {r?.settled && t.claimedAt > 0 && !t.collected && <span className="pill accent">Collect</span>}
                       </span>
                     </a>
@@ -140,17 +128,7 @@ export default function Me() {
               })}
             </section>
 
-            <section>
-              <div className="sechead"><h2 className="display">Riddles you entered</h2><span className="muted">{entered.length}</span></div>
-              {entered.length === 0 && <p className="muted">None yet. <Link href="/">Pick one from the board.</Link></p>}
-              {entered.map((c) => <Row key={c.id.toString()} c={c} revealWindow={revealWindow} now={now} who="solver" />)}
-            </section>
-
-            <section>
-              <div className="sechead"><h2 className="display">Riddles you wrote</h2><span className="muted">{written.length}</span></div>
-              {written.length === 0 && <p className="muted">None yet. <Link href="/write">Write one the machines can&apos;t crack.</Link></p>}
-              {written.map((c) => <Row key={c.id.toString()} c={c} revealWindow={revealWindow} now={now} who="author" />)}
-            </section>
+            <p className="muted small">Pieces of the map you hold are on <Link href="/map">the map</Link>.</p>
           </>
         )}
       </div>
@@ -162,13 +140,7 @@ export default function Me() {
         .empty { padding: 28px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
         .empty p { margin: 0; }
         .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        @media (min-width: 760px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
-        @media (min-width: 1000px) { .tiles { grid-template-columns: repeat(5, 1fr); } }
-        .hrow { display: grid; grid-template-columns: 48px 1fr; gap: 4px 12px; padding: 14px 0; border-top: 1px solid var(--line); text-decoration: none; }
-        .hrow:hover .text { color: var(--accent); }
-        .hrow .num { color: var(--ink-3); padding-top: 2px; }
-        .hrow .text { font-size: 17px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .hrow .meta { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; }
+        @media (min-width: 760px) { .tiles { grid-template-columns: repeat(4, 1fr); } }
         .tile { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; min-height: 130px; }
         .tile.warn { border-color: var(--warn); }
         .tile strong { font-size: 30px; font-weight: 500; }
@@ -178,6 +150,11 @@ export default function Me() {
         section { display: flex; flex-direction: column; }
         .sechead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
         h2 { font-size: 24px; margin: 0; }
+        .row { display: grid; grid-template-columns: 48px 1fr; gap: 4px 12px; padding: 14px 0; border-top: 1px solid var(--line); text-decoration: none; }
+        .row:hover .text { color: var(--accent); }
+        .num { color: var(--ink-3); padding-top: 2px; }
+        .text { font-size: 17px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .meta { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; }
       `}</style>
     </Layout>
   );

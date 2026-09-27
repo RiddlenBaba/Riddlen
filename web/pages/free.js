@@ -3,16 +3,15 @@ import { useAccount } from 'wagmi';
 import Layout from '../components/Layout';
 import { ConnectInline, useWalletTotals } from '../components/Wallet';
 import { AddTokenButton, GasButton } from '../components/Onboard';
-import { useActions, useMe } from '../hooks/useStump';
+import { useFaucet } from '../hooks/useFaucet';
 import { rdln } from '../components/format';
 
 // The sticker page. Scan the code, connect, get gas, get your Riddlen, see it in your wallet.
 export default function Free() {
   const { address, isConnected, connector } = useAccount();
-  const me = useMe(undefined, address);
+  const faucet = useFaucet(address);
   const totals = useWalletTotals(address);
-  const actions = useActions(address);
-  const busy = !!actions.pending;
+  const busy = !!faucet.pending;
   const hasGas = totals.gas >= 10n ** 16n;
   const hasRdln = totals.rdln > 0n;
 
@@ -39,14 +38,14 @@ export default function Free() {
     },
     {
       title: 'Take your Riddlen',
-      done: hasRdln || (isConnected && !me.faucet.available),
+      done: hasRdln || (isConnected && !faucet.available),
       body: hasRdln
         ? <span className="muted">You&apos;re riddlen. Balance: <b>{rdln(totals.rdln)} RDLN</b>.</span>
-        : isConnected && me.faucet.available
+        : isConnected && faucet.available
           ? <>
-              <p>One dose per wallet: <b>{rdln(me.faucet.amount)} RDLN</b>, enough for a good few riddles.</p>
-              <button className="btn accent" disabled={busy || !hasGas} onClick={() => actions.claimFaucet().then((ok) => ok && me.refetch())}>{busy ? 'Claiming…' : hasGas ? 'Take your Riddlen' : 'Get gas first'}</button>
-              {actions.error && <p className="notice warn">{actions.error}</p>}
+              <p>One dose per wallet: <b>{rdln(faucet.amount)} RDLN</b>, enough for a good few riddles.</p>
+              <button className="btn accent" disabled={busy || !hasGas} onClick={() => faucet.claim().then((ok) => ok && faucet.refetch())}>{busy ? 'Claiming…' : hasGas ? 'Take your Riddlen' : 'Get gas first'}</button>
+              {faucet.error && <p className="notice warn">{faucet.error}</p>}
             </>
           : <span className="muted">Connect first.</span>,
     },

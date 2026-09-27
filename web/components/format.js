@@ -12,36 +12,6 @@ export function countdown(seconds) {
   return `${s}s`;
 }
 
-/** Short human label per phase, plus a pill tone */
-export const PHASE = {
-  pending: { label: 'Machines thinking', tone: 'machine', live: true },
-  open: { label: 'Open', tone: 'human', live: true },
-  'awaiting-author': { label: 'Closed · awaiting author', tone: '' },
-  'void-ready': { label: 'Author missed reveal', tone: 'accent' },
-  reveal: { label: 'Revealing', tone: 'accent', live: true },
-  'awaiting-panel': { label: 'Awaiting machine reveal', tone: 'machine' },
-  finalizing: { label: 'Ready to settle', tone: 'accent' },
-  complete: { label: 'Settled', tone: '' },
-  rejected: { label: 'Declined', tone: '' },
-  loading: { label: '…', tone: '' },
-};
-
-export const OUTCOME_LABEL = {
-  stumped: 'Stumped the machine',
-  'machine-solved': 'Machine solved it',
-  unsolved: 'Nobody solved it',
-  voided: 'Voided',
-  pending: 'Pending',
-};
-
-export function deadline(c, revealWindow) {
-  if (!revealWindow) return null;
-  if (c.phase === 'open') return { label: 'closes in', at: Number(c.endTime) };
-  if (c.phase === 'awaiting-author') return { label: 'author has', at: Number(c.endTime + revealWindow) };
-  if (c.phase === 'reveal') return { label: 'reveals close in', at: Number(c.authorRevealedAt + revealWindow) };
-  return null;
-}
-
 /** Hunt phases */
 export const HUNT_PHASE = {
   released: { label: 'Rolling the count', tone: 'machine', live: true },

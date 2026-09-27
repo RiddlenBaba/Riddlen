@@ -37,7 +37,7 @@ export default function MapPage() {
               const frag = loadUnlocked('fragment', t.id);
               const text = frag ? asText(frag) : null;
               return (
-                <Link key={t.riddleId} href={`/hunt/${t.riddleId}`} legacyBehavior>
+                <Link key={t.riddleId} href={`/r/${t.riddleId}`} legacyBehavior>
                   <a className="piece card">
                     <span className="mono muted">Riddle #{t.riddleId}</span>
                     {frag ? (text ? <p className="mono txt">{text}</p> : <p className="muted">{(frag.length - 2) / 2} bytes</p>) : <p className="muted">Piece not in this browser. Scan the code at the place again to read it.</p>}

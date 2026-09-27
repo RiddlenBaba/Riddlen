@@ -33,9 +33,9 @@ no value.
 | Release | The house | Posts the riddle text, the sealed answer roots, the address of a key hidden at a place, the location clue encrypted with the answer, and this riddle's map fragment encrypted with a secret that exists only at the place. Reserves the pot. | — |
 | Open | Anyone, 10 blocks later | Rolls how many NFTs exist from a future block hash: half of riddles get 10 to 50, a quarter 50 to 200, a fifth 200 to 600, one in twenty 600 to 1,000. Fixes the price and the share schedule. | gas |
 | Buy | You | Mint an NFT: your right to attempt this riddle. | 20% of the pot per NFT, floored, through the split |
-| Guess | You | Submit an answer on chain for that NFT. Charged right or wrong; the chain tells you which. Spelling, case and articles don't matter; the words do. | 1 RDLN, then 2, then 3… per NFT |
+| Guess | You | Submit an answer on chain for that NFT. Charged right or wrong; the chain tells you which. Spelling, case and articles don't matter; the words do. | 2% of the ticket price for the first guess, 4% for the second, 6% for the third… |
 | Go | You | The right answer lets your browser decrypt the location clue. Go there. | shoes |
-| Find | You, at the place | Scan the code and leave it. It holds a key that signs your claim in the browser and is never sent anywhere. Your share is booked by your finishing rank, RON is awarded, your map fragment is revealed, and the previous finder's share is released. | 5 RDLN |
+| Find | You, at the place | Scan the code and leave it. It holds a key that signs your claim in the browser and is never sent anywhere. Your share is booked by your finishing rank, RON is awarded, your map fragment is revealed, and an earlier finder's share is released. | 5 RDLN |
 | Withdraw | You | Pull everything you are owed, from every riddle, in one transaction. | gas |
 
 Nothing expires. A riddle nobody completes keeps its pot. A finder nobody follows waits with
@@ -49,9 +49,9 @@ The k-th finder on a riddle with N NFTs gets `pot × (1/k) ÷ (1 + 1/2 + … + 1
 a 12-NFT riddle: 32% of the pot. On 100: 19%. On 800: 14%. Every finder gets something; the pot
 is exactly emptied if every NFT finds it. The full table is on [Tokenomics](/tokens/#4-pots-and-shares).
 
-Your share is **released when the next person finds it**. The first finder is paid by the second,
-the second by the third, the last by the riddle completing. That is why the code stays where you
-found it. The dashboard shows what is pending and what is ready to withdraw.
+Your share is **released when enough people find it after you**: one more on Easy and Medium
+riddles, two on Hard, three on Legendary. Completion releases everyone still waiting. That is
+why the code stays where you found it. The dashboard shows what is pending and what is ready to withdraw.
 
 ## The numbers as deployed
 
@@ -60,7 +60,8 @@ found it. The dashboard shows what is pending and what is ready to withdraw.
 | Pot by difficulty | 10,000 / 25,000 / 60,000 / 150,000 RDLN | tunable, snapshotted per riddle at release |
 | Mint price | 20% of the pot divided by the NFT count, never below the floor | the 20% is tunable, snapshotted |
 | Price floor | 10 RDLN at launch, halving every 730 days | fixed in `HuntCommitments` |
-| Guess step | 1 RDLN per try on an NFT, rising by one | tunable, snapshotted |
+| Guess step | 2% of the ticket price; the k-th guess on an NFT costs k steps | tunable, snapshotted |
+| Finders before a release | 1 / 1 / 2 / 3 by difficulty | tunable, snapshotted |
 | Claim fee | 5 RDLN | tunable, snapshotted |
 | Blocks before open | 10 | tunable |
 | Riddles in the hunt | 1,000 | fixed |

@@ -22,11 +22,12 @@ your own front end. Addresses are on [Contracts](/contracts/). Source is under
 ```solidity
 function riddleCount() external view returns (uint256);
 function getRiddle(uint256 id) external view returns (Riddle memory);   // text, pot, nftCount, minted,
-    // claimCount, opened, complete, booked, claimFee, attemptStep, priceBps, harmonic, cacheSigner,
-    // altRoots[8], locationCipher, firstTokenId, lastClaimTokenId, commitBlock, releasedAt, firstClaimAt
+    // claimCount, opened, complete, booked, claimFee, stepBps, priceBps, releaseGap, harmonic, cacheSigner,
+    // altRoots[8], locationCipher, firstTokenId, commitBlock, releasedAt, firstClaimAt
 function getToken(uint256 tokenId) external view returns (TokenState memory); // riddleId, index, attempts,
     // unlockedAt, claimedAt, rank, released, share
 function mintPriceFor(uint256 id) external view returns (uint256);      // 0 until opened
+function attemptCostFor(uint256 tokenId) external view returns (uint256); // (attempts+1) * step
 function priceFloor() external view returns (uint256);
 function shareFor(uint256 id, uint256 rank) external view returns (uint256);
 function tokenAtRank(uint256 id, uint256 rank) external view returns (uint256);
@@ -98,7 +99,8 @@ against the committed map, given the proof from the house's manifest.
 
 `share(k) = pot × 1e18 ÷ (k × harmonic)` where `harmonic = Σ_{i=1..N} floor(1e18 / i)`, and the
 last rank takes `pot − booked` so rounding never strands anything. A share is booked at `claim`
-and released to the token's holder at the next `claim` on that riddle, or at completion.
+and released to the token's holder when `releaseGap` more claims have landed on that riddle (1 on
+Easy and Medium, 2 on Hard, 3 on Legendary), or at completion.
 
 ## Running it yourself
 

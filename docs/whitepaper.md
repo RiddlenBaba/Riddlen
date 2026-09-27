@@ -46,12 +46,15 @@ the mechanic is wrong.
    until every NFT on it has found it, or forever. An NFT is a live claim on its riddle's pot for
    as long as it is held.
 2. **Every guess costs.** Each guess on an NFT is paid, more each time, whether it is right or
-   wrong. The site never checks an answer for free.
+   wrong. The step is a share of the ticket price, so it floats with the pot, the scarcity and
+   the halving floor. The site never checks an answer for free.
 3. **Everyone who finds is paid, earlier finders more.** Shares are set by finishing order and
    scaled to the riddle's NFT count. There is no cap on how many finders share the pot.
-4. **A share is released by the next finder.** The first finder is paid when the second person
-   scans, the second when the third does, and so on. The last is paid when the riddle completes.
-   The code stays at the place because taking it away costs the taker.
+4. **A share is released by the finders who follow.** On small pots the first finder is paid when
+   the second person scans, the second when the third does, and so on. On large pots two or
+   three more finders are needed before each release, which makes two friends taking a big pot
+   a much bigger conspiracy. Completion pays everyone still waiting. The code stays at the place
+   because taking it away costs the taker.
 5. **The answer lives in the world.** No machine is in the loop. The hunt's difficulty comes from
    places, not from wordplay a model can crack.
 6. **The treasury pays only for the house's riddles.** Player-written riddles, when they come,
@@ -83,7 +86,7 @@ Held in `HuntCommitments`, a plain contract of immutables.
 | Buy | A player | Mints an NFT: one right to attempt this riddle. |
 | Guess | The holder | Submits an answer on chain for that NFT. Charged whether right or wrong; the chain says which. The right answer unlocks the location for that NFT. |
 | Go | The holder | Reads the location clue, decrypted in the browser with the answer, and goes there. |
-| Find | The holder, at the place | Scans the code and leaves it. The code's key signs the claim in the browser and is never sent anywhere. The finder's share is booked, RON is awarded, the map fragment is revealed. The previous finder's share is released. |
+| Find | The holder, at the place | Scans the code and leaves it. The code's key signs the claim in the browser and is never sent anywhere. The finder's share is booked, RON is awarded, the map fragment is revealed. An earlier finder's share is released. |
 | Withdraw | Anyone owed | Pulls everything owed, from every riddle, in one transaction. |
 
 ## 5. The NFT
@@ -123,7 +126,7 @@ This applies to every mint, every guess and every claim. It was 50% burn / 25% /
 | Event | Cost |
 |---|---|
 | Mint an NFT | The mint price at that moment (section 7) |
-| Guess | 1 RDLN, then 2, then 3… per NFT, rising by one each time until that NFT solves |
+| Guess | k steps for the k-th guess on that NFT, a step being 2% of that riddle's ticket price; the 2% is tunable and snapshotted at release |
 | Claim | A fixed fee, so the last step cannot be brute-forced |
 | Player submits a riddle (later phase) | 1, 2, 3… RDLN per wallet |
 
@@ -154,10 +157,11 @@ far more than the first finder on a crowded one, so the roll matters:
 | 376 | 15.4% | 7.7% | 1.5% | 0.04% |
 | 800 | 13.8% | 6.9% | 1.4% | 0.02% |
 
-A share is **booked** at the scan and **released** when the next finder scans. The last finder
-on a riddle is released by the riddle completing, which is every NFT on it having found. A
-finder whose riddle attracts nobody after them waits, with their share booked, for as long as
-it takes. That is the cost of being last and the reason the code stays where it is.
+A share is **booked** at the scan and **released** when enough finders have followed: one more
+on Easy and Medium riddles, two on Hard, three on Legendary. Completion, every NFT on the riddle
+having found, releases everyone still waiting. A finder whose riddle attracts nobody after them
+waits, with their share booked, for as long as it takes. That is the cost of being last and the
+reason the code stays where it is.
 
 Late shares are small in RDLN today. The hunt runs twenty years; what a share is worth in year
 twelve is not for today's numbers to decide.
@@ -182,11 +186,11 @@ with them. The full numbers are on [Tokenomics](/tokens/).
 ### 6.6 Collusion
 
 A first finder who brings a friend as the second finder collects two shares, 29% of a 100-NFT
-riddle's pot between them, and releases the first. Each needs an NFT, guesses and a claim fee.
-The design bounds this rather than preventing it: shares fall fast with rank, crowded riddles pay
-colluders less, and every extra collaborator pays. If it proves a problem on large pots, the
-remedy is a higher number of finders before the first release on Hard and Legendary riddles.
-Not built; noted.
+riddle's pot between them. Each needs an NFT, guesses and a claim fee. The design bounds this
+rather than preventing it: shares fall fast with rank, crowded riddles pay colluders less, every
+extra collaborator pays, and on Hard and Legendary riddles nothing is released until two or
+three more people have found it, so taking a large pot needs a larger conspiracy, each member
+with their own NFT and their own journey.
 
 ## 7. The mint price
 
@@ -311,7 +315,6 @@ and a size diet for the RDLN contract, which is over the mainnet limit.
 
 ## 14. Open questions
 
-- Whether large pots should require more finders before the first release (section 6.6).
 - Whether seats on a riddle should be tradable inside the site or only on open markets.
 - Whether the riddle NFT should pay its original finder a royalty on resale.
 - Whether very long-standing riddles should have their pots topped up from the treasury.

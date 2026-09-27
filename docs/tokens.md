@@ -57,7 +57,7 @@ contract nobody holds keys to.
 | Payment | Amount | Set by |
 |---|---|---|
 | Buy an NFT | 20% of the riddle's pot divided by its NFT count, never below the floor | The 20% is a tunable, snapshotted per riddle. The floor is fixed: 10 RDLN at launch, halving every two years. |
-| Guess | 1 RDLN, then 2, then 3… on that NFT, right or wrong | Tunable step, snapshotted per riddle. A per-riddle scaling of the step is under discussion. |
+| Guess | k steps for the k-th guess on that NFT, right or wrong; a step is 2% of the riddle's ticket price | The 2% is tunable, snapshotted per riddle. It floats with the pot, the scarcity and the halving floor. |
 | Claim (the scan at the place) | 5 RDLN | Tunable, snapshotted per riddle |
 | Submit a riddle (later phase) | 1, 2, 3… RDLN per wallet | Not live |
 
@@ -99,8 +99,8 @@ are paid more; scarce riddles pay their first finder far more than crowded ones.
 | 100 | 19.3% | 9.6% | 1.9% | 0.19% |
 | 800 | 13.8% | 6.9% | 1.4% | 0.02% |
 
-A share is booked at the scan and **released when the next finder scans**; the last finder is
-released when the riddle completes. A share that is booked but not yet released belongs to
+A share is booked at the scan and **released when enough finders follow**: one on Easy and
+Medium, two on Hard, three on Legendary. Completion releases everyone still waiting. A share that is booked but not yet released belongs to
 whoever holds the NFT when it is released. Nothing expires: a riddle nobody finishes keeps its
 pot, and a finder nobody follows waits with their share booked.
 

@@ -26,8 +26,8 @@ function toRiddle(id, r) {
   return {
     id, difficulty: Number(r.difficulty), releasedAt: Number(r.releasedAt), firstClaimAt: Number(r.firstClaimAt),
     nftCount: Number(r.nftCount), minted: Number(r.minted), claimCount: Number(r.claimCount), opened: r.opened, complete: r.complete,
-    pot: r.pot, booked: r.booked, claimFee: r.claimFee, attemptStep: r.attemptStep, priceBps: Number(r.priceBps), harmonic: r.harmonic,
-    firstTokenId: Number(r.firstTokenId), lastClaimTokenId: Number(r.lastClaimTokenId), commitBlock: Number(r.commitBlock), cacheSigner: r.cacheSigner,
+    pot: r.pot, booked: r.booked, claimFee: r.claimFee, stepBps: Number(r.stepBps), priceBps: Number(r.priceBps), releaseGap: Number(r.releaseGap), harmonic: r.harmonic,
+    firstTokenId: Number(r.firstTokenId), commitBlock: Number(r.commitBlock), cacheSigner: r.cacheSigner,
     fragmentCipherHash: r.fragmentCipherHash, altRoots: r.altRoots, text: r.text, locationCipher: r.locationCipher,
   };
 }
@@ -142,4 +142,9 @@ export function shareFor(riddle, rank) {
   if (!riddle?.opened || rank < 1 || rank > riddle.nftCount || !riddle.harmonic) return 0n;
   if (rank === riddle.nftCount) return riddle.pot - riddle.booked;
   return (riddle.pot * ONE) / (BigInt(rank) * BigInt(riddle.harmonic));
+}
+
+/** One guess step on a riddle: the ticket price times stepBps. Matches RiddlenHunt._step. */
+export function stepOf(riddle, floor) {
+  return (mintPriceOf(riddle, floor) * BigInt(riddle?.stepBps ?? 0)) / 10000n;
 }

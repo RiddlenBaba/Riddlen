@@ -28,11 +28,13 @@ interface IHuntNFT {
  *            fixes the share schedule.
  *  mint      buy an NFT: one right to attempt. Priced at priceBps of the pot per NFT, never
  *            below the halving floor in HuntCommitments. Paid through RDLN's game protocol.
- *  attempt   guess. Costs 1, 2, 3... RDLN per NFT, right or wrong. The proof is positional and
- *            bound to the token. A correct guess lets the holder decrypt the location off chain.
+ *  attempt   guess. The k-th guess on an NFT costs k steps, a step being stepBps of that riddle's
+ *            ticket price, right or wrong. The proof is positional and bound to the token. A
+ *            correct guess lets the holder decrypt the location off chain.
  *  claim     stand at the place, scan the key, sign. The k-th finder's share of the pot is
- *            pot * (1/k) / H(N); it is booked now and RELEASED WHEN THE NEXT FINDER CLAIMS. The
- *            last finder is released by completion. RON and the map fragment come at the claim.
+ *            pot * (1/k) / H(N); it is booked now and RELEASED WHEN releaseGap MORE FINDERS HAVE
+ *            CLAIMED (one on small pots, two or three on large ones). Completion releases the
+ *            rest. RON and the map fragment come at the claim.
  *  withdraw  pull payments.
  *
  *  Nothing expires, nothing settles, nothing is refunded. A riddle nobody completes keeps its
@@ -69,12 +71,12 @@ contract RiddlenHunt is
         uint128 pot;
         uint128 booked;          // sum of shares booked so far (released or not)
         uint128 claimFee;
-        uint128 attemptStep;
+        uint16 stepBps;          // guess step = ticket price * stepBps / BPS
         uint16 priceBps;         // mint price = max(floor, pot * priceBps / BPS / nftCount)
+        uint8 releaseGap;        // finder k is released when claimCount >= k + releaseGap
         uint64 commitBlock;
         uint64 harmonic;         // H(nftCount) * ONE, fixed at open
         uint32 firstTokenId;
-        uint32 lastClaimTokenId; // released by the next claim
         address cacheSigner;
         bytes32 fragmentCipherHash;
         bytes32[8] altRoots;
@@ -115,8 +117,9 @@ contract RiddlenHunt is
     // Economics: admin-settable, snapshotted into each riddle at release
     uint256[4] public potByDifficulty;
     uint128 public claimFee;
-    uint128 public attemptStep;
+    uint16 public stepBps;       // guess step as a share of the ticket price
     uint16 public priceBps;      // share of a ticket's pot value charged at mint
+    uint8[4] public releaseGapByDifficulty; // finders that must follow before a share is released
     uint16 public revealDelay;   // blocks between release and open
 
     error BadText();
@@ -149,7 +152,7 @@ contract RiddlenHunt is
     event GrandPrizeOpen(uint256 riddleCount);
     event Withdrawn(address indexed to, uint256 amount);
     event RONAwardFailed(uint256 indexed id, address indexed player);
-    event EconomicsUpdated(uint256[4] pots, uint128 claimFee, uint128 attemptStep, uint16 priceBps, uint16 revealDelay);
+    event EconomicsUpdated(uint256[4] pots, uint128 claimFee, uint16 stepBps, uint16 priceBps, uint8[4] releaseGaps, uint16 revealDelay);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -177,8 +180,9 @@ contract RiddlenHunt is
 
         potByDifficulty = [uint256(10_000 ether), 25_000 ether, 60_000 ether, 150_000 ether];
         claimFee = 5 ether;
-        attemptStep = 1 ether;
+        stepBps = 200;
         priceBps = 2000;
+        releaseGapByDifficulty = [1, 1, 2, 3];
         revealDelay = 10;
     }
 
@@ -224,8 +228,9 @@ contract RiddlenHunt is
         r.commitBlock = uint64(block.number);
         r.pot = uint128(pot);
         r.claimFee = claimFee;
-        r.attemptStep = attemptStep;
+        r.stepBps = stepBps;
         r.priceBps = priceBps;
+        r.releaseGap = releaseGapByDifficulty[difficulty];
         r.cacheSigner = cacheSigner;
         r.altRoots = altRoots;
         r.text = text;
@@ -314,8 +319,8 @@ contract RiddlenHunt is
     }
 
     /**
-     * @notice Guess the answer. Costs (attempts + 1) * attemptStep, charged whether or not it is
-     *         right. `leaf` is keccak256(abi.encode(riddleId, index, H)) where H is the slow hash of
+     * @notice Guess the answer. Costs (attempts + 1) * step, where step = ticket price * stepBps / BPS,
+     *         charged whether or not it is right. `leaf` is keccak256(abi.encode(riddleId, index, H)) where H is the slow hash of
      *         the canonical answer; `proof` are the 10 siblings from the token's position up to
      *         altRoots[alt]. Nothing here is reusable by another token.
      */
@@ -332,7 +337,7 @@ contract RiddlenHunt is
 
         uint32 n = t.attempts + 1;
         t.attempts = n;
-        uint256 cost = uint256(n) * r.attemptStep;
+        uint256 cost = uint256(n) * _step(r);
         if (cost > 0) rdln.burnNFTMint(msg.sender, cost);
 
         unlocked = _verify(leaf, t.index, proof, r.altRoots[alt]);
@@ -372,14 +377,14 @@ contract RiddlenHunt is
         }
         emit Claimed(t.riddleId, tokenId, msg.sender, rank, share);
 
-        // The previous finder is paid because you found it too
-        if (r.lastClaimTokenId != 0) _release(t.riddleId, r.lastClaimTokenId);
-        r.lastClaimTokenId = uint32(tokenId);
+        // An earlier finder is paid because enough people found it after them
+        if (rank > r.releaseGap) _release(t.riddleId, tokenAtRank[t.riddleId][rank - r.releaseGap]);
 
-        // The last finder is paid by completion
+        // Completion pays everyone still waiting
         if (rank == r.nftCount) {
             r.complete = true;
-            _release(t.riddleId, tokenId);
+            uint256 from = rank > r.releaseGap ? rank - r.releaseGap + 1 : 1;
+            for (uint256 k = from; k <= rank; k++) _release(t.riddleId, tokenAtRank[t.riddleId][k]);
             emit RiddleComplete(t.riddleId);
         }
 
@@ -402,6 +407,11 @@ contract RiddlenHunt is
         uint256 floor_ = commitments.mintPriceAt(block.timestamp);
         uint256 byValue = (uint256(r.pot) * r.priceBps) / BPS / r.nftCount;
         return byValue > floor_ ? byValue : floor_;
+    }
+
+    /// @dev one guess step: the ticket price at this moment times stepBps
+    function _step(Riddle storage r) internal view returns (uint256) {
+        return (_mintPrice(r) * r.stepBps) / BPS;
     }
 
     /// @dev share(k) = pot * (1/k) / H(N); the last rank takes whatever rounding left behind.
@@ -445,18 +455,24 @@ contract RiddlenHunt is
 
     // ============ ADMIN ============
 
-    function setEconomics(uint256[4] calldata pots, uint128 claimFee_, uint128 attemptStep_, uint16 priceBps_, uint16 revealDelay_)
-        external
-        onlyRole(ADMIN_ROLE)
-    {
+    function setEconomics(
+        uint256[4] calldata pots,
+        uint128 claimFee_,
+        uint16 stepBps_,
+        uint16 priceBps_,
+        uint8[4] calldata releaseGaps_,
+        uint16 revealDelay_
+    ) external onlyRole(ADMIN_ROLE) {
         require(revealDelay_ > 0 && revealDelay_ < 200, "delay");
-        require(priceBps_ <= BPS, "bps");
+        require(priceBps_ <= BPS && stepBps_ <= BPS, "bps");
+        for (uint256 i = 0; i < 4; i++) require(releaseGaps_[i] >= 1 && releaseGaps_[i] <= 8, "gap");
         potByDifficulty = pots;
         claimFee = claimFee_;
-        attemptStep = attemptStep_;
+        stepBps = stepBps_;
         priceBps = priceBps_;
+        releaseGapByDifficulty = releaseGaps_;
         revealDelay = revealDelay_;
-        emit EconomicsUpdated(pots, claimFee_, attemptStep_, priceBps_, revealDelay_);
+        emit EconomicsUpdated(pots, claimFee_, stepBps_, priceBps_, releaseGaps_, revealDelay_);
     }
 
     /// @notice Move unreserved RDLN out. Never touches pots or owed funds.
@@ -488,6 +504,13 @@ contract RiddlenHunt is
     /// @notice The halving floor under every mint price right now.
     function priceFloor() external view returns (uint256) {
         return commitments.mintPriceAt(block.timestamp);
+    }
+
+    /// @notice What the next guess on this NFT costs right now.
+    function attemptCostFor(uint256 tokenId) external view returns (uint256) {
+        TokenState storage t = tokens[tokenId];
+        if (t.riddleId == 0) return 0;
+        return uint256(t.attempts + 1) * _step(riddles[t.riddleId]);
     }
 
     /// @notice What the next NFT on this riddle costs. Zero until the count is rolled.

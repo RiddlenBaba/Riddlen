@@ -100,11 +100,12 @@ describe("RDLNSplit: upgrade from the deployed RDLN", function () {
         const supply = await up.totalSupply();
         const price = await hunt.mintPriceFor(1);
         await hunt.connect(alice).mint(1);
+        const step = (price * 200n) / 10000n;
         const a = H.attemptFor(1, 0, Hh, 0);
-        await hunt.connect(alice).attempt(1, 0, H.hex(a.leaf), a.proof.map(H.hex)); // 1
+        await hunt.connect(alice).attempt(1, 0, H.hex(a.leaf), a.proof.map(H.hex)); // one step
         const td = H.claimTypedData({ chainId, hunt: huntAddress, riddleId: 1, tokenId: 1, owner: alice.address });
         await hunt.connect(alice).claim(1, await cache.signTypedData(td.domain, td.types, td.message)); // 5
-        const total = price + E("6");
+        const total = price + step + E("5");
         expect(await up.balanceOf(alice.address)).to.equal(E("1000") - total);
         expect(supply - await up.totalSupply()).to.equal(total / 4n);
         expect(await up.balanceOf(grand.address)).to.equal(total / 4n);

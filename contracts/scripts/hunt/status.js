@@ -13,7 +13,7 @@ async function main() {
     console.log(`RDLN GAME_ROLE ${await rdln.hasRole(await rdln.GAME_ROLE(), address)}   RON GAME_ROLE ${await ron.hasRole(await ron.GAME_ROLE(), address)}   NFT minter ${await nft.hasRole(await nft.MINTER_ROLE(), address)}`);
     console.log(`Commitments: mapRoot ${await commitments.mapRoot()}  prize ${await commitments.prizeCommitment()}  total ${await commitments.totalRiddles()}  launch ${new Date(Number(await commitments.launchAt()) * 1000).toISOString()}`);
     const pots = await Promise.all([0, 1, 2, 3].map((d) => hunt.potByDifficulty(d)));
-    console.log(`Pots ${pots.map((p, d) => `${DIFFICULTY[d]} ${ethers.formatEther(p)}`).join("  ")}   claim fee ${ethers.formatEther(await hunt.claimFee())}   step ${ethers.formatEther(await hunt.attemptStep())}`);
+    console.log(`Pots ${pots.map((p, d) => `${DIFFICULTY[d]} ${ethers.formatEther(p)}`).join("  ")}   claim fee ${ethers.formatEther(await hunt.claimFee())}   step ${Number(await hunt.stepBps()) / 100}% of the ticket   release gaps ${(await Promise.all([0,1,2,3].map((d) => hunt.releaseGapByDifficulty(d)))).join('/')}`);
     const count = Number(await hunt.riddleCount());
     console.log(`Riddles ${count}   tokens minted ${Number(await nft.nextId()) - 1}`);
     for (let id = 1; id <= count; id++) {

@@ -309,15 +309,21 @@ export const HUNT_ABI = [
       },
       {
         "indexed": false,
-        "internalType": "uint128",
-        "name": "attemptStep",
-        "type": "uint128"
+        "internalType": "uint16",
+        "name": "stepBps",
+        "type": "uint16"
       },
       {
         "indexed": false,
         "internalType": "uint16",
         "name": "priceBps",
         "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8[4]",
+        "name": "releaseGaps",
+        "type": "uint8[4]"
       },
       {
         "indexed": false,
@@ -697,19 +703,6 @@ export const HUNT_ABI = [
   },
   {
     "inputs": [],
-    "name": "attemptStep",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "available",
     "outputs": [
       {
@@ -846,14 +839,19 @@ export const HUNT_ABI = [
             "type": "uint128"
           },
           {
-            "internalType": "uint128",
-            "name": "attemptStep",
-            "type": "uint128"
+            "internalType": "uint16",
+            "name": "stepBps",
+            "type": "uint16"
           },
           {
             "internalType": "uint16",
             "name": "priceBps",
             "type": "uint16"
+          },
+          {
+            "internalType": "uint8",
+            "name": "releaseGap",
+            "type": "uint8"
           },
           {
             "internalType": "uint64",
@@ -868,11 +866,6 @@ export const HUNT_ABI = [
           {
             "internalType": "uint32",
             "name": "firstTokenId",
-            "type": "uint32"
-          },
-          {
-            "internalType": "uint32",
-            "name": "lastClaimTokenId",
             "type": "uint32"
           },
           {

@@ -5,7 +5,8 @@ const fs = require("fs");
 
 /**
  * One unattended game-master pass. Safe to run every few minutes (GitHub Actions, cron, PM2):
- *   1. screens each new submission (is it a genuine riddle a person could attempt?) and rejects junk
+ *   1. screens each new submission: junk is declined, riddles that may need private knowledge are
+ *      left for a human, the rest go on
  *   2. runs the AI panel and opens accepted submissions, up to MAX_OPEN open at once
  *   3. reveals the panel for every closed riddle that has a saved secret
  *   4. settles every riddle whose reveal window has passed
@@ -22,7 +23,7 @@ const DURATION = Number(process.env.DURATION ?? 86400);
 const MAX_PENDING_PER_AUTHOR = Number(process.env.MAX_PENDING_PER_AUTHOR ?? 2);
 
 async function screen(riddle) {
-    if (process.env.SCREEN === "no" || process.env.PANEL_STUB) return { ok: true };
+    if (process.env.SCREEN === "no" || process.env.PANEL_STUB) return { verdict: "yes", ok: true };
     return screenRiddle(riddle);
 }
 
@@ -53,6 +54,10 @@ async function main() {
             if (pendingByAuthor[c.author] > MAX_PENDING_PER_AUTHOR) { console.log(`#${id}: author has too many pending, skipped`); continue; }
             if (openCount >= MAX_OPEN) { console.log(`#${id}: ${MAX_OPEN} already open, skipped`); continue; }
             const verdict = await screen(c.riddle);
+            if (verdict.verdict === "unsure") {
+                console.log(`#${id}: left for a human (${verdict.reason}). Open with ID=${id} or REJECT=... via open-challenge.js`);
+                continue;
+            }
             if (!verdict.ok) {
                 console.log(`#${id}: rejected (${verdict.reason})`);
                 if (confirm) await (await game.reject(id, "Not a riddle")).wait();

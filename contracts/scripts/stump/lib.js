@@ -134,14 +134,25 @@ async function runPanel(riddle, { models = panelModels(), log = console.log } = 
     return { panelAnswers, transcript };
 }
 
-/** Cheap yes/no screening call used by the unattended pass. */
+/**
+ * Screening call used by the unattended pass. Three answers:
+ *   YES    a riddle a stranger could attempt -> open it
+ *   NO     spam, abuse, adverts, empty filler -> decline it
+ *   UNSURE anything else, including riddles that seem to need private knowledge of the author
+ *          ("my dog", "my grandmother's word for") -> leave it for a human game master
+ */
 async function screenRiddle(riddle) {
     const model = process.env.SCREEN_MODEL || (useGateway() ? "anthropic/claude-haiku-4.5" : "claude-haiku-4-5");
-    const system = "You moderate submissions to a riddle game. Answer with one word, YES or NO, then a short reason. " +
-        "YES if the text is a genuine riddle, puzzle or lateral-thinking question that a person could attempt to answer. " +
-        "NO if it is spam, advertising, abuse, personal data, empty filler, or not a question at all.";
+    const system = "You screen submissions to a riddle game where strangers try to guess the answer. " +
+        "Reply with one word on the first line: YES, NO or UNSURE, then one short sentence of reason. " +
+        "YES if it is a genuine riddle, puzzle or lateral-thinking question a stranger could reasonably attempt. " +
+        "NO only if it is spam, advertising, abuse, personal data, empty filler, or not a question at all. " +
+        "UNSURE for everything else, including riddles that may depend on private knowledge of the author " +
+        "(their pet, their family, their street): a human will decide those.";
     const { text } = await complete(model, system, riddle, 200);
-    return { ok: /^\s*yes/i.test(text), reason: text.trim().slice(0, 120) };
+    const first = text.trim().split(/\s/)[0].toUpperCase();
+    const verdict = first.startsWith("YES") ? "yes" : first.startsWith("NO") ? "no" : "unsure";
+    return { verdict, ok: verdict === "yes", reason: text.trim().replace(/\s+/g, " ").slice(0, 160) };
 }
 
 function panelModels() {

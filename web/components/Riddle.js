@@ -33,13 +33,18 @@ function Timeline({ phase }) {
 
 function Machines({ c, reveals }) {
   const revealed = c.panelRevealed && reveals?.panelAnswers?.length;
+  const notYet = c.phase === 'pending' || c.phase === 'rejected';
   return (
     <div className="mach">
       <div className="head">
         <span className="eyebrow">The machines</span>
-        {!revealed && <span className="pill machine">guesses sealed</span>}
+        {!revealed && <span className={`pill machine ${notYet ? '' : ''}`}>{c.phase === 'pending' ? 'not tried yet' : c.phase === 'rejected' ? 'never ran' : 'guesses sealed'}</span>}
       </div>
-      {!revealed ? (
+      {c.phase === 'pending' ? (
+        <p className="muted">Waiting for the game master. Claude, GPT and Gemini will each get this riddle cold, their guesses will be sealed on chain, and then it opens to people.</p>
+      ) : c.phase === 'rejected' ? (
+        <p className="muted">The riddle was declined before the machines saw it.</p>
+      ) : !revealed ? (
         <p className="muted">Three frontier models (Claude, GPT and Gemini) tried this riddle before it opened. Every guess they made is sealed on chain and revealed after entries close.</p>
       ) : (
         <ul className="guesses">
@@ -108,7 +113,7 @@ export default function Riddle({ c, revealWindow, now, onChange }) {
 
       <section className="act">
         {c.phase === 'pending' && <p>The machines are on it. Their sealed guesses go on chain first, then this riddle opens to people. Usually a few minutes.</p>}
-        {c.phase === 'rejected' && <p>This submission was declined as not a riddle. The stake stays burned.</p>}
+        {c.phase === 'rejected' && <p>This submission was declined before opening. Riddles are declined when they read as spam, or as something no stranger could answer, like a fact about the author&apos;s own life. The stake stays burned. Write another one: the best riddles are still personal in flavour, but solvable by anyone clever.</p>}
 
         {!isConnected && !['pending', 'complete', 'rejected'].includes(c.phase) && <p>Connect a wallet to play. New here? The <Link href="/free">faucet</Link> gives every wallet free testnet RDLN.</p>}
 

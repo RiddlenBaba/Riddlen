@@ -1,0 +1,163 @@
+{
+  "normalize": [
+    [
+      "  The Statue of LIBERTY! ",
+      "statue of liberty"
+    ],
+    [
+      "An echo.",
+      "echo"
+    ],
+    [
+      "\"Keyboard\"",
+      "keyboard"
+    ],
+    [
+      "a   piano",
+      "piano"
+    ]
+  ],
+  "answerHash": [
+    {
+      "chainId": 31337,
+      "hunt": "0x1111111111111111111111111111111111111111",
+      "riddleId": 1,
+      "answer": "keyboard",
+      "iterations": 1000,
+      "H": "0x83f8f0f212d013748ac5740b0eab2e8f83412cbf05afec85f3fe1fecbdd20708"
+    },
+    {
+      "chainId": 31337,
+      "hunt": "0x1111111111111111111111111111111111111111",
+      "riddleId": 2,
+      "answer": "The Golden Gate Bridge!",
+      "iterations": 1000,
+      "H": "0x094ba8bc541f0d8184b664cc25388d02b2fcbb6851a4b41d9ae116edac177eb3"
+    }
+  ],
+  "trees": [
+    {
+      "riddleId": 1,
+      "index": 0,
+      "H": "0x83f8f0f212d013748ac5740b0eab2e8f83412cbf05afec85f3fe1fecbdd20708",
+      "root": "0x9811702c8056486e2ed6278730591dd9cebfa747e0b279fd6289917afb116da6",
+      "leaf": "0x0ad3e69aacb68f9888b16be810ee2a8053530ce127e3dbe06cbf7847f21f0a17",
+      "proof": [
+        "0x1bcff100ab5feb10e809a7b80f8e6b70c64dc3c1491285be37f285131b21f345",
+        "0x34d2755658d03e1f05a936dc13effd613b707061c578909f3cffc853960811aa",
+        "0x1f527c0a561d4266d70cb2187651453fe343857c709fb523b657cef266aa77be",
+        "0x0634da923b498b523a4b44488b0fe852059a2da45fad2e2b0cd94706c550090d",
+        "0x7b259ac2176deced9bda4c5b0639d85f89bbcb9ac6b7e58310e10e1659729b50",
+        "0x6c200cc3632050b17721898b1e5673b62bca89b8b8dd3a465a5c6d74c6bfecf5",
+        "0xb5efb517d9781c8dfae9dc4aaffcec3540ee1d6c8fbe3c73cf1dedcfce1b07d3",
+        "0x2221ec52bcc7924384c0d561e280b14b6cf45b187ef8a461f981fed60f7c5b59",
+        "0xb2f1e96ce868bd379aba9636d03a3674f88ddab5ac743744bed4d22a44613d64",
+        "0x1a443c3f46c2e028d7a1aae2182c4d928bf2a0239e06009340a9d38612f7a13b"
+      ]
+    },
+    {
+      "riddleId": 1,
+      "index": 7,
+      "H": "0x83f8f0f212d013748ac5740b0eab2e8f83412cbf05afec85f3fe1fecbdd20708",
+      "root": "0x9811702c8056486e2ed6278730591dd9cebfa747e0b279fd6289917afb116da6",
+      "leaf": "0x877d30f0b79f82012b9831b634f073fae4ca750e96980db5e876c8375c4150a5",
+      "proof": [
+        "0x8a694e063690a8a27d9531e0202691af447c1729eed320ea6e1470ccdf574f2b",
+        "0x08c82a6958a74b233c01db2f0ccd73125fc711c9a55a3c270e34fbbe192e7568",
+        "0x509d3dacb7b8f17ec95a25919ae1d5c10253ed80d461400868b7aab93912a0e3",
+        "0x0634da923b498b523a4b44488b0fe852059a2da45fad2e2b0cd94706c550090d",
+        "0x7b259ac2176deced9bda4c5b0639d85f89bbcb9ac6b7e58310e10e1659729b50",
+        "0x6c200cc3632050b17721898b1e5673b62bca89b8b8dd3a465a5c6d74c6bfecf5",
+        "0xb5efb517d9781c8dfae9dc4aaffcec3540ee1d6c8fbe3c73cf1dedcfce1b07d3",
+        "0x2221ec52bcc7924384c0d561e280b14b6cf45b187ef8a461f981fed60f7c5b59",
+        "0xb2f1e96ce868bd379aba9636d03a3674f88ddab5ac743744bed4d22a44613d64",
+        "0x1a443c3f46c2e028d7a1aae2182c4d928bf2a0239e06009340a9d38612f7a13b"
+      ]
+    },
+    {
+      "riddleId": 42,
+      "index": 1023,
+      "H": "0x83f8f0f212d013748ac5740b0eab2e8f83412cbf05afec85f3fe1fecbdd20708",
+      "root": "0x8c425f63138ac832d02da8b5002bcd15e5cef9950a7cd3b1ea41ec18015bcb42",
+      "leaf": "0x62efe6850d5a0054ee43d4c235183692d33dd026d6b542940b8c855070b61ca9",
+      "proof": [
+        "0xdd297c61bf79340a61baafe82f5fb2079c9a8b395fd91af2ac0693de4c3e4c01",
+        "0xf18a94cbbb6ac3ebac4408d1d4837f6649538249b9dddaf840461eed0c36de87",
+        "0xcd80ae6e34dd5dfcc896cfb7127c8f246ca79c955ba1ab1d964bc2cebc7dc526",
+        "0xcda3c8776b70539814dce4631bd42fe9090c252237a1cbc2f505943af3f82e02",
+        "0xaf66309a1a6e3154d3d093187dc2a28c2e09405307d03d93f764febe60eb7210",
+        "0x18a49b4509a14aa3a1e8a22d2a5ce0865e9c57a8e3a0339c4fbd9895bd3f559c",
+        "0x9491701f01b18915678d55480a341aa021fa8e0f870e618a7520c6432ae4f2e1",
+        "0x1cfdd03700d6512de05aa021321c1fb5dc8a2ac027b369b811ba1adeced8c533",
+        "0x856bc1a9ed025aea0e1dbf780c00461a180c8b89cc63686ea2cbf80ffbc15d4f",
+        "0xbf079441ed79b6a1b2d1a0d6d7716800785949c1d8a70404cb4aa22c9d3004b6"
+      ]
+    }
+  ],
+  "map": {
+    "fragmentHashes": [
+      "0x536de30aa2aad680c7e3512b12387344f306b6a0405517401959f8ff4a5e8cf7",
+      "0x049c31cd40b3fcb9447768d855caebfe347992142252a8526802c6ccde0aa560",
+      "0x9098bfb16a0a04fb3bcfa7953f600ee4165d1a18f9828ab41dd82154dfc1e804",
+      "0x38f694f867676ea15ac8e4e4a9e7a70ce4d43e995d8577fb2a955d2f64f01b4d",
+      "0x2eeab17f468a7f9aa3a30880ba35f4d091e443ad4619b93b2d29610c849a5ef1",
+      "0x387fc8c2d47422981df6ce718731b1f9def81d3d12c333b2798d8a47cd2f89ad",
+      "0xd49253ded6a5f6166918e4533b2f7fb9d1b3b907bf8ebebb6cf9296bcda2d71f",
+      "0x114ea77dce03b49fa9e28fac9d8fbdbe32b6e1f9f7d305ab2a42cc48c2de7ea5",
+      "0xe0d57048a7ec6532710455230527ff511df48cb93e56644863f3ef607e99c0fd",
+      "0x905216ee89f6ee60b10b21e066a095b7f0f161d8a4025413bbf21888489eb392"
+    ],
+    "root": "0x7a901d560993f4baac4f570e5612fc17d2c2c8db3c94282d719013874ebdec63",
+    "index": 3,
+    "proof": [
+      "0x8e0215e0ad131b2b797c05dbe0531559e1148d2dd36aac7fbf5680b2b802e64d",
+      "0x37b22712ece40eb9aac51e02fde5e78cf47d30bf3d550e2aae064beade525cc9",
+      "0x1fc2273212ea9dd8b97bb7b50cb5c3608bcfdfe49e5e0e4cd5a13ca359e809c5",
+      "0xc56f1cc8ab0234f8aae5adcfa0ddb90f2458fabce056aa2f9f3ac1ad0e4f21e8"
+    ]
+  },
+  "claim": {
+    "input": {
+      "chainId": 80002,
+      "hunt": "0x1111111111111111111111111111111111111111",
+      "riddleId": 5,
+      "tokenId": 77,
+      "owner": "0x2222222222222222222222222222222222222222"
+    },
+    "typedData": {
+      "domain": {
+        "name": "Riddlen Hunt",
+        "version": "1",
+        "chainId": 80002,
+        "verifyingContract": "0x1111111111111111111111111111111111111111"
+      },
+      "types": {
+        "Claim": [
+          {
+            "name": "riddleId",
+            "type": "uint256"
+          },
+          {
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "name": "owner",
+            "type": "address"
+          }
+        ]
+      },
+      "primaryType": "Claim",
+      "message": {
+        "riddleId": "5",
+        "tokenId": "77",
+        "owner": "0x2222222222222222222222222222222222222222"
+      }
+    }
+  },
+  "qr": {
+    "k": "1111111111111111111111111111111111111111111111111111111111111111",
+    "s": "2222222222222222222222222222222222222222222222222222222222222222",
+    "text": "riddlen://cache?v=1&r=3&k=1111111111111111111111111111111111111111111111111111111111111111&s=2222222222222222222222222222222222222222222222222222222222222222"
+  }
+}

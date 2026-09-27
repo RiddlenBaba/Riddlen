@@ -53,6 +53,7 @@ export default function Me() {
   const busy = !!hunt.pending || !!faucet.pending;
   const lowGas = isConnected && totals.gas < 10n ** 16n;
   const waiting = tokens.filter((t) => t.claimedAt > 0 && !t.released);
+  const pending = waiting.reduce((sum, t) => sum + t.share, 0n);
 
   return (
     <Layout title="Dashboard">
@@ -78,6 +79,11 @@ export default function Me() {
                 <button className="btn primary small" disabled={huntOwed.owed === 0n || busy} onClick={() => hunt.withdraw().then((ok) => ok && huntOwed.refetch())}>
                   {hunt.pending === 'Withdrawing' ? 'Withdrawing…' : 'Withdraw'}
                 </button>
+              </div>
+              <div className="tile">
+                <span className="eyebrow">Pending</span>
+                <strong className="display">{rdln(pending)} <span className="unit">RDLN</span></strong>
+                <span className="muted small">{waiting.length ? `Booked on ${waiting.length} ${waiting.length === 1 ? 'find' : 'finds'}. Released when the next person finds it.` : 'Shares booked but not yet released show here.'}</span>
               </div>
               <div className="tile">
                 <span className="eyebrow">RDLN</span>
@@ -139,7 +145,8 @@ export default function Me() {
         .empty { padding: 28px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
         .empty p { margin: 0; }
         .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        @media (min-width: 760px) { .tiles { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 760px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1000px) { .tiles { grid-template-columns: repeat(5, 1fr); } }
         .tile { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; min-height: 130px; }
         .tile.warn { border-color: var(--warn); }
         .tile strong { font-size: 30px; font-weight: 500; }

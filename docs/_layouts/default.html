@@ -6,7 +6,8 @@
   <title>{{ page.title | default: site.title }}</title>
   <meta name="description" content="{{ page.description | default: site.description }}">
 
-  <!-- Direct CSS Link -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500&display=swap">
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 
@@ -24,25 +25,27 @@
   <footer class="site-footer">
     <div class="footer-wrapper">
       <div class="footer-section">
-        <h4>🧠 Riddlen Protocol</h4>
-        <p>A scavenger hunt for the whole world</p>
+        <p class="footer-brand">Riddlen</p>
+        <p>A scavenger hunt for the whole world, paid in RDLN. Every attempt burns. Running on the Polygon Amoy testnet: the tokens have no value yet.</p>
       </div>
 
       <div class="footer-section">
-        <h4>Documentation</h4>
+        <h4>Docs</h4>
         <ul>
-          <li><a href="/">Overview</a></li>
           <li><a href="/hunt/">Playing the hunt</a></li>
           <li><a href="/whitepaper/">Whitepaper</a></li>
+          <li><a href="/contracts/">Contracts</a></li>
+          <li><a href="/developers/">For developers</a></li>
         </ul>
       </div>
 
       <div class="footer-section">
-        <h4>Community</h4>
+        <h4>Elsewhere</h4>
         <ul>
-          <li><a href="https://t.me/RiddlenToken" target="_blank">Telegram</a></li>
-          <li><a href="https://twitter.com/RiddlenToken" target="_blank">Twitter</a></li>
-          <li><a href="https://github.com/RiddlenBaba/riddlen" target="_blank">GitHub</a></li>
+          <li><a href="https://riddlen.com">Play at riddlen.com</a></li>
+          <li><a href="https://github.com/RiddlenBaba/Riddlen" target="_blank" rel="noreferrer">Source</a></li>
+          <li><a href="https://x.com/RiddlenToken" target="_blank" rel="noreferrer">X</a></li>
+          <li><a href="https://t.me/RiddlenToken" target="_blank" rel="noreferrer">Telegram</a></li>
         </ul>
       </div>
     </div>

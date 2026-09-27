@@ -11,7 +11,7 @@ const { gameMaster, runPanel, saveSecret, STATUS, DIFFICULTY, panelModels } = re
  *   CONFIRM=yes ALL=yes npx hardhat run ...                                 # every pending challenge
  *
  * Options: DURATION seconds (default 86400), PANEL_MODELS, PANEL_SAMPLES, REJECT="reason" with ID
- * to decline a submission instead. Needs ANTHROPIC_API_KEY (or an `ant auth login` profile).
+ * to decline a submission instead. Needs AI_GATEWAY_API_KEY (or ANTHROPIC_API_KEY as a Claude-only fallback).
  * Panel answers and transcripts are saved to contracts/game-master/ and must be kept until reveal.
  */
 

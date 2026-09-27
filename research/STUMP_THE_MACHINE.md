@@ -61,17 +61,23 @@ never promise RDLN it doesn't hold. `sweep` moves only unreserved balance.
 
 ## The panel
 
-`contracts/scripts/stump/lib.js` → `runPanel`. Default: `claude-opus-5`, `claude-sonnet-5`,
-`claude-haiku-4-5`, 2 samples each, 3 guesses per sample, deduplicated, capped at 32. The panel
-is deliberately generous to the machines: more guesses make STUMPED harder to earn and the claim
-"AI couldn't solve this" stronger. `PANEL_MODELS` and `PANEL_SAMPLES` override; `PANEL_STUB="a|b"`
-replaces the API for rehearsals. Model transcripts are saved with the salt in
-`contracts/game-master/` (gitignored) and can be published after reveal.
+`contracts/scripts/stump/lib.js` → `runPanel`. Runs through **Vercel AI Gateway**
+(`AI_GATEWAY_API_KEY`, OpenAI-compatible endpoint) so one code path covers every lab. Default
+panel: `anthropic/claude-opus-5`, `openai/gpt-6-astra`, `google/gemini-3.8-flash`, 2 samples
+each, 3 guesses per sample, deduplicated, capped at 32. Three labs make "no AI could solve
+this" a real claim and protect the game from one lab's blind spots. Without a gateway key it
+falls back to the Anthropic SDK with Claude-only models. `PANEL_MODELS`, `PANEL_SAMPLES` and
+`SCREEN_MODEL` override; `PANEL_STUB="a|b"` replaces the API for rehearsals. Transcripts are
+saved with the salt in `contracts/game-master/` (gitignored) and can be published after reveal.
+
+Matching is exact on the canonical form, so a panel guess of "computer keyboard" does not match
+an author answer of "keyboard". The panel prompt asks for short answers to keep this fair; the
+contract already accepts several author answers (`string[]`), and the frontend should let
+authors list alternatives ("keyboard / computer keyboard") when it is rebuilt.
 
 Trust: the game master sees the panel result before humans play and could leak or lie. Same
-trust as the existing commit-reveal game master. Mitigations available later: publish the
-transcript hash in the open transaction (already the commitment), rotate to a multi-party or
-TEE-run panel, or let validators dispute.
+trust as the existing commit-reveal game master. Mitigations available later: a multi-party or
+TEE-run panel, or validators who can dispute using the published transcripts.
 
 ## Deployment (Polygon Amoy)
 
@@ -87,8 +93,8 @@ OpenZeppelin manifest is `contracts/.openzeppelin/unknown-80002.json` (gitignore
 
 ## Runbook (game master)
 
-All commands in `contracts/`. `PRIVATE_KEY` and `AMOY_RPC_URL` in `contracts/.env`; the panel
-needs `ANTHROPIC_API_KEY` there too (or an `ant auth login` profile).
+All commands in `contracts/`. `PRIVATE_KEY`, `AMOY_RPC_URL` and `AI_GATEWAY_API_KEY` in
+`contracts/.env` (`ANTHROPIC_API_KEY` works as a Claude-only fallback).
 
 ```bash
 npx hardhat run scripts/stump/status.js --network amoy                 # funding, roles, every riddle
@@ -112,13 +118,14 @@ sweeps; there is no escape hatch on purpose, so back the files up).
 spam), runs the panel and opens up to `MAX_OPEN` (6) riddles at once with at most 2 pending per
 author, reveals panels for closed riddles, and settles anything whose reveal window has passed.
 `.github/workflows/stump-game-master.yml` runs it every 15 minutes once the repository secrets
-`GAME_MASTER_PRIVATE_KEY` and `ANTHROPIC_API_KEY` exist and the `if: false` line is removed.
+`GAME_MASTER_PRIVATE_KEY` and `AI_GATEWAY_API_KEY` exist and the `if: false` line is removed.
 The workflow caches `contracts/game-master/` between runs; keep a second backup of it.
 
 ### Running cost
 
-Only the panel bills: about $0.10–0.15 per riddle at typical thinking lengths (Opus 5,
-Sonnet 5, Haiku 4.5, two samples each, 4,000 output-token cap), worst case about $0.33.
+Only the panel bills, on the AI Gateway account: about $0.10–0.20 per riddle at typical
+lengths (three flagships, two samples each, 4,000 output-token cap), worst case under $0.50.
+The Haiku screening call is a fraction of a cent.
 Amoy gas is free; GitHub Actions is free for a public repository.
 
 ## Frontend

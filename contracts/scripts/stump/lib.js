@@ -57,13 +57,20 @@ const DIFFICULTY = ["Easy", "Medium", "Hard", "Legendary"];
 // ---------------------------------------------------------------------------------------
 // The panel: frontier models get the riddle cold, before any human sees it. Every distinct
 // guess they produce is sealed on-chain. If any one of them matches the author's answer, the
-// riddle counts as machine-solved. The panel is deliberately strong: several models, several
-// samples each, and several guesses per sample.
+// riddle counts as machine-solved. The panel is deliberately strong: one flagship model from
+// each of three labs, several samples each, several guesses per sample.
+//
+// Provider: Vercel AI Gateway (AI_GATEWAY_API_KEY) through its OpenAI-compatible endpoint, so
+// any lab's model works with the same code. Without a gateway key it falls back to the
+// Anthropic SDK (ANTHROPIC_API_KEY) with Claude-only models.
 
-const DEFAULT_MODELS = ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"];
+const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
+const GATEWAY_MODELS = ["anthropic/claude-opus-5", "openai/gpt-6-astra", "google/gemini-3.8-flash"];
+const ANTHROPIC_MODELS = ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"];
 const SAMPLES_PER_MODEL = Number(process.env.PANEL_SAMPLES ?? 2);
 const GUESSES_PER_SAMPLE = 3;
 const MAX_PANEL_ANSWERS = 32;
+const MAX_OUTPUT_TOKENS = 4000;
 
 const PANEL_SYSTEM = [
     "You are one of several AI models on a panel trying to solve riddles written by humans.",
@@ -72,6 +79,37 @@ const PANEL_SYSTEM = [
     "in a few words. No numbering, no punctuation, no explanation.",
 ].join(" ");
 
+function useGateway() {
+    return !!process.env.AI_GATEWAY_API_KEY;
+}
+
+/** One completion. Returns { model, text, stopReason }. */
+async function complete(model, system, user, maxTokens) {
+    if (useGateway()) {
+        const res = await fetch(GATEWAY_URL, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model, max_tokens: maxTokens,
+                messages: [{ role: "system", content: system }, { role: "user", content: user }],
+            }),
+        });
+        if (!res.ok) throw new Error(`gateway ${res.status} for ${model}: ${(await res.text()).slice(0, 300)}`);
+        const json = await res.json();
+        const choice = json.choices?.[0];
+        return { model: json.model || model, text: choice?.message?.content || "", stopReason: choice?.finish_reason };
+    }
+    const Anthropic = require("@anthropic-ai/sdk").default;
+    const client = new Anthropic();
+    const response = await client.beta.messages.create({
+        model, max_tokens: maxTokens,
+        betas: ["server-side-fallback-2026-07-01"], fallbacks: "default",
+        system, messages: [{ role: "user", content: user }],
+    });
+    const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
+    return { model: response.model, text, stopReason: response.stop_reason };
+}
+
 async function runPanel(riddle, { models = panelModels(), log = console.log } = {}) {
     // PANEL_STUB="guess one|guess two" skips the API for local rehearsals
     if (process.env.PANEL_STUB) {
@@ -79,43 +117,39 @@ async function runPanel(riddle, { models = panelModels(), log = console.log } = 
         log(`  (stub panel) ${panelAnswers.join(" | ")}`);
         return { panelAnswers, transcript: [{ model: "stub", text: process.env.PANEL_STUB, answers: panelAnswers }] };
     }
-    const Anthropic = require("@anthropic-ai/sdk").default;
-    const client = new Anthropic();
     const transcript = [];
     const guesses = new Set();
-
     for (const model of models) {
         for (let sample = 0; sample < SAMPLES_PER_MODEL; sample++) {
-            const response = await client.beta.messages.create({
-                model,
-                max_tokens: 4000,
-                betas: ["server-side-fallback-2026-07-01"],
-                fallbacks: "default",
-                system: PANEL_SYSTEM,
-                messages: [{ role: "user", content: riddle }],
-            });
-            const text = response.content
-                .filter((b) => b.type === "text")
-                .map((b) => b.text)
-                .join("\n");
+            const { model: used, text, stopReason } = await complete(model, PANEL_SYSTEM, riddle, MAX_OUTPUT_TOKENS);
             const lines = text.split("\n").map((l) => l.replace(/^\s*(\d+[.)]|[-*•])\s*/, "").trim()).filter(Boolean);
             const answers = canonicalAnswers(lines.slice(0, GUESSES_PER_SAMPLE)).filter(Boolean);
-            transcript.push({ model: response.model, stopReason: response.stop_reason, text, answers });
+            transcript.push({ model: used, stopReason, text, answers });
             for (const a of answers) guesses.add(a);
-            log(`  ${response.model} #${sample + 1}: ${answers.join(" | ") || "(no answer)"}`);
+            log(`  ${used} #${sample + 1}: ${answers.join(" | ") || "(no answer)"}`);
         }
     }
-
     const panelAnswers = [...guesses].slice(0, MAX_PANEL_ANSWERS);
     if (panelAnswers.length === 0) throw new Error("The panel produced no answers; refusing to open");
     return { panelAnswers, transcript };
 }
 
+/** Cheap yes/no screening call used by the unattended pass. */
+async function screenRiddle(riddle) {
+    const model = process.env.SCREEN_MODEL || (useGateway() ? "anthropic/claude-haiku-4.5" : "claude-haiku-4-5");
+    const system = "You moderate submissions to a riddle game. Answer with one word, YES or NO, then a short reason. " +
+        "YES if the text is a genuine riddle, puzzle or lateral-thinking question that a person could attempt to answer. " +
+        "NO if it is spam, advertising, abuse, personal data, empty filler, or not a question at all.";
+    const { text } = await complete(model, system, riddle, 200);
+    return { ok: /^\s*yes/i.test(text), reason: text.trim().slice(0, 120) };
+}
+
 function panelModels() {
-    return (process.env.PANEL_MODELS || DEFAULT_MODELS.join(",")).split(",").map((m) => m.trim()).filter(Boolean);
+    const defaults = useGateway() ? GATEWAY_MODELS : ANTHROPIC_MODELS;
+    return (process.env.PANEL_MODELS || defaults.join(",")).split(",").map((m) => m.trim()).filter(Boolean);
 }
 
 module.exports = {
     gameAddress, saveAddress, saveSecret, loadSecret, secretFile, gameMaster,
-    runPanel, panelModels, STATUS, OUTCOME, DIFFICULTY,
+    runPanel, panelModels, screenRiddle, useGateway, STATUS, OUTCOME, DIFFICULTY,
 };

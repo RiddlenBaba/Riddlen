@@ -2,7 +2,7 @@
 # reveals and settles. Panel secrets are cached between runs; ALSO back them up elsewhere,
 # because a lost salt means that riddle can never settle.
 #
-# Repository secrets needed: GAME_MASTER_PRIVATE_KEY, ANTHROPIC_API_KEY. Optional: AMOY_RPC_URL.
+# Repository secrets needed: GAME_MASTER_PRIVATE_KEY, AI_GATEWAY_API_KEY. Optional: AMOY_RPC_URL.
 # Enable by removing the `if: false` line once the secrets are set.
 name: Stump the Machine game master
 on:
@@ -30,7 +30,7 @@ jobs:
       - run: CONFIRM=yes npx hardhat run scripts/stump/cron.js --network amoy
         env:
           PRIVATE_KEY: ${{ secrets.GAME_MASTER_PRIVATE_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
           AMOY_RPC_URL: ${{ secrets.AMOY_RPC_URL || 'https://polygon-amoy-bor-rpc.publicnode.com' }}
       - name: Save panel secrets
         if: always()

@@ -1,6 +1,6 @@
 const { ethers, network } = require("hardhat");
 const { panelCommitment } = require("../game/riddleAnswers");
-const { gameMaster, runPanel, saveSecret, loadSecret, secretFile, STATUS } = require("./lib");
+const { gameMaster, runPanel, screenRiddle, saveSecret, loadSecret, secretFile, STATUS } = require("./lib");
 const fs = require("fs");
 
 /**
@@ -12,7 +12,7 @@ const fs = require("fs");
  *
  *   CONFIRM=yes npx hardhat run scripts/stump/cron.js --network amoy
  * Options: MAX_OPEN (default 6), DURATION (default 86400), MAX_PENDING_PER_AUTHOR (default 2),
- * SCREEN=no to skip the screening call. Needs ANTHROPIC_API_KEY unless PANEL_STUB is set.
+ * SCREEN=no to skip the screening call. Needs AI_GATEWAY_API_KEY (or ANTHROPIC_API_KEY) unless PANEL_STUB is set.
  * Secrets live in contracts/game-master/; on CI, persist that directory between runs (see
  * .github/workflows/stump-game-master.yml).
  */
@@ -23,18 +23,7 @@ const MAX_PENDING_PER_AUTHOR = Number(process.env.MAX_PENDING_PER_AUTHOR ?? 2);
 
 async function screen(riddle) {
     if (process.env.SCREEN === "no" || process.env.PANEL_STUB) return { ok: true };
-    const Anthropic = require("@anthropic-ai/sdk").default;
-    const client = new Anthropic();
-    const response = await client.messages.create({
-        model: "claude-haiku-4-5",
-        max_tokens: 200,
-        system: "You moderate submissions to a riddle game. Answer with one word, YES or NO, then a short reason. " +
-            "YES if the text is a genuine riddle, puzzle or lateral-thinking question that a person could attempt to answer. " +
-            "NO if it is spam, advertising, abuse, personal data, empty filler, or not a question at all.",
-        messages: [{ role: "user", content: riddle }],
-    });
-    const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join(" ").trim();
-    return { ok: /^yes/i.test(text), reason: text.slice(0, 120) };
+    return screenRiddle(riddle);
 }
 
 async function main() {

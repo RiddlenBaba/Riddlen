@@ -7,6 +7,8 @@ import { AddTokenButton, GasButton } from '../components/Onboard';
 import { countdown, deadline, rdln } from '../components/format';
 import { DIFFICULTY, useActions, useChallenges, useMe, useMyActivity, useNow } from '../hooks/useStump';
 import { EXPLORER } from '../lib/wagmi';
+import { DIFFICULTY as HUNT_DIFFICULTY, useHuntActions, useHuntOwed, useMyTokens, useRiddles } from '../hooks/useHunt';
+import { HuntPill } from '../components/HuntRiddle';
 
 const NEEDS = {
   'awaiting-author': 'Reveal your answer',
@@ -53,7 +55,11 @@ export default function Me() {
   const totals = useWalletTotals(address);
   const actions = useActions(address);
   const { written, entered } = useMyActivity(address, challenges);
-  const busy = !!actions.pending;
+  const hunt = useHuntActions();
+  const huntOwed = useHuntOwed(address);
+  const { tokens: huntTokens } = useMyTokens(address);
+  const { riddles: huntRiddles } = useRiddles(now);
+  const busy = !!actions.pending || !!hunt.pending;
   const lowGas = isConnected && totals.gas < 10n ** 16n;
 
   return (
@@ -66,7 +72,7 @@ export default function Me() {
 
         {!isConnected && (
           <div className="card empty">
-            <p>Connect a wallet to see your balances, the riddles you wrote, the ones you entered, and what you can withdraw.</p>
+            <p>Connect a wallet to see your balances, your hunt NFTs, the riddles you wrote or entered, and what you can withdraw.</p>
             <ConnectInline className="btn primary" />
           </div>
         )}
@@ -79,6 +85,13 @@ export default function Me() {
                 <strong className="display">{rdln(me.owed)} <span className="unit">RDLN</span></strong>
                 <button className="btn primary small" disabled={me.owed === 0n || busy} onClick={() => actions.withdraw().then((ok) => ok && me.refetch())}>
                   {actions.pending === 'Withdrawing' ? 'Withdrawing…' : 'Withdraw'}
+                </button>
+              </div>
+              <div className="tile">
+                <span className="eyebrow">Hunt winnings</span>
+                <strong className="display">{rdln(huntOwed.owed)} <span className="unit">RDLN</span></strong>
+                <button className="btn primary small" disabled={huntOwed.owed === 0n || busy} onClick={() => hunt.withdraw().then((ok) => ok && huntOwed.refetch())}>
+                  {hunt.pending === 'Withdrawing' ? 'Withdrawing…' : 'Withdraw'}
                 </button>
               </div>
               <div className="tile">
@@ -102,6 +115,30 @@ export default function Me() {
               </div>
             </div>
             {actions.error && <p className="notice warn">{actions.error}</p>}
+            {hunt.error && <p className="notice warn">{hunt.error}</p>}
+
+            <section>
+              <div className="sechead"><h2 className="display">Your hunt NFTs</h2><span className="muted">{huntTokens.length}</span></div>
+              {huntTokens.length === 0 && <p className="muted">None yet. <Link href="/hunt">Buy one on the hunt.</Link></p>}
+              {huntTokens.map((t) => {
+                const r = huntRiddles.find((x) => Number(x.id) === t.riddleId);
+                const state = t.collected ? 'collected' : t.claimedAt ? 'found' : t.unlockedAt ? 'location unlocked' : 'unsolved';
+                return (
+                  <Link key={t.id.toString()} href={`/hunt/${t.riddleId}`} legacyBehavior>
+                    <a className="hrow">
+                      <span className="mono num">#{t.riddleId}</span>
+                      <span className="text riddle-text">{r ? r.text : `Hunt riddle ${t.riddleId}`}</span>
+                      <span className="meta">
+                        {r && <HuntPill phase={r.phase} />}
+                        <span className={`pill ${t.claimedAt ? 'human' : t.unlockedAt ? 'accent' : ''}`}>{state}</span>
+                        <span className="mono muted">NFT {t.id.toString()} · {t.attempts} tries{r ? ` · ${HUNT_DIFFICULTY[r.difficulty]} · ${rdln(r.pot)} RDLN` : ''}</span>
+                        {r?.settled && t.claimedAt > 0 && !t.collected && <span className="pill accent">Collect</span>}
+                      </span>
+                    </a>
+                  </Link>
+                );
+              })}
+            </section>
 
             <section>
               <div className="sechead"><h2 className="display">Riddles you entered</h2><span className="muted">{entered.length}</span></div>
@@ -125,7 +162,13 @@ export default function Me() {
         .empty { padding: 28px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
         .empty p { margin: 0; }
         .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        @media (min-width: 760px) { .tiles { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 760px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1000px) { .tiles { grid-template-columns: repeat(5, 1fr); } }
+        .hrow { display: grid; grid-template-columns: 48px 1fr; gap: 4px 12px; padding: 14px 0; border-top: 1px solid var(--line); text-decoration: none; }
+        .hrow:hover .text { color: var(--accent); }
+        .hrow .num { color: var(--ink-3); padding-top: 2px; }
+        .hrow .text { font-size: 17px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .hrow .meta { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; }
         .tile { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; min-height: 130px; }
         .tile.warn { border-color: var(--warn); }
         .tile strong { font-size: 30px; font-weight: 500; }

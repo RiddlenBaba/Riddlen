@@ -77,6 +77,14 @@ export default function Home() {
         <Stats challenges={challenges} />
       </section>
 
+      <Link href="/hunt" legacyBehavior>
+        <a className="huntbar">
+          <span className="eyebrow">New · the hunt</span>
+          <span className="hb">A scavenger hunt for the whole world. Buy a riddle, solve it, go find what was hidden.</span>
+          <span className="cta">Enter →</span>
+        </a>
+      </Link>
+
       {featured && <Featured c={featured} revealWindow={revealWindow} now={now} />}
 
       <section id="board" className="sec">
@@ -102,6 +110,10 @@ export default function Home() {
         .lede { font-size: 18px; color: var(--ink-2); margin: 0; max-width: 60ch; }
         .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
         .sec { margin-top: 64px; display: flex; flex-direction: column; gap: 18px; }
+        .huntbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 20px; border-radius: 14px; background: var(--ink); color: var(--paper); text-decoration: none; }
+        .huntbar .eyebrow { color: var(--paper-3); }
+        .hb { flex: 1; min-width: 240px; font-family: var(--display); font-size: 18px; }
+        .huntbar .cta { font-weight: 600; color: var(--accent); }
         .sechead { display: flex; justify-content: space-between; align-items: baseline; }
         h2 { font-size: 30px; margin: 0; }
         .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 20px; }

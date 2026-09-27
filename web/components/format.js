@@ -41,3 +41,14 @@ export function deadline(c, revealWindow) {
   if (c.phase === 'reveal') return { label: 'reveals close in', at: Number(c.authorRevealedAt + revealWindow) };
   return null;
 }
+
+/** Hunt phases */
+export const HUNT_PHASE = {
+  released: { label: 'Rolling the count', tone: 'machine', live: true },
+  open: { label: 'On sale', tone: 'human', live: true },
+  'sold-out': { label: 'Sold out · unsolved', tone: '' },
+  found: { label: 'Found · window open', tone: 'accent', live: true },
+  settling: { label: 'Ready to settle', tone: 'accent' },
+  settled: { label: 'Settled', tone: '' },
+  loading: { label: '…', tone: '' },
+};

@@ -29,9 +29,9 @@ without trusting the people running it.
 | Commitment | Value |
 |---|---|
 | Riddles | 1,000, released on a published schedule, roughly one a week |
-| The end | When riddle 1,000 is distributed. Not when it is solved. |
+| The end | When riddle 1,000 is released. Not when it is solved. |
 | Burn split | Every payment: 50% burned, 25% grand prize, 25% treasury |
-| Mint price | Halves every two years from launch |
+| Mint price | Computed at the moment you mint. Halves every two years from launch. |
 | The map | The whole map and the prize location are hashed on chain on day one and sealed off chain with a successor. Every fragment ever revealed checks against that hash. |
 | The handoff | The founder's authorship rights expire on the schedule, not at the founder's discretion |
 
@@ -44,11 +44,11 @@ Everything else on this page is a parameter the DAO can tune.
 | Release | The house | A riddle goes live. The contract rolls how many NFTs exist for it. |
 | Mint | Player | Buy an NFT. The NFT is the riddle: a poem, a clue, a puzzle. Mint price follows the burn split. |
 | Attempt | Holder | Guess the riddle's answer. The first attempt on that NFT costs 1 RDLN, the next 2, then 3. |
-| Reveal | Contract | A correct answer unlocks the location, readable only by that NFT's holder. |
+| Reveal | Contract | A correct answer unlocks the location. It is encrypted with the answer, so only someone who solved it can read it. |
 | Find | Holder | Go there with the clue. Find what was hidden. Read the code on it. |
 | Claim | Holder | Enter the code into the NFT. Checked against a seal. This is the solve. |
-| Pay | Contract | First finder takes the largest share of the riddle's pot. Finishers inside the window split the rest. RON to every solver. |
-| Fragment | Contract | The solved NFT now carries its piece of the map, readable only by its holder. |
+| Pay | Contract | First finder takes the largest share of the riddle's pot. Finishers inside the window split the rest. RON to every finder once the riddle has two unrelated finders. |
+| Fragment | Contract | The solved NFT now carries its piece of the map, encrypted with a secret that exists only at the spot. |
 
 ## The NFT
 
@@ -61,7 +61,8 @@ Everything else on this page is a parameter the DAO can tune.
   Sell one whose riddle you cracked and the buyer gets the location. Sell a solved one and the
   buyer gets the map fragment. The token carries its cost and its progress, not the wallet.
 - **Two markets, one token.** Unsolved NFTs trade on potential. Solved NFTs trade on the
-  fragment, which only their holder can read. The counter is public, so a sprayed token cannot
+  fragment, which can only be read with the secret from the spot. That exclusivity is physical:
+  whoever stood there holds it. The counter is public, so a sprayed token cannot
   be passed off as fresh.
 - **Enough of them that it is a race.** One holder alone is a private puzzle, not a game. The
   count per riddle is random, with a floor high enough that people compete for the same find.
@@ -73,7 +74,7 @@ Every payment in the game goes through the same protocol: 50% burned and gone fr
 
 | Event | Cost |
 |---|---|
-| Mint an NFT | The riddle's mint price. Starts at the launch price and halves every two years. |
+| Mint an NFT | The mint price at that moment. Starts at the launch price and halves every two years. |
 | Attempt | 1, 2, 3… RDLN per NFT, rising by one each time until that NFT solves |
 | Enter a found code | A fixed fee, so the last step cannot be brute-forced |
 | Submit a piece (later phases) | 1, 2, 3… RDLN per wallet |
@@ -116,7 +117,7 @@ Every solved NFT carries one fragment of the map to the grand prize. A fragment 
 you almost nothing. Hundreds together tell you where to go. The fragments belong to the
 tokens, not the people who solved them, so a solved NFT is worth buying for twenty years.
 
-When riddle 1,000 is distributed, the grand prize hunt begins. It is not a payout and not a
+When riddle 1,000 is released, the grand prize hunt begins. It is not a payout and not a
 lottery. It is one more hunt, played by whoever holds the most of the map. Nobody, including
 the founder, ever held the whole thing: it was scattered across a thousand riddles before the
 first one shipped, and the hash on chain proves it.
@@ -167,7 +168,6 @@ constitution says and the last thing the DAO may weaken.
 
 ## A note on the token
 
-The live RDLN contract does not implement the burn split above. Its payments go to a rewards
-split with no burn. The protocol as written in the original Riddlen documentation is the one
-this page describes, and restoring it means deploying the token again. That is the first
-piece of contract work.
+The RDLN token deployed on Amoy already implements the split above: every payment a game
+contract charges through it burns half and sends a quarter each to the grand prize wallet and
+the treasury. The hunt charges through that path. No new token is needed.

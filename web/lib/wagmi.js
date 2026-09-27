@@ -1,8 +1,11 @@
 import { createConfig, http } from 'wagmi';
+import { parseGwei } from 'viem';
 import { polygonAmoy } from 'wagmi/chains';
 import { injected, walletConnect } from 'wagmi/connectors';
 
-export const CHAIN = polygonAmoy;
+// Amoy enforces a 25 gwei minimum priority fee. Public RPCs sometimes estimate just under it and
+// the transaction is rejected ("gas tip cap ... minimum needed 25000000000"), so pin a safe tip.
+export const CHAIN = { ...polygonAmoy, fees: { ...(polygonAmoy.fees || {}), defaultPriorityFee: parseGwei('30') } };
 
 // Every installed wallet announces itself (EIP-6963) and shows up as its own connector, so
 // MetaMask, Rabby, Crypto.com and friends are all offered instead of whichever injected first.

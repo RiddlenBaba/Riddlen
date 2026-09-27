@@ -26,7 +26,7 @@ function toRiddle(id, r) {
   return {
     id, difficulty: Number(r.difficulty), releasedAt: Number(r.releasedAt), firstClaimAt: Number(r.firstClaimAt),
     nftCount: Number(r.nftCount), minted: Number(r.minted), claimCount: Number(r.claimCount), opened: r.opened, complete: r.complete,
-    pot: r.pot, booked: r.booked, claimFee: r.claimFee, attemptStep: r.attemptStep, harmonic: r.harmonic,
+    pot: r.pot, booked: r.booked, claimFee: r.claimFee, attemptStep: r.attemptStep, priceBps: Number(r.priceBps), harmonic: r.harmonic,
     firstTokenId: Number(r.firstTokenId), lastClaimTokenId: Number(r.lastClaimTokenId), commitBlock: Number(r.commitBlock), cacheSigner: r.cacheSigner,
     fragmentCipherHash: r.fragmentCipherHash, altRoots: r.altRoots, text: r.text, locationCipher: r.locationCipher,
   };
@@ -74,9 +74,17 @@ export function useRiddle(id, now) {
   return { riddle, isLoading, refetch };
 }
 
-export function useMintPrice() {
-  const { data } = useReadContract({ ...hunt, functionName: 'mintPrice', query: { refetchInterval: 60_000 } });
+/** The halving floor under every mint price */
+export function usePriceFloor() {
+  const { data } = useReadContract({ ...hunt, functionName: 'priceFloor', query: { refetchInterval: 60_000 } });
   return data ?? 0n;
+}
+
+/** price = max(floor, pot * priceBps / 10000 / nftCount). Matches RiddlenHunt._mintPrice. */
+export function mintPriceOf(riddle, floor) {
+  if (!riddle?.opened || !riddle.nftCount) return 0n;
+  const byValue = (riddle.pot * BigInt(riddle.priceBps)) / 10000n / BigInt(riddle.nftCount);
+  return byValue > floor ? byValue : floor;
 }
 
 /** Every hunt NFT the wallet holds, with its state; optionally only those on one riddle */

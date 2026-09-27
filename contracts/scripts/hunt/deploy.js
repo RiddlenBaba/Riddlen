@@ -12,7 +12,7 @@ const { saveAddress, mapDir } = require("./lib");
  *
  * Commitments come from the map manifest written by mapmaker.js (game-master/hunt/map/manifest.json)
  * or from MAP_ROOT and PRIZE_COMMITMENT. Other options:
- *   LAUNCH_AT (unix seconds, default now)     BASE_PRICE (RDLN, default 100)
+ *   LAUNCH_AT (unix seconds, default now)     BASE_PRICE (the mint-price FLOOR in RDLN, default 10)
  *   HALVING_DAYS (default 730)                TOTAL_RIDDLES (default 1000)
  *   SPACING_SECONDS (default 0; the schedule on mainnet)
  *   GAME_MASTER (default deployer)            PRIZE_FUNDING (RDLN via mintPrizePool, default 1000000)
@@ -37,7 +37,7 @@ async function main() {
     if (!mapRoot || !prizeCommitment) throw new Error("Run scripts/hunt/mapmaker.js first, or set MAP_ROOT and PRIZE_COMMITMENT");
 
     const launchAt = Number(process.env.LAUNCH_AT || (await ethers.provider.getBlock("latest")).timestamp);
-    const basePrice = ethers.parseEther(process.env.BASE_PRICE || "100");
+    const basePrice = ethers.parseEther(process.env.BASE_PRICE || "10");
     const halving = Number(process.env.HALVING_DAYS || 730) * 86400;
     const total = Number(process.env.TOTAL_RIDDLES || 1000);
     const spacing = Number(process.env.SPACING_SECONDS || 0);
@@ -48,7 +48,7 @@ async function main() {
     console.log(`Network ${network.name}   deployer ${deployer.address}   game master ${gameMaster}`);
     console.log(`RDLN ${RDLN}   RON ${RON}`);
     console.log(`Commitments: mapRoot ${mapRoot}  prize ${prizeCommitment}`);
-    console.log(`  launchAt ${new Date(launchAt * 1000).toISOString()}  basePrice ${ethers.formatEther(basePrice)} RDLN  halving ${halving / 86400}d  total ${total}  spacing ${spacing}s`);
+    console.log(`  launchAt ${new Date(launchAt * 1000).toISOString()}  price floor ${ethers.formatEther(basePrice)} RDLN  halving ${halving / 86400}d  total ${total}  spacing ${spacing}s`);
     console.log(`Funding ${ethers.formatEther(funding)} RDLN   baseURI ${baseURI}`);
 
     const roleAbi = ["function hasRole(bytes32,address) view returns (bool)", "function grantRole(bytes32,address)",

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Layout from '../components/Layout';
 import { HuntPill } from '../components/HuntRiddle';
-import { DIFFICULTY, useCommitments, useMintPrice, useRiddles } from '../hooks/useHunt';
+import { DIFFICULTY, mintPriceOf, useCommitments, usePriceFloor, useRiddles } from '../hooks/useHunt';
 import { useNow } from '../hooks/useFaucet';
 import { rdln } from '../components/format';
 import { formatEther } from 'viem';
@@ -16,7 +16,7 @@ const STEPS = [
 export default function HuntBoard() {
   const now = useNow();
   const { riddles, isLoading } = useRiddles(now);
-  const price = useMintPrice();
+  const floor = usePriceFloor();
   const c = useCommitments();
   const open = riddles.filter((r) => r.phase === 'open').length;
 
@@ -30,7 +30,7 @@ export default function HuntBoard() {
           <span><b>{riddles.length}</b> released</span>
           <span className="h"><b>{open}</b> on sale</span>
           <span><b>{riddles.reduce((n, r) => n + r.claimCount, 0)}</b> finds</span>
-          <span>price now <b>{Number(formatEther(price)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</b> RDLN</span>
+          <span>price floor <b>{Number(formatEther(floor)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</b> RDLN</span>
         </div>
       </section>
 
@@ -47,7 +47,7 @@ export default function HuntBoard() {
                 <span className="meta">
                   <HuntPill phase={r.phase} />
                   <span className="mono muted">{DIFFICULTY[r.difficulty]} · {rdln(r.pot)} RDLN</span>
-                  {r.opened && <span className="mono muted">{r.nftCount - r.minted} of {r.nftCount} left</span>}
+                  {r.opened && <span className="mono muted">{r.nftCount - r.minted} of {r.nftCount} left · {Number(formatEther(mintPriceOf(r, floor))).toLocaleString(undefined, { maximumFractionDigits: 2 })} RDLN each</span>}
                   {r.claimCount > 0 && <span className="mono ok">{r.claimCount} found it</span>}
                 </span>
               </a>

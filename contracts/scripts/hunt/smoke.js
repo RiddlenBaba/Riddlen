@@ -13,7 +13,7 @@ async function main() {
   let bal = await rdln.balanceOf(signer.address);
   console.log("house RDLN", ethers.formatEther(bal));
   if (bal < ethers.parseEther("200")) { await (await rdln.mintPrizePool(signer.address, ethers.parseEther("1000"))).wait(); console.log("minted 1000 RDLN to house"); }
-  const price = await hunt.mintPrice();
+  const price = await hunt.mintPriceFor(id);
   let tx = await hunt.mint(id); let rc = await tx.wait();
   const tokenId = (await nft.nextId()) - 1n;
   console.log(`minted token ${tokenId} for ${ethers.formatEther(price)} RDLN in ${rc.hash}`);

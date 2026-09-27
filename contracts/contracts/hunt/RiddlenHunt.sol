@@ -26,7 +26,8 @@ interface IHuntNFT {
  *            with a secret that only exists at that place. The pot is reserved.
  *  open      anyone, a few blocks later: a future block hash rolls how many NFTs exist, which
  *            fixes the share schedule.
- *  mint      buy an NFT: one right to attempt. Paid through RDLN's game protocol.
+ *  mint      buy an NFT: one right to attempt. Priced at priceBps of the pot per NFT, never
+ *            below the halving floor in HuntCommitments. Paid through RDLN's game protocol.
  *  attempt   guess. Costs 1, 2, 3... RDLN per NFT, right or wrong. The proof is positional and
  *            bound to the token. A correct guess lets the holder decrypt the location off chain.
  *  claim     stand at the place, scan the key, sign. The k-th finder's share of the pot is
@@ -52,6 +53,7 @@ contract RiddlenHunt is
     uint256 public constant MAX_ALTERNATIVES = 8;
     uint256 public constant MAX_TEXT_LENGTH = 4000;
     uint256 public constant ONE = 1e18;               // fixed point for the harmonic sum
+    uint256 public constant BPS = 10000;
     bytes32 public constant CLAIM_TYPEHASH =
         keccak256("Claim(uint256 riddleId,uint256 tokenId,address owner)");
 
@@ -68,6 +70,7 @@ contract RiddlenHunt is
         uint128 booked;          // sum of shares booked so far (released or not)
         uint128 claimFee;
         uint128 attemptStep;
+        uint16 priceBps;         // mint price = max(floor, pot * priceBps / BPS / nftCount)
         uint64 commitBlock;
         uint64 harmonic;         // H(nftCount) * ONE, fixed at open
         uint32 firstTokenId;
@@ -113,6 +116,7 @@ contract RiddlenHunt is
     uint256[4] public potByDifficulty;
     uint128 public claimFee;
     uint128 public attemptStep;
+    uint16 public priceBps;      // share of a ticket's pot value charged at mint
     uint16 public revealDelay;   // blocks between release and open
 
     error BadText();
@@ -145,7 +149,7 @@ contract RiddlenHunt is
     event GrandPrizeOpen(uint256 riddleCount);
     event Withdrawn(address indexed to, uint256 amount);
     event RONAwardFailed(uint256 indexed id, address indexed player);
-    event EconomicsUpdated(uint256[4] pots, uint128 claimFee, uint128 attemptStep, uint16 revealDelay);
+    event EconomicsUpdated(uint256[4] pots, uint128 claimFee, uint128 attemptStep, uint16 priceBps, uint16 revealDelay);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -174,6 +178,7 @@ contract RiddlenHunt is
         potByDifficulty = [uint256(10_000 ether), 25_000 ether, 60_000 ether, 150_000 ether];
         claimFee = 5 ether;
         attemptStep = 1 ether;
+        priceBps = 2000;
         revealDelay = 10;
     }
 
@@ -220,6 +225,7 @@ contract RiddlenHunt is
         r.pot = uint128(pot);
         r.claimFee = claimFee;
         r.attemptStep = attemptStep;
+        r.priceBps = priceBps;
         r.cacheSigner = cacheSigner;
         r.altRoots = altRoots;
         r.text = text;
@@ -289,13 +295,13 @@ contract RiddlenHunt is
 
     // ============ PLAYERS ============
 
-    /// @notice Buy an NFT on an open riddle. Price follows the halving clock at this moment.
+    /// @notice Buy an NFT on an open riddle. Price is a share of what the ticket is worth, floored.
     function mint(uint256 id) external nonReentrant returns (uint256 tokenId) {
         Riddle storage r = riddles[id];
         if (!r.opened) revert NotOpened();
         if (r.minted >= r.nftCount) revert SoldOut();
 
-        uint256 price = commitments.mintPriceAt(block.timestamp);
+        uint256 price = _mintPrice(r);
         uint16 index = r.minted;
         r.minted = index + 1;
         if (price > 0) rdln.burnNFTMint(msg.sender, price);
@@ -391,6 +397,13 @@ contract RiddlenHunt is
 
     // ============ INTERNALS ============
 
+    /// @dev price = max(halving floor, pot * priceBps / BPS / nftCount)
+    function _mintPrice(Riddle storage r) internal view returns (uint256) {
+        uint256 floor_ = commitments.mintPriceAt(block.timestamp);
+        uint256 byValue = (uint256(r.pot) * r.priceBps) / BPS / r.nftCount;
+        return byValue > floor_ ? byValue : floor_;
+    }
+
     /// @dev share(k) = pot * (1/k) / H(N); the last rank takes whatever rounding left behind.
     function _shareFor(Riddle storage r, uint256 rank) internal view returns (uint256) {
         if (rank == r.nftCount) return uint256(r.pot) - uint256(r.booked);
@@ -432,16 +445,18 @@ contract RiddlenHunt is
 
     // ============ ADMIN ============
 
-    function setEconomics(uint256[4] calldata pots, uint128 claimFee_, uint128 attemptStep_, uint16 revealDelay_)
+    function setEconomics(uint256[4] calldata pots, uint128 claimFee_, uint128 attemptStep_, uint16 priceBps_, uint16 revealDelay_)
         external
         onlyRole(ADMIN_ROLE)
     {
         require(revealDelay_ > 0 && revealDelay_ < 200, "delay");
+        require(priceBps_ <= BPS, "bps");
         potByDifficulty = pots;
         claimFee = claimFee_;
         attemptStep = attemptStep_;
+        priceBps = priceBps_;
         revealDelay = revealDelay_;
-        emit EconomicsUpdated(pots, claimFee_, attemptStep_, revealDelay_);
+        emit EconomicsUpdated(pots, claimFee_, attemptStep_, priceBps_, revealDelay_);
     }
 
     /// @notice Move unreserved RDLN out. Never touches pots or owed funds.
@@ -470,8 +485,16 @@ contract RiddlenHunt is
         return _shareFor(r, rank);
     }
 
-    function mintPrice() external view returns (uint256) {
+    /// @notice The halving floor under every mint price right now.
+    function priceFloor() external view returns (uint256) {
         return commitments.mintPriceAt(block.timestamp);
+    }
+
+    /// @notice What the next NFT on this riddle costs. Zero until the count is rolled.
+    function mintPriceFor(uint256 id) external view returns (uint256) {
+        Riddle storage r = riddles[id];
+        if (!r.opened) return 0;
+        return _mintPrice(r);
     }
 
     function available() external view returns (uint256) {

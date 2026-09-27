@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useAccount, useBlockNumber, usePublicClient } from 'wagmi';
 import { privateKeyToAccount } from 'viem/accounts';
 import { formatEther } from 'viem';
-import { DIFFICULTY, loadUnlocked, saveUnlocked, shareFor, useHuntActions, useMintPrice, useMyTokens } from '../hooks/useHunt';
+import { DIFFICULTY, loadUnlocked, mintPriceOf, saveUnlocked, shareFor, useHuntActions, useMyTokens, usePriceFloor } from '../hooks/useHunt';
 import { CHAIN, CONTRACTS, EXPLORER } from '../lib/wagmi';
 import { HUNT_ABI } from '../lib/abi';
 import { HUNT_PHASE, rdln } from './format';
@@ -248,7 +248,7 @@ function TokenCard({ riddle, token, actions, onChange }) {
 export default function HuntRiddle({ riddle, onChange }) {
   const { address, isConnected } = useAccount();
   const actions = useHuntActions();
-  const price = useMintPrice();
+  const price = mintPriceOf(riddle, usePriceFloor());
   const { tokens, refetch } = useMyTokens(address, riddle.id);
   const { data: block } = useBlockNumber({ watch: true });
   const busy = !!actions.pending;
@@ -268,7 +268,7 @@ export default function HuntRiddle({ riddle, onChange }) {
         <div className="meta mono muted">
           <span><b>{rdln(riddle.pot)}</b> RDLN pot</span>
           {riddle.opened ? <span><b>{left}</b> of {riddle.nftCount} NFTs left</span> : <span>count not rolled yet</span>}
-          <span>price now <b>{fmt(price)}</b> RDLN</span>
+          {riddle.opened && <span>NFT price <b>{fmt(price)}</b> RDLN</span>}
           {riddle.opened && !riddle.complete && <span>next finder gets <b>{rdln(shareFor(riddle, riddle.claimCount + 1))}</b> RDLN</span>}
           {riddle.claimCount > 0 && <span><b>{riddle.claimCount}</b> found it{riddle.firstClaimAt > 0 ? `, first on ${new Date(riddle.firstClaimAt * 1000).toLocaleDateString()}` : ''}</span>}
         </div>
@@ -283,7 +283,7 @@ export default function HuntRiddle({ riddle, onChange }) {
         )}
         {['open', 'found'].includes(riddle.phase) && left > 0 && (
           <div className="box">
-            <p>An NFT is the right to attempt this riddle. It never expires, it keeps its own count of tries, and everything it earns travels with it if you sell it.</p>
+            <p>An NFT is the right to attempt this riddle. It never expires, it keeps its own count of tries, and everything it earns travels with it if you sell it. The price is a fifth of what one ticket is worth: the pot divided by the number of NFTs.</p>
             {isConnected
               ? <button className="btn accent" disabled={busy} onClick={() => actions.mint(riddle.id).then((ok) => ok && change())}>{actions.pending === 'Buying' ? 'Buying…' : `Buy one for ${fmt(price)} RDLN`}</button>
               : <p className="muted small">Connect a wallet to buy. New here? The <Link href="/free">faucet</Link> gives every wallet free testnet RDLN.</p>}

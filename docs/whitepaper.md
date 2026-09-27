@@ -68,7 +68,7 @@ Held in `HuntCommitments`, a plain contract of immutables.
 | Map root | Merkle root over the hashes of the 1,000 map fragments |
 | Prize commitment | `keccak256(location, salt)` of the grand prize, sealed off chain with a successor |
 | Launch | The moment the mint-price clock starts |
-| Mint price floor | Halves every two years from launch |
+| Mint price floor | The least an NFT can cost. Halves every two years from launch. |
 | Release spacing | Minimum time between releases (zero on testnet) |
 
 ## 4. The loop
@@ -161,8 +161,9 @@ twelve is not for today's numbers to decide.
 
 ### 6.5 What the burn actually does
 
-Simulated over the full thousand riddles at the testnet parameters (100 RDLN mint halving every
-two years, average 166 NFTs per riddle, average pot 29,000 RDLN):
+Simulated over the full thousand riddles at the first testnet parameters (a flat 100 RDLN mint
+halving every two years, average 166 NFTs per riddle, average pot 29,000 RDLN), before the
+pot-based price in section 7 was adopted:
 
 | Scenario | Through the protocol | Burned (25%) | Share of 1B supply | Pots paid |
 |---|---|---|---|---|
@@ -170,10 +171,11 @@ two years, average 166 NFTs per riddle, average pot 29,000 RDLN):
 | Busy: 80% sell, 2 guesses, 4 finders | 3.2M | 0.8M | 0.08% | 26M |
 | Busy at a 1,000 RDLN mint | 28M | 7M | 0.7% | 26M |
 
-The burn is real and permanent, but at these prices it is small against the supply. What shrinks
+The burn is real and permanent, but at a flat price it is small against the supply. What shrinks
 the float is the slow payout of the prize pool. What gives a share value is a market, which is
-why a quarter of every payment builds one. The mint price is the lever if the burn is to be felt;
-see section 7.
+why a quarter of every payment builds one. The pot-based price in section 7 ties mint volume to
+the pots: a fully sold riddle pushes a fifth of its pot through the split, so the burn scales
+with the game instead of with a fixed number.
 
 ### 6.6 Collusion
 
@@ -186,15 +188,16 @@ Not built; noted.
 
 ## 7. The mint price
 
-**As deployed:** a flat price, 100 RDLN at launch, halving every two years, the same for every
-NFT on every riddle.
+An NFT costs a fifth of what one ticket is worth, and never less than the floor:
 
-**Under discussion:** a price that follows what a ticket is worth. `price = k × pot ÷ nftCount`
-with a floor that halves, k around 20%. A 150,000 pot with 12 NFTs would price near 2,500 RDLN;
-a 10,000 pot with 800 near 2.5. Scarcity and prize are priced automatically and mint volume
-scales with the pot, so the burn does too. The price cannot be quoted until the count is rolled,
-which the two-step open already allows. Choosing this changes "the price halves" in the
-commitments to "the floor halves". Decision pending.
+    price = max(floor, 20% × pot ÷ nftCount)
+
+A 150,000 pot with 12 NFTs prices at 2,500 RDLN; a 10,000 pot with 800 at 12.5 on testnet's
+10 RDLN floor. Scarcity and prize are priced automatically, and mint volume scales with the
+pot, so the burn does too: a fully sold riddle recycles a fifth of its pot through the split.
+The price is quoted once the count is rolled, which the two-step open allows. The 20% is a
+tunable snapshotted into each riddle at release; the floor is a commitment and halves every two
+years from launch. Decided 2026-09-27.
 
 ## 8. Answers, places and codes
 
@@ -303,7 +306,6 @@ and a size diet for the RDLN contract, which is over the mainnet limit.
 
 ## 14. Open questions
 
-- The mint price (section 7).
 - Whether large pots should require more finders before the first release (section 6.6).
 - Whether seats on a riddle should be tradable inside the site or only on open markets.
 - Whether the riddle NFT should pay its original finder a royalty on resale.

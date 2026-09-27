@@ -316,6 +316,12 @@ export const HUNT_ABI = [
       {
         "indexed": false,
         "internalType": "uint16",
+        "name": "priceBps",
+        "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
         "name": "revealDelay",
         "type": "uint16"
       }
@@ -845,6 +851,11 @@ export const HUNT_ABI = [
             "type": "uint128"
           },
           {
+            "internalType": "uint16",
+            "name": "priceBps",
+            "type": "uint16"
+          },
+          {
             "internalType": "uint64",
             "name": "commitBlock",
             "type": "uint64"
@@ -976,19 +987,6 @@ export const HUNT_ABI = [
       }
     ],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "mintPrice",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

@@ -10,7 +10,8 @@ pragma solidity ^0.8.24;
  *                     solved riddle reveals checks against it.
  *  - prizeCommitment  keccak256 of the grand prize's location and a salt, sealed off chain.
  *  - launchAt         when the mint-price halving clock starts.
- *  - basePrice        mint price at launch, in RDLN wei; halves every halvingPeriod.
+ *  - basePrice        the mint-price FLOOR at launch, in RDLN wei; halves every halvingPeriod. The
+ *                     price itself is a share of the pot per NFT (RiddlenHunt.priceBps), never below this.
  *  - totalRiddles     how many riddles the hunt releases before the grand prize opens.
  *  - minReleaseSpacing seconds the house must wait between releases (the published schedule).
  */
@@ -45,7 +46,7 @@ contract HuntCommitments {
         minReleaseSpacing = minReleaseSpacing_;
     }
 
-    /// @notice Mint price at a moment: basePrice halved once per elapsed halvingPeriod since launch.
+    /// @notice Mint-price floor at a moment: basePrice halved once per elapsed halvingPeriod since launch.
     function mintPriceAt(uint256 timestamp) public view returns (uint256) {
         if (timestamp <= launchAt) return basePrice;
         uint256 halvings = (timestamp - launchAt) / halvingPeriod;

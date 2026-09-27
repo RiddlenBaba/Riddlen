@@ -20,7 +20,7 @@ in testing. Testnet tokens: no value.
 |---|---|---|---|
 | Release | The house | Posts the riddle text, sealed answer roots, the address of a key hidden at a place, the location clue encrypted with the answer, and this riddle's map fragment encrypted with a secret that exists only at the place. Reserves the pot. | — |
 | Open | Anyone, 10 blocks later | Rolls how many NFTs exist for it from a future block hash. Half of riddles get 10 to 50, a quarter 50 to 200, a fifth 200 to 600, one in twenty 600 to 1,000. | gas |
-| Buy | You | Mint an NFT. It is the right to attempt this riddle. | the mint price, through the token's split |
+| Buy | You | Mint an NFT. It is the right to attempt this riddle. | a fifth of the pot per NFT, floored, through the token's split |
 | Guess | You | Submit an answer on chain for that NFT. Right or wrong, it is charged; the chain tells you which. The right one unlocks the location for that NFT. The site never checks a guess for free. | 1 RDLN, then 2, then 3… per NFT |
 | Go | You | Read the location clue (decrypted in your browser with the answer) and go there. | shoes |
 | Find | You, at the place | Scan the code and leave it there. It holds a key that signs your claim in the browser and is never sent anywhere. Your share is booked by your finishing rank, RON is awarded, the map fragment is revealed, and the previous finder's share is released. | 5 RDLN |
@@ -35,7 +35,8 @@ share goes to the new holder when it is released.
 
 | Setting | Value | Fixed? |
 |---|---|---|
-| Mint price at launch | 100 RDLN, halving every 730 days | fixed in `HuntCommitments` |
+| Mint price | 20% of the pot divided by the NFT count, never below the floor | the 20% is tunable, snapshotted |
+| Price floor | 10 RDLN at launch, halving every 730 days | fixed in `HuntCommitments` |
 | Riddles in the hunt | 1,000 | fixed |
 | Pot by difficulty | 10,000 / 25,000 / 60,000 / 150,000 RDLN | tunable, snapshotted per riddle at release |
 | Attempt step | 1 RDLN per NFT per try | tunable, snapshotted |
@@ -59,7 +60,7 @@ nobody holds keys to. The token was upgraded to this split on 2026-09-27 (implem
 | `mapRoot` | `0xaf55cae06f4edef4903243be02eade25e9cccd2a7ae283f7e356e24111b926dd` (placeholder map) |
 | `prizeCommitment` | `0x9da21311e3a6599dc963a6c39d8cb45b4c76c6c14fa75bdbf3f1ce929f310528` (placeholder) |
 | `launchAt` | 2026-09-27 |
-| `basePrice` | 100 RDLN |
+| `basePrice` (the floor) | 10 RDLN |
 | `halvingPeriod` | 730 days |
 | `totalRiddles` | 1,000 |
 

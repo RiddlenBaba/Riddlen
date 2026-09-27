@@ -25,15 +25,15 @@ describe("RiddlenHunt", function () {
             const logs = await f.hunt.queryFilter(f.hunt.filters.RiddleReleased(r.id));
             expect(logs[0].args.fragmentCipher).to.equal(H.hex(r.fragmentCipher));
             // later economics changes do not touch a released riddle
-            await f.hunt.connect(f.admin).setEconomics([E("1"), E("1"), E("1"), E("1")], E("9"), E("2"), 5);
+            await f.hunt.connect(f.admin).setEconomics([E("1"), E("1"), E("1"), E("1")], E("9"), E("2"), 2000, 5);
             expect((await f.hunt.getRiddle(r.id)).claimFee).to.equal(E("5"));
         });
 
         it("reverts when underfunded, on a reused cache key, and past the riddle total", async function () {
             const f = await loadFixture(fixture);
-            await f.hunt.connect(f.admin).setEconomics([E("600000"), E("1"), E("1"), E("1")], E("5"), E("1"), 5);
+            await f.hunt.connect(f.admin).setEconomics([E("600000"), E("1"), E("1"), E("1")], E("5"), E("1"), 2000, 5);
             await expect(release(f)).to.be.revertedWithCustomError(f.hunt, "PoolUnderfunded");
-            await f.hunt.connect(f.admin).setEconomics([E("10000"), E("1"), E("1"), E("1")], E("5"), E("1"), 5);
+            await f.hunt.connect(f.admin).setEconomics([E("10000"), E("1"), E("1"), E("1")], E("5"), E("1"), 2000, 5);
             const r = await release(f);
             await expect(f.hunt.connect(f.gm).release("again", 0, r.roots, r.cache.address, "0x", "0x"))
                 .to.be.revertedWithCustomError(f.hunt, "BadSigner");
@@ -89,43 +89,59 @@ describe("RiddlenHunt", function () {
     // ------------------------------------------------------------ mint
 
     describe("mint", function () {
-        it("charges the price through the 50/25/25 protocol and stops at the count", async function () {
+        const priceOf = (pot, n, floor) => { const v = (pot * 2000n) / 10000n / BigInt(n); return v > floor ? v : floor; };
+
+        it("prices a ticket at 20% of the pot per NFT, never below the floor, through the 50/25/25 protocol, and stops at the count", async function () {
             const f = await loadFixture(fixture);
             const r = await releaseAndOpen(f);
             const R = await f.hunt.getRiddle(r.id);
+            const N = Number(R.nftCount);
+            const floor = await f.hunt.priceFloor();
+            expect(floor).to.equal(E("100")); // fixture base price
+            const price = priceOf(R.pot, N, floor);
+            expect(await f.hunt.mintPriceFor(r.id)).to.equal(price);
             const supply = await f.rdln.totalSupply();
             const grand = await f.rdln.balanceOf(f.grand.address);
             const treasury = await f.rdln.balanceOf(f.treasury.address);
             const tokenId = await mintTo(f, f.alice, r.id);
             expect(await f.nft.ownerOf(tokenId)).to.equal(f.alice.address);
-            expect(await f.rdln.balanceOf(f.alice.address)).to.equal(E("4900"));
-            expect(supply - await f.rdln.totalSupply()).to.equal(E("50"));
-            expect(await f.rdln.balanceOf(f.grand.address) - grand).to.equal(E("25"));
-            expect(await f.rdln.balanceOf(f.treasury.address) - treasury).to.equal(E("25"));
+            expect(E("5000") - await f.rdln.balanceOf(f.alice.address)).to.equal(price);
+            expect(supply - await f.rdln.totalSupply()).to.equal(price / 2n);
+            expect(await f.rdln.balanceOf(f.grand.address) - grand).to.equal(price / 4n);
+            expect(await f.rdln.balanceOf(f.treasury.address) - treasury).to.equal(price / 4n);
             const t = await f.hunt.getToken(tokenId);
             expect(t.riddleId).to.equal(r.id);
             expect(t.index).to.equal(0);
 
-            await f.rdln.mintPrizePool(f.bob.address, E("200000"));
-            for (let i = 1; i < Number(R.nftCount); i++) await f.hunt.connect(f.bob).mint(r.id);
+            await f.rdln.mintPrizePool(f.bob.address, E("2000000"));
+            for (let i = 1; i < N; i++) await f.hunt.connect(f.bob).mint(r.id);
             await expect(f.hunt.connect(f.bob).mint(r.id)).to.be.revertedWithCustomError(f.hunt, "SoldOut");
         });
 
-        it("prices at mint time and halves every two years", async function () {
-            const f = await loadFixture(fixture);
-            const r = await releaseAndOpen(f);
-            expect(await f.hunt.mintPrice()).to.equal(E("100"));
+        it("scarce riddles cost more per NFT; the floor halves every two years and binds when the pot share is tiny", async function () {
+            const f = await deployHunt({ basePrice: E("10") });
+            const a = await releaseAndOpen(f, { difficulty: 3 }); // 150k pot
+            const b = await releaseAndOpen(f, { difficulty: 0 }); // 10k pot
+            const A = await f.hunt.getRiddle(a.id), B = await f.hunt.getRiddle(b.id);
+            const pa = await f.hunt.mintPriceFor(a.id), pb = await f.hunt.mintPriceFor(b.id);
+            expect(pa).to.equal(priceOf(A.pot, Number(A.nftCount), E("10")));
+            expect(pb).to.equal(priceOf(B.pot, Number(B.nftCount), E("10")));
+            expect(pa * BigInt(A.nftCount) / A.pot >= pb * BigInt(B.nftCount) / B.pot || pb === E("10")).to.equal(true);
+            // a riddle priced at 0 bps sits on the floor, and the floor halves
+            await f.hunt.connect(f.admin).setEconomics([E("10000"), E("25000"), E("60000"), E("150000")], E("5"), E("1"), 0, 5);
+            const c = await releaseAndOpen(f);
+            expect(await f.hunt.mintPriceFor(c.id)).to.equal(E("10"));
             await time.increase(730 * 86400);
-            expect(await f.hunt.mintPrice()).to.equal(E("50"));
-            await mintTo(f, f.alice, r.id);
-            expect(await f.rdln.balanceOf(f.alice.address)).to.equal(E("4950"));
-            await time.increase(3 * 730 * 86400);
-            expect(await f.hunt.mintPrice()).to.equal(E("6.25"));
+            expect(await f.hunt.priceFloor()).to.equal(E("5"));
+            expect(await f.hunt.mintPriceFor(c.id)).to.equal(E("5"));
+            await mintTo(f, f.alice, c.id);
+            expect(await f.rdln.balanceOf(f.alice.address)).to.equal(E("4995"));
         });
 
-        it("cannot mint before open", async function () {
+        it("cannot mint before open, and quotes zero", async function () {
             const f = await loadFixture(fixture);
             const r = await release(f);
+            expect(await f.hunt.mintPriceFor(r.id)).to.equal(0);
             await expect(f.hunt.connect(f.alice).mint(r.id)).to.be.revertedWithCustomError(f.hunt, "NotOpened");
         });
     });
@@ -370,7 +386,7 @@ describe("RiddlenHunt", function () {
             const f = await loadFixture(fixture);
             await expect(f.hunt.connect(f.alice).release("x", 0, Array(8).fill(ethers.id("r")), f.alice.address, "0x", "0x"))
                 .to.be.revertedWithCustomError(f.hunt, "AccessControlUnauthorizedAccount");
-            await expect(f.hunt.connect(f.alice).setEconomics([0, 0, 0, 0], 0, 0, 1))
+            await expect(f.hunt.connect(f.alice).setEconomics([0, 0, 0, 0], 0, 0, 0, 1))
                 .to.be.revertedWithCustomError(f.hunt, "AccessControlUnauthorizedAccount");
         });
     });
